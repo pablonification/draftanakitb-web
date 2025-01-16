@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
 
 :root {
   --background: #ffffff;
@@ -17,5 +18,31 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+
+.h1{
+  font-size: 1.125rem;
+  /* font-weight: 600; */
+}
+
+.status-indicator {
+  font-size: 1.125rem;
+  font-weight: bold;
+}
+
+.error-message {
+  color: #f87171;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.success-message {
+  font-size: 12px;
+  color: #b5e48c;
+}
+
+.file-input::file-selector-button {
+  text-transform: uppercase;
 }
