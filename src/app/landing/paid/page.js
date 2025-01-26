@@ -11,6 +11,27 @@ const PaidMenfessLanding = () => {
   const PAYMENT_AMOUNT = 1000;
 
   useEffect(() => {
+    let pollInterval;
+
+    const checkPaymentStatus = async () => {
+      try {
+        if (!merchantRef) return;
+
+        const response = await fetch(`/api/payment-status?ref=${merchantRef}`);
+        const data = await response.json();
+
+        if (data.status === 'PAID') {
+          setPaymentStatus('success');
+          clearInterval(pollInterval);
+        } else if (data.status === 'FAILED' || data.status === 'EXPIRED') {
+          setPaymentStatus('failed');
+          clearInterval(pollInterval);
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+      }
+    };
+
     const initializePayment = async () => {
       try {
         const data = JSON.parse(localStorage.getItem('menfessData'));
@@ -39,6 +60,9 @@ const PaidMenfessLanding = () => {
         setMerchantRef(paymentData.merchantRef);
         setPaymentStatus('pending');
 
+        // Start polling for payment status every 5 seconds
+        pollInterval = setInterval(checkPaymentStatus, 5000);
+
       } catch (error) {
         console.error('Error initializing payment:', error);
         setError(error.message || 'Failed to initialize payment');
@@ -47,7 +71,14 @@ const PaidMenfessLanding = () => {
     };
 
     initializePayment();
-  }, []);
+
+    // Cleanup interval on component unmount
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [merchantRef]); // Add merchantRef as dependency
 
   return (
     <div className="min-h-screen bg-[#000072] text-white p-4">

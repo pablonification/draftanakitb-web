@@ -113,22 +113,48 @@ export async function POST(request) {
     if (data.status === 'PAID') {
       transaction.tweetStatus = 'pending';
       
-      // Create paid tweet entry
+      // Log the attachment data for debugging
+      console.log('Transaction attachment data:', {
+        attachmentUrl: transaction.attachment,
+        hasAttachment: Boolean(transaction.attachment)
+      });
+
+      // Validate and process attachment URL
+      let mediaUrl = null;
+      let mediaType = null;
+
+      if (transaction.attachment) {
+        mediaUrl = transaction.attachment;
+        // Determine media type from URL or file extension
+        if (mediaUrl.match(/\.(jpg|jpeg|png|gif)$/i)) {
+          mediaType = 'image';
+        } else if (mediaUrl.match(/\.(mp4|mov|avi)$/i)) {
+          mediaType = 'video';
+        } else {
+          // Default to image if can't determine
+          mediaType = 'image';
+        }
+      }
+
+      // Create paid tweet entry with validated attachment
       const paidTweet = {
-        _id: data.merchant_ref, // Use merchant_ref as unique ID
+        _id: data.merchant_ref,
         email: transaction.email,
         messageText: transaction.message,
-        mediaUrl: transaction.attachment,
-        mediaType: transaction.attachment ? (
-          transaction.attachment.toLowerCase().endsWith('.mp4') ? 'video' : 'image'
-        ) : null,
+        mediaUrl: mediaUrl,
+        mediaType: mediaType,
         tweetStatus: "pending",
         createdAt: new Date(data.paid_at),
         paymentStatus: "completed",
         paymentAmount: transaction.amount,
         notificationSent: false,
-        // Default scheduling to next available slot
-        scheduledTime: "20:00"
+        scheduledTime: "20:00",
+        // Add metadata about attachment
+        attachmentMetadata: mediaUrl ? {
+          originalUrl: mediaUrl,
+          processedAt: new Date(),
+          type: mediaType
+        } : null
       };
 
       await db.collection('paidTweets').insertOne(paidTweet);
@@ -136,7 +162,9 @@ export async function POST(request) {
       console.log('Payment successful, created paid tweet entry:', {
         merchantRef: data.merchant_ref,
         message: transaction.message,
-        hasAttachment: !!transaction.attachment
+        hasAttachment: Boolean(mediaUrl),
+        mediaType: mediaType,
+        mediaUrl: mediaUrl
       });
     }
 
