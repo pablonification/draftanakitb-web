@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { connectToDatabase } from '@/lib/mongodb';
 import { connectDB } from '@/app/utils/db';
 import mongoose from 'mongoose';
 
@@ -68,6 +69,7 @@ const verifySignature = (data, signature) => {
 export async function POST(request) {
   try {
     await connectDB();
+    const { db } = await connectToDatabase();
 
     const callbackSignature = request.headers.get('X-Callback-Signature');
     console.log('Received callback with signature:', callbackSignature);
@@ -107,10 +109,31 @@ export async function POST(request) {
     transaction.status = data.status;
     transaction.paidAt = data.paid_at;
 
-    // If payment is successful, set tweet status to pending for admin to handle
+    // If payment is successful, create a paid tweet entry
     if (data.status === 'PAID') {
       transaction.tweetStatus = 'pending';
-      console.log('Payment successful, transaction marked for admin review:', {
+      
+      // Create paid tweet entry
+      const paidTweet = {
+        _id: data.merchant_ref, // Use merchant_ref as unique ID
+        email: transaction.email,
+        messageText: transaction.message,
+        mediaUrl: transaction.attachment,
+        mediaType: transaction.attachment ? (
+          transaction.attachment.toLowerCase().endsWith('.mp4') ? 'video' : 'image'
+        ) : null,
+        tweetStatus: "pending",
+        createdAt: new Date(data.paid_at),
+        paymentStatus: "completed",
+        paymentAmount: transaction.amount,
+        notificationSent: false,
+        // Default scheduling to next available slot
+        scheduledTime: "20:00"
+      };
+
+      await db.collection('paidTweets').insertOne(paidTweet);
+      
+      console.log('Payment successful, created paid tweet entry:', {
         merchantRef: data.merchant_ref,
         message: transaction.message,
         hasAttachment: !!transaction.attachment
