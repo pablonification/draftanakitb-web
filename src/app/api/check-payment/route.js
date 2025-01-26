@@ -55,7 +55,7 @@ export async function POST(request) {
 
     // Otherwise check with TriPay
     const response = await axios.get(
-      `https://tripay.co.id/api-sandbox/transaction/detail`,
+      `https://tripay.co.id/api/transaction/detail`,
       {
         params: {
           reference: merchantRef

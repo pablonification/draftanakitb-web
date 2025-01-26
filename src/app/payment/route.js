@@ -4,6 +4,16 @@ import axios from 'axios';
 
 export async function POST(request) {
   try {
+    // Add IP logging at the start
+    console.log('Server Information:', {
+      forwardedFor: request.headers.get('x-forwarded-for'),
+      realIP: request.headers.get('x-real-ip'),
+      clientIP: request.headers.get('x-client-ip'),
+      vercelIP: request.headers.get('x-vercel-ip'),
+      vercelProxyIP: request.headers.get('x-vercel-proxy-ip'),
+      vercelForwardedFor: request.headers.get('x-vercel-forwarded-for'),
+    });
+
     const { email, message } = await request.json();
     
     const privateKey = process.env.TRIPAY_PRIVATE_KEY;
@@ -39,7 +49,7 @@ export async function POST(request) {
     console.log('>>>>>>>>>Payment Request Payload:', JSON.stringify(payload, null, 2));
 
     const response = await axios.post(
-      'https://tripay.co.id/api-sandbox/transaction/create', // Changed from detail to create endpoint
+      'https://tripay.co.id/api/transaction/create', // Changed from detail to create endpoint
       payload,
       {
         headers: {
