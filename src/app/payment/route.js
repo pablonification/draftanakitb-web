@@ -19,7 +19,7 @@ export async function POST(request) {
       .digest('hex');
 
     const payload = {
-      method: "QRISC",
+      method: "QRIS2",
       merchant_ref: merchant_ref,
       amount: amount,
       customer_name: "DraftAnakITB",
