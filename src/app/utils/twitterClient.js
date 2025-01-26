@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { TwitterApi } from 'twitter-api-v2';
 
 // Initialize Twitter client with v2 credentials

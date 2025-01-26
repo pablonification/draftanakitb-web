@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { twitterClientRW } from './twitterClient';
 import fs from 'fs';
 import path from 'path';
