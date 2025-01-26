@@ -12,6 +12,118 @@ const isVideoFile = (file) => {
   return file?.type?.startsWith('video/');
 };
 
+// Replace the OtpHelpTooltip component
+const OtpHelpTooltip = () => {
+  const [showMobileTooltip, setShowMobileTooltip] = useState(false);
+
+  return (
+    <div className="relative group">
+      <div 
+        className="cursor-help ml-2 text-blue-300"
+        onClick={() => setShowMobileTooltip(prev => !prev)} // for mobile
+      >
+        <span>ℹ️ Belum menerima OTP?</span>
+      </div>
+      
+      {/* Desktop tooltip */}
+      <div className="hidden group-hover:md:block absolute z-50 w-[400px] p-4 mt-2 -left-1/2 
+        bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700">
+        <h4 className="font-semibold text-blue-300 mb-2">Tidak menerima kode OTP?</h4>
+        <p className="text-sm text-gray-300 mb-3">
+          Kode OTP biasanya masuk ke folder JUNK/SPAM di Email Outlook ITB anda.
+          Silakan cek folder tersebut seperti pada gambar di bawah ini:
+        </p>
+        <Image
+          src="/junk.png"
+          alt="Junk Email Location"
+          width={350}
+          height={200}
+          className="rounded-lg border border-gray-600"
+        />
+        <div className="absolute w-3 h-3 bg-gray-800 rotate-45 transform 
+          -translate-y-1.5 left-[80px] -top-1 border-t border-l border-gray-700">
+        </div>
+      </div>
+
+      {/* Mobile tooltip */}
+      {showMobileTooltip && (
+        <div className="md:hidden fixed inset-x-0 bottom-0 z-50 p-4 bg-gray-800/95 backdrop-blur-sm border-t border-gray-700">
+          <div className="max-w-lg mx-auto space-y-3">
+            <div className="flex justify-between items-start">
+              <h4 className="font-semibold text-blue-300">Tidak menerima kode OTP?</h4>
+              <button 
+                onClick={() => setShowMobileTooltip(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-gray-300">
+              Kode OTP biasanya masuk ke folder JUNK/SPAM di Email Outlook ITB anda.
+            </p>
+            <div className="relative w-full max-w-[300px] mx-auto">
+              <Image
+                src="/junk.png"
+                alt="Junk Email Location"
+                width={300}
+                height={170}
+                className="rounded-lg border border-gray-600"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Add this new component after OtpHelpTooltip
+const PaidMenfessTooltip = () => {
+  const [showMobileTooltip, setShowMobileTooltip] = useState(false);
+
+  return (
+    <div className="relative group">
+      <div 
+        className="cursor-help ml-1 text-gray-400"
+        onClick={() => setShowMobileTooltip(prev => !prev)}
+      >
+        ℹ️
+      </div>
+      
+      {/* Desktop tooltip */}
+      <div className="hidden group-hover:md:block absolute z-20 w-72 right-0 bottom-full mb-2
+        bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg p-3 border border-gray-700">
+        <p className="text-sm text-gray-200">
+          Menfess akan dikirim secara manual oleh admin pada pukul 20.00 atau 22.00 WIB.
+        </p>
+        <div className="absolute w-3 h-3 bg-gray-800/95 rotate-45 transform 
+          right-4 bottom-0 translate-y-full border-r border-b border-gray-700">
+        </div>
+      </div>
+
+      {/* Mobile tooltip */}
+      {showMobileTooltip && (
+        <div className="md:hidden fixed inset-x-0 bottom-0 z-50 p-4 bg-gray-800/95 backdrop-blur-sm border-t border-gray-700">
+          <div className="max-w-lg mx-auto">
+            <div className="flex justify-between items-start">
+              <h4 className="font-semibold text-blue-300">Tentang Paid Menfess</h4>
+              <button 
+                onClick={() => setShowMobileTooltip(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-gray-300 mt-2">
+              Menfess akan dikirim secara manual oleh admin pada pukul 20.00 atau 22.00 WIB.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MainPage = () => {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -80,9 +192,9 @@ const MainPage = () => {
 
   const getMediaTypeInfo = () => {
     if (menfessType === 'paid') {
-      return "Pictures (JPG, PNG, GIF) or Video (MP4, 60s max, 720p)";
+      return "Pictures (JPG, PNG, GIF, 1MB) or Video (MP4, 60s max, 720p, 5MB)";
     }
-    return "Pictures only (JPG, PNG, GIF)";
+    return "Pictures only (JPG, PNG, GIF, 1MB)";
   };
 
   const handleFileChange = async (e) => {
@@ -181,7 +293,7 @@ const MainPage = () => {
         if (data.success) {
           setIsEmailVerified(true);
           setEmailError('');
-          setOtpMessage('Kode OTP telah dikirim ke email anda. Kode akan kadaluarsa dalam 5 menit.');
+          setOtpMessage('Kode OTP telah dikirim ke email anda. Tolong cek dalam folder JUNK EMAIL di Email ITB (Outlook anda). Kode akan kadaluarsa dalam 5 menit.');
           startOtpCooldown();
         } else {
           setEmailError(data.error || 'Gagal mengirim OTP. Silakan coba lagi.');
@@ -389,7 +501,7 @@ const MainPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyPress={handleEmailKeyPress}
+                  onKeyDown={handleEmailKeyPress}
                   disabled={isEmailVerified}
                   className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                   placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
@@ -416,13 +528,16 @@ const MainPage = () => {
 
             {isEmailVerified && (
               <div className="space-y-2">
-                <label className="block font-semibold">OTP</label>
+                <div className="flex items-center">
+                  <label className="block font-semibold">OTP</label>
+                  <OtpHelpTooltip />
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    onKeyPress={handleOtpKeyPress}
+                    onKeyDown={handleOtpKeyPress}
                     disabled={isOtpVerified}
                     className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                     placeholder="Masukkan kode OTP"
@@ -468,45 +583,16 @@ const MainPage = () => {
                   />
                   Regular Menfess
                 </label>
-                <div className="relative">
-                  <label 
-                    className="flex items-center cursor-pointer group"
-                    onMouseEnter={() => setShowPaidInfo(true)}
-                    onMouseLeave={() => setShowPaidInfo(false)}
-                    onClick={handlePaidInfoToggle} // for mobile
-                  >
-                    <input
-                      type="radio"
-                      value="paid"
-                      checked={menfessType === 'paid' || botStatus.isPaidOnly}
-                      onChange={(e) => setMenfessType(e.target.value)}
-                      className="mr-2"
-                    />
-                    Paid Menfess
-                    <span className="ml-1 text-gray-400">ℹ️</span>
-                    
-                    {showPaidInfo && (
-                      <>
-                        {/* Mobile version - fixed at bottom */}
-                        <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 p-4 bg-gray-800 text-gray-200">
-                          <p className="text-sm">
-                            Menfess akan dikirim secara manual oleh admin pada pukul 20.00 atau 22.00 WIB.
-                          </p>
-                        </div>
-
-                        {/* Desktop version - tooltip */}
-                        <div className="hidden sm:block absolute z-20 w-72 right-0 bottom-full mb-2
-                          bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg p-3">
-                          <p className="text-sm text-gray-200">
-                            Menfess akan dikirim secara manual oleh admin pada pukul 20.00 atau 22.00 WIB.
-                          </p>
-                          <div className="absolute w-3 h-3 bg-gray-800/95 rotate-45 transform 
-                            -translate-y-1.5 right-4 bottom-0 translate-y-full">
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </label>
+                <div className="relative flex items-center">
+                  <input
+                    type="radio"
+                    value="paid"
+                    checked={menfessType === 'paid' || botStatus.isPaidOnly}
+                    onChange={(e) => setMenfessType(e.target.value)}
+                    className="mr-2"
+                  />
+                  <span>Paid Menfess</span>
+                  <PaidMenfessTooltip />
                 </div>
               </div>
 

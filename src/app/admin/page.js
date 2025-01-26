@@ -142,7 +142,16 @@ export default function AdminPanel() {
       if (response.ok) {
         setSuccessMessage('Tweet status updated successfully');
         await fetchPaidTweets();
-        await fetchAdminStats(); // Add this line
+        await fetchAdminStats();
+        
+        // Schedule media cleanup if tweet is marked as posted and has media
+        if (status === 'posted') {
+          const tweet = paidTweets.find(t => t._id === tweetId);
+          if (tweet?.mediaUrl) {
+            scheduleMediaCleanup(tweetId);
+            console.log('Scheduled media cleanup for tweet:', tweetId);
+          }
+        }
       } else {
         setError(data.error || 'Failed to update tweet status');
       }
@@ -281,7 +290,9 @@ export default function AdminPanel() {
 
   // Add this helper function at the top level of your component
   const isVideoFile = (url) => {
-    return url?.match(/\.(mp4|webm|ogg)$/i);
+    if (!url) return false;
+    // Check both extension and MIME type patterns
+    return url.match(/\.(mp4|webm|ogg)$/i) || url.includes('video');
   };
 
   // Add this helper function at the top level of your component after isVideoFile
@@ -292,6 +303,34 @@ export default function AdminPanel() {
     } catch (err) {
       console.error('Failed to copy text:', err);
       return false;
+    }
+  };
+
+  // Add this helper function at the top level
+  const isBase64Url = (url) => {
+    return url?.startsWith('data:');
+  };
+
+  // Add this function after other helper functions
+  const scheduleMediaCleanup = async (tweetId) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/admin/media/${tweetId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (!response.ok) {
+            console.error('Failed to clean up media for tweet:', tweetId);
+          }
+        } catch (error) {
+          console.error('Error cleaning up media:', error);
+        }
+      }, 1 * 60 * 1000); // 30 minutes
+    } catch (error) {
+      console.error('Error scheduling media cleanup:', error);
     }
   };
 
@@ -421,13 +460,34 @@ export default function AdminPanel() {
                         {tweet.mediaUrl && (
                           <div className="mt-2">
                             {isVideoFile(tweet.mediaUrl) ? (
-                              <video
-                                controls
-                                className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
-                              >
-                                <source src={tweet.mediaUrl} />
-                                Your browser does not support the video tag.
-                              </video>
+                              <div className="relative">
+                                <video
+                                  key={tweet.mediaUrl} // Add key to force remount
+                                  className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
+                                  controls
+                                  playsInline
+                                  preload="metadata"
+                                  controlsList="nodownload"
+                                  onError={(e) => console.error('Video Error:', e)}
+                                >
+                                  <source 
+                                    src={tweet.mediaUrl} 
+                                    type="video/mp4"
+                                  />
+                                  {/* Fallback content */}
+                                  <div className="bg-gray-700 p-2 rounded text-sm text-gray-300">
+                                    Video cannot be previewed.
+                                    <a 
+                                      href={tweet.mediaUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="ml-2 text-blue-400 hover:underline"
+                                    >
+                                      Open in new tab
+                                    </a>
+                                  </div>
+                                </video>
+                              </div>
                             ) : (
                               <img
                                 src={tweet.mediaUrl}
@@ -435,15 +495,27 @@ export default function AdminPanel() {
                                 className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
                               />
                             )}
-                            <a
-                              href={tweet.mediaUrl}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-block mt-2 px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-                            >
-                              Download Media
-                            </a>
+                            <div className="mt-2 space-x-2">
+                              <a
+                                href={tweet.mediaUrl}
+                                download={`media-${tweet._id}${isVideoFile(tweet.mediaUrl) ? '.mp4' : '.jpg'}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                              >
+                                Download Media
+                              </a>
+                              {!isBase64Url(tweet.mediaUrl) && (
+                                <a
+                                  href={tweet.mediaUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                                >
+                                  Open in New Tab
+                                </a>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
