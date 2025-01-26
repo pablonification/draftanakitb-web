@@ -9,25 +9,31 @@ export const tweet = async (message, mediaBuffer, mediaType) => {
     
     if (mediaBuffer) {
       try {
-        // Upload media with type information
-        const mediaResponse = await twitterClientRW.v1.uploadMedia(mediaBuffer, {
-          mimeType: mediaType,
-          target: 'tweet'
+        // Upload media using v1 endpoint (required for media upload)
+        mediaId = await twitterClientRW.v1.uploadMedia(mediaBuffer, { 
+          mimeType: mediaType 
         });
-        mediaId = mediaResponse;
+        console.log('Media uploaded successfully:', mediaId);
       } catch (mediaError) {
         console.error('Error uploading media:', mediaError);
         // Continue without media if upload fails
       }
     }
 
-    // Post tweet with or without media
-    const tweetParams = {
+    // Create tweet with v2 endpoint
+    const tweetData = {
       text: message,
-      ...(mediaId && { media: { media_ids: [mediaId] } })
     };
 
-    return await twitterClientRW.v2.tweet(tweetParams); 
+    // Add media if available
+    if (mediaId) {
+      tweetData.media = { media_ids: [mediaId] };
+    }
+
+    const result = await twitterClientRW.v2.tweet(tweetData);
+    console.log('Tweet sent successfully:', result);
+    return result;
+
   } catch (error) {
     console.error('Error in tweet function:', error);
     throw error;
