@@ -10,34 +10,53 @@ const PaidMenfessLanding = () => {
   const [merchantRef, setMerchantRef] = useState('');
   const PAYMENT_AMOUNT = 1000;
 
-  useEffect(() => {
-    let pollInterval;
+  // Add polling interval state
+  const [pollInterval, setPollInterval] = useState(null);
 
-    const checkPaymentStatus = async () => {
-      try {
-        if (!merchantRef) return;
-
-        const response = await fetch(`/api/payment-status?ref=${merchantRef}`);
-        const data = await response.json();
-
-        if (data.status === 'PAID') {
-          setPaymentStatus('success');
-          clearInterval(pollInterval);
-        } else if (data.status === 'FAILED' || data.status === 'EXPIRED') {
-          setPaymentStatus('failed');
-          clearInterval(pollInterval);
-        }
-      } catch (error) {
-        console.error('Error checking payment status:', error);
+  // Add status checking function
+  const checkTransactionStatus = async (ref) => {
+    try {
+      const response = await fetch(`/api/check-transaction?ref=${ref}`);
+      const data = await response.json();
+      
+      if (data.status === 'PAID') {
+        setPaymentStatus('success');
+        localStorage.removeItem('paymentSession');
+        if (pollInterval) clearInterval(pollInterval);
+      } else if (data.status === 'FAILED' || data.status === 'EXPIRED') {
+        setPaymentStatus('failed');
+        localStorage.removeItem('paymentSession');
+        if (pollInterval) clearInterval(pollInterval);
       }
-    };
+    } catch (error) {
+      console.error('Error checking transaction status:', error);
+    }
+  };
 
+  useEffect(() => {
     const initializePayment = async () => {
       try {
+        // Check for existing payment session
+        const existingPayment = localStorage.getItem('paymentSession');
+        if (existingPayment) {
+          const paymentData = JSON.parse(existingPayment);
+          // Reuse existing payment data
+          setQrUrl(paymentData.qrUrl);
+          setMerchantRef(paymentData.merchantRef);
+          setPaymentStatus('pending');
+          
+          // Start polling for existing payment
+          const interval = setInterval(() => {
+            checkTransactionStatus(paymentData.merchantRef);
+          }, 5000);
+          setPollInterval(interval);
+          return;
+        }
+
         const data = JSON.parse(localStorage.getItem('menfessData'));
         setMenfessData(data);
 
-        // Change endpoint from '/api/init-payment' to '/payment'
+        // Only create new payment if no existing session
         const response = await fetch('/payment', {
           method: 'POST',
           headers: {
@@ -56,12 +75,22 @@ const PaidMenfessLanding = () => {
           throw new Error(paymentData.error || 'Failed to initialize payment');
         }
 
+        // Store payment session
+        localStorage.setItem('paymentSession', JSON.stringify({
+          qrUrl: paymentData.qrUrl,
+          merchantRef: paymentData.merchantRef,
+          createdAt: new Date().toISOString()
+        }));
+
         setQrUrl(paymentData.qrUrl);
         setMerchantRef(paymentData.merchantRef);
         setPaymentStatus('pending');
 
-        // Start polling for payment status every 5 seconds
-        pollInterval = setInterval(checkPaymentStatus, 5000);
+        // Start polling for new payment
+        const interval = setInterval(() => {
+          checkTransactionStatus(paymentData.merchantRef);
+        }, 5000);
+        setPollInterval(interval);
 
       } catch (error) {
         console.error('Error initializing payment:', error);
@@ -72,13 +101,17 @@ const PaidMenfessLanding = () => {
 
     initializePayment();
 
-    // Cleanup interval on component unmount
+    // Cleanup payment session on component unmount
     return () => {
+      // Only clear if payment wasn't successful
+      if (paymentStatus !== 'success') {
+        localStorage.removeItem('paymentSession');
+      }
       if (pollInterval) {
         clearInterval(pollInterval);
       }
     };
-  }, [merchantRef]); // Add merchantRef as dependency
+  }, []); // Keep empty dependency array
 
   return (
     <div className="min-h-screen bg-[#000072] text-white p-4">
