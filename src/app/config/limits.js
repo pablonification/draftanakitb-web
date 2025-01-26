@@ -12,13 +12,9 @@ export const LIMITS = {
   GLOBAL_REGULAR_DAILY: 17,       // Twitter API limit per day
   PERSONAL_REGULAR_DAYS: 7,       // Days between regular menfess per user
   
-  // Paid menfess limits
-  PERSONAL_PAID_DAILY: 5,         // Maximum paid menfess per user per day
-  GLOBAL_PAID_DAILY: 50,         // Maximum paid menfess per day
-  
   // Message limits
   MESSAGE_LENGTH: 280,           // Twitter character limit
-  ATTACHMENT_SIZE: 5,           // Max file size in MB
+  ATTACHMENT_SIZE: 1,           // Max file size in MB
   
   // Rate limiting
   OTP_COOLDOWN: 30,            // Seconds between OTP requests

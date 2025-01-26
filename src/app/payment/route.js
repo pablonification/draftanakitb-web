@@ -22,37 +22,26 @@ export async function POST(request) {
 
     const body = await request.json();
     
-    // Process media if it exists with better error handling
+    // Simplified media handling - just store the original base64 string
     let mediaData = null;
     if (body.attachment) {
       try {
-        // Extract media type and base64 data
         const [header, base64] = body.attachment.split(',');
-        if (!header || !base64) {
-          throw new Error('Invalid media format');
-        }
-
         const type = header.split(':')[1]?.split(';')[0];
-        if (!type) {
-          throw new Error('Invalid media type');
-        }
-
-        const filename = `media_${Date.now()}.${type.split('/')[1]}`;
         
-        mediaData = {
-          type: type,
-          base64: base64,
-          filename: filename
-        };
-
-        console.log('Media processed:', {
-          type: type,
-          filename: filename,
-          base64Length: base64.length
-        });
+        // Only store if we have valid data
+        if (header && base64 && type) {
+          mediaData = {
+            type,
+            base64
+          };
+          console.log('Media processed:', {
+            type,
+            base64Length: base64.length
+          });
+        }
       } catch (mediaError) {
         console.error('Media processing error:', mediaError);
-        // Continue without media if processing fails
         mediaData = null;
       }
     }
@@ -111,7 +100,7 @@ export async function POST(request) {
       message: body.message,
       amount: amount,
       status: 'UNPAID',
-      mediaData: mediaData, // Store the media data in transaction
+      mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store as string
       createdAt: new Date()
     });
 

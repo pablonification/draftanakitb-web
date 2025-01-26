@@ -1,6 +1,6 @@
 export const validateFile = (file) => {
-  const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB for videos
-  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for videos
+  const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB for images
   
   const ALLOWED_TYPES = {
     images: ['image/jpeg', 'image/png', 'image/gif'],
@@ -23,7 +23,7 @@ export const validateFile = (file) => {
   if (file.size > maxSize) {
     return {
       valid: false,
-      error: `Ukuran file maksimal ${isVideo ? '15MB untuk video' : '5MB untuk gambar'}`
+      error: `Ukuran file maksimal ${isVideo ? '5MB untuk video' : '1MB untuk gambar'}`
     };
   }
 

@@ -24,9 +24,8 @@ const transactionSchema = new mongoose.Schema({
     default: null
   },
   mediaData: {
-    base64: String,
-    type: String,
-    filename: String
+    type: String,  // Changed from Object to String
+    default: null
   },
   amount: {
     type: Number,
@@ -118,42 +117,27 @@ export async function POST(request) {
     if (data.status === 'PAID') {
       transaction.tweetStatus = 'pending';
       
-      // Log transaction data for debugging
-      console.log('Transaction data:', {
-        hasMediaData: !!transaction.mediaData,
-        mediaType: transaction.mediaData?.type,
-        messageLength: transaction.message?.length
-      });
-
-      // Process media data
-      let mediaUrl = null;
+      // Parse stored media data
+      let mediaData = null;
       let mediaType = null;
-      let mediaData = transaction.mediaData;  // Get directly from transaction
+      let mediaUrl = null;
 
-      if (mediaData && mediaData.base64) {
-        mediaType = mediaData.type;
-        // Create a proper data URL
-        mediaUrl = `data:${mediaData.type};base64,${mediaData.base64}`;
-
-        console.log('Media data processed:', {
-          type: mediaType,
-          filename: mediaData.filename,
-          urlLength: mediaUrl.length,
-          hasBase64: !!mediaData.base64
-        });
+      if (transaction.mediaData) {
+        try {
+          mediaData = JSON.parse(transaction.mediaData);
+          mediaType = mediaData.type;
+          mediaUrl = `data:${mediaData.type};base64,${mediaData.base64}`;
+        } catch (e) {
+          console.error('Error parsing media data:', e);
+        }
       }
 
-      // Create paid tweet entry with complete media data
+      // Create paid tweet entry
       const paidTweet = {
         _id: data.merchant_ref,
         email: transaction.email,
         messageText: transaction.message,
-        // Store complete media information
-        mediaData: mediaData ? {
-          type: mediaType,
-          filename: mediaData.filename,
-          base64: mediaData.base64
-        } : null,
+        mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store as string
         mediaType: mediaType,
         mediaUrl: mediaUrl,
         tweetStatus: "pending",
@@ -164,14 +148,12 @@ export async function POST(request) {
         scheduledTime: "20:00"
       };
 
-      // Insert into paidTweets collection
-      const result = await db.collection('paidTweets').insertOne(paidTweet);
+      await db.collection('paidTweets').insertOne(paidTweet);
       
-      console.log('Paid tweet created:', {
+      console.log('Payment successful, created paid tweet entry:', {
         merchantRef: data.merchant_ref,
-        insertedId: result.insertedId,
-        hasMediaData: !!paidTweet.mediaData,
-        mediaType: paidTweet.mediaType
+        hasMedia: !!mediaData,
+        mediaType
       });
     }
 
