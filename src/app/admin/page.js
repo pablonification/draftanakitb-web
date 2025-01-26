@@ -279,6 +279,22 @@ export default function AdminPanel() {
     </div>
   );
 
+  // Add this helper function at the top level of your component
+  const isVideoFile = (url) => {
+    return url?.match(/\.(mp4|webm|ogg)$/i);
+  };
+
+  // Add this helper function at the top level of your component after isVideoFile
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+      return false;
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -383,15 +399,52 @@ export default function AdminPanel() {
                         <p className="text-sm font-medium text-gray-200">
                           Email: {tweet.email}
                         </p>
-                        <p className="text-sm text-gray-300">
-                          Message: {tweet.messageText}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-300">
+                            Message: {tweet.messageText}
+                          </p>
+                          <button
+                            onClick={async () => {
+                              if (await copyToClipboard(tweet.messageText)) {
+                                setSuccessMessage('Message copied to clipboard!');
+                                setTimeout(() => setSuccessMessage(''), 1000);
+                              }
+                            }}
+                            className="p-1 rounded hover:bg-gray-600 transition-colors"
+                            title="Copy message"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
                         {tweet.mediaUrl && (
-                          <img
-                            src={tweet.mediaUrl}
-                            alt="Tweet media"
-                            className="mt-2 h-32 w-auto rounded-lg shadow-md"
-                          />
+                          <div className="mt-2">
+                            {isVideoFile(tweet.mediaUrl) ? (
+                              <video
+                                controls
+                                className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
+                              >
+                                <source src={tweet.mediaUrl} />
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : (
+                              <img
+                                src={tweet.mediaUrl}
+                                alt="Tweet media"
+                                className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
+                              />
+                            )}
+                            <a
+                              href={tweet.mediaUrl}
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block mt-2 px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                            >
+                              Download Media
+                            </a>
+                          </div>
                         )}
                       </div>
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${
