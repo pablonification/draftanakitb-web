@@ -7,7 +7,7 @@ export async function POST(request) {
     const { email, message } = await request.json();
     
     const privateKey = process.env.TRIPAY_PRIVATE_KEY;
-    const apiKey = "DEV-oStxvQXw3iNxvviRptEMBGfCMFxJllfyIMHaXVto";
+    const apiKey = process.env.TRIPAY_API_KEY;
     const merchant_code = process.env.TRIPAY_MERCHANT_CODE;
     const merchant_ref = 'TP' + Date.now();
     const amount = 3000;
@@ -36,6 +36,8 @@ export async function POST(request) {
       signature: signature
     };
 
+    console.log('>>>>>>>>>Payment Request Payload:', JSON.stringify(payload, null, 2));
+
     const response = await axios.post(
       'https://tripay.co.id/api/transaction/create',
       payload,
@@ -49,6 +51,8 @@ export async function POST(request) {
       }
     );
 
+    console.log('>>>>>>>>>>>Tripay Response:', JSON.stringify(response.data, null, 2));
+
     // Return the response from TriPay
     return NextResponse.json({
       success: true,
@@ -58,7 +62,11 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Payment error:', error.response?.data || error);
+    console.error('Payment error:', {
+      message: error.message,
+      response: error.response?.data,
+      stack: error.stack
+    });
     return NextResponse.json(
       { error: 'Payment initialization failed', details: error.message },
       { status: 500 }

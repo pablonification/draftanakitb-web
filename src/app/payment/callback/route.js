@@ -68,23 +68,24 @@ const verifySignature = (data, signature) => {
 
 export async function POST(request) {
   try {
-    // Connect to database first
     await connectDB();
 
-    // Get callback signature from header
     const callbackSignature = request.headers.get('X-Callback-Signature');
+    console.log('Received callback with signature:', callbackSignature);
+
     if (!callbackSignature) {
+      console.error('Missing callback signature');
       return NextResponse.json(
         { error: 'Missing callback signature' },
         { status: 400 }
       );
     }
 
-    // Parse request body
     const data = await request.json();
+    console.log('Callback payload:', JSON.stringify(data, null, 2));
 
-    // Verify signature
     if (!verifySignature(data, callbackSignature)) {
+      console.error('Invalid signature. Expected:', verifySignature(data, ''), 'Received:', callbackSignature);
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 403 }
@@ -110,8 +111,12 @@ export async function POST(request) {
 
     // If payment is successful, post the menfess
     if (data.status === 'PAID') {
-      // Get menfess details from transaction
       const { message, attachment } = transaction;
+      console.log('Attempting to post tweet for paid transaction:', {
+        merchantRef: data.merchant_ref,
+        message,
+        hasAttachment: !!attachment
+      });
 
       try {
         await tweet(message, attachment);
@@ -121,7 +126,11 @@ export async function POST(request) {
         await transaction.save();
 
       } catch (tweetError) {
-        console.error('Error posting tweet:', tweetError);
+        console.error('Tweet posting error:', {
+          merchantRef: data.merchant_ref,
+          error: tweetError.message,
+          stack: tweetError.stack
+        });
         transaction.tweetStatus = 'failed';
         transaction.tweetError = tweetError.message;
         await transaction.save();
@@ -131,7 +140,10 @@ export async function POST(request) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('Callback processing error:', error);
+    console.error('Callback processing error:', {
+      message: error.message,
+      stack: error.stack
+    });
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }
