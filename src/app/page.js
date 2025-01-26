@@ -1,7 +1,11 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import TermsModal from '../components/TermsModal';
+import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
+
+// Add whitelist constant at the top
+const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
 
 const MainPage = () => {
   const [email, setEmail] = useState('');
@@ -17,52 +21,222 @@ const MainPage = () => {
   const [otpMessage, setOtpMessage] = useState('');
   const [otpSuccessMessage, setOtpSuccessMessage] = useState('');
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [botStatus, setBotStatus] = useState({ 
+    status: 'ON', 
+    isPaidOnly: false, 
+    remainingRegular: 17,
+    personalLimitExceeded: false 
+  });
+  const [personalLimitError, setPersonalLimitError] = useState('');
+  const [attachmentError, setAttachmentError] = useState('');
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const fetchBotStatus = async () => {
+      try {
+        const response = await fetch('/api/messages');
+        const data = await response.json();
+        setBotStatus({
+          ...data,
+          personalLimitExceeded: data.personalLimitExceeded || false
+        });
+      } catch (error) {
+        console.error('Error fetching bot status:', error);
+      }
+    };
+
+    fetchBotStatus();
+    const interval = setInterval(fetchBotStatus, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const startOtpCooldown = () => {
+    setOtpCooldown(30);
+    const timer = setInterval(() => {
+      setOtpCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    setAttachmentError('');
+
+    if (!file) {
+      setAttachment(null);
+      return;
+    }
+
+    const validation = validateFile(file);
+    if (!validation.valid) {
+      setAttachmentError(validation.error);
+      e.target.value = '';
+      return;
+    }
+
+    setAttachment(file);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isEmailVerified || !isOtpVerified || !message.trim()) {
       return;
     }
-    // Add your form submission logic here
-    console.log({
-      email,
-      otp,
-      message,
-      menfessType,
-      attachment,
-    });
+
+    setIsSubmitting(true);
+    setSubmitError('');
+    setSubmitSuccess('');
+    setPersonalLimitError('');
+
+    try {
+      let base64Attachment = null;
+      if (attachment) {
+        base64Attachment = await convertFileToBase64(attachment);
+      }
+
+      // Check if email is whitelisted
+      const isWhitelisted = WHITELISTED_EMAILS.includes(email);
+      
+      // Determine correct menfess type based on bot status and whitelist
+      const effectiveType = isWhitelisted ? 'regular' : (botStatus.isPaidOnly ? 'paid' : menfessType);
+
+      const menfessData = {
+        email,
+        message,
+        type: effectiveType,
+        attachment: base64Attachment,
+        remainingRegular: botStatus.remainingRegular,
+        personalLimitExceeded: botStatus.personalLimitExceeded,
+        isWhitelisted // Add this flag to menfessData
+      };
+      
+      localStorage.setItem('menfessData', JSON.stringify(menfessData));
+
+      // Redirect based on effective type
+      window.location.href = effectiveType === 'paid' 
+        ? '/landing/paid'
+        : '/landing/regular';
+
+    } catch (error) {
+      console.error('Error:', error);
+      setSubmitError('Terjadi kesalahan. Silakan coba lagi.');
+      setIsSubmitting(false);
+    }
   };
 
   const validateEmail = (email) => {
+    // Allow whitelisted emails to bypass the validation
+    if (WHITELISTED_EMAILS.includes(email)) {
+      return true;
+    }
     return email.endsWith('@mahasiswa.itb.ac.id');
   };
 
-  const handleVerifyEmail = () => {
-    if (validateEmail(email)) {
-      setIsEmailVerified(true);
-      setEmailError('');
-      setOtpMessage('Kode OTP telah dikirim ke email anda. Kode akan kadaluarsa dalam 5 menit.');
-      console.log('Sending OTP to:', email);
+  const handleVerifyEmail = async () => {
+    // Check for whitelist first
+    const isWhitelisted = WHITELISTED_EMAILS.includes(email);
+    
+    if ((isWhitelisted || validateEmail(email)) && !isSendingOtp && otpCooldown === 0) {
+      setIsSendingOtp(true);
+      try {
+        const response = await fetch('/api/otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: email })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setIsEmailVerified(true);
+          setEmailError('');
+          setOtpMessage('Kode OTP telah dikirim ke email anda. Kode akan kadaluarsa dalam 5 menit.');
+          startOtpCooldown();
+        } else {
+          setEmailError(data.error || 'Gagal mengirim OTP. Silakan coba lagi.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        setEmailError('Terjadi kesalahan. Silakan coba lagi.');
+      } finally {
+        setIsSendingOtp(false);
+      }
     } else {
       setEmailError('Email tidak valid! Pastikan anda menggunakan email ITB anda!');
     }
   };
 
-  const handleVerifyOtp = () => {
-    // Add your OTP verification logic here
-    if (otp === '123456') { // Replace with actual OTP validation
-      setIsOtpVerified(true);
-      setOtpError('');
-      setOtpSuccessMessage('OTP berhasil diverifikasi! Silakan lanjutkan mengisi pesan anda.');
-    } else {
-      setOtpError('OTP tidak valid!');
-      setOtpSuccessMessage('');
+  const handleVerifyOtp = async () => {
+    if (isVerifyingOtp) return;
+    
+    setIsVerifyingOtp(true);
+    setOtpError('');
+    setOtpSuccessMessage('');
+
+    try {
+      const response = await fetch('/api/otp', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsOtpVerified(true);
+        setOtpSuccessMessage('OTP berhasil diverifikasi! Silakan lanjutkan mengisi pesan anda.');
+      } else {
+        setOtpError(data.error || 'OTP tidak valid!');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setOtpError('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsVerifyingOtp(false);
     }
   };
 
-  const handleResendOtp = () => {
-    setOtpMessage('Kode OTP baru telah dikirim ke email anda. Kode akan kadaluarsa dalam 5 menit.');
-    console.log('Resending OTP to:', email);
+  const handleResendOtp = async () => {
+    if (isSendingOtp || otpCooldown > 0) return;
+    
+    setIsSendingOtp(true);
+    try {
+      const response = await fetch('/api/otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setOtpMessage('Kode OTP baru telah dikirim ke email anda. Kode akan kadaluarsa dalam 5 menit.');
+        startOtpCooldown();
+      } else {
+        setEmailError(data.error || 'Gagal mengirim OTP. Silakan coba lagi.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setEmailError('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
   const handleCheckboxChange = (e) => {
@@ -75,6 +249,26 @@ const MainPage = () => {
   const handleAcceptTerms = () => {
     setIsAgreed(true);
     setShowTermsModal(false);
+  };
+
+  // Add info message for whitelisted users
+  const renderWhitelistInfo = () => {
+    if (WHITELISTED_EMAILS.includes(email)) {
+      return (
+        <div className="bg-green-900/30 p-4 rounded-lg mt-4">
+          <div className="flex items-start space-x-3">
+            <div className="text-green-300 text-sm">✨</div>
+            <div>
+              <p className="text-sm font-semibold text-green-300">Admin/Test Account</p>
+              <p className="text-sm text-gray-300">
+                Email ini memiliki akses khusus untuk bypass limit regular menfess.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -99,8 +293,54 @@ const MainPage = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <span className="h1">BOT STATUS:</span>
-            <span className="h1 font-bold">ON</span>
+            <span className="h1 font-bold">
+              {botStatus.isPaidOnly ? 'PAID MENFESS ONLY' : 'ON'}
+            </span>
           </div>
+
+          {/* Add Twitter API Limit Info */}
+          {botStatus.isPaidOnly && (
+            <div className="bg-blue-900/30 p-4 rounded-lg mb-6">
+              <div className="flex items-start space-x-3">
+                <div className="text-yellow-300 text-sm">ℹ️</div>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-white-300">Regular Menfess Unavailable</p>
+                  <p className="text-sm text-gray-300">
+                    Karena kebijakan baru Twitter/X yang membatasi penggunaan API, kami hanya dapat mengirim maksimal 17 tweets per hari untuk layanan regular menfess. Batas harian ini telah tercapai.
+                  </p>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span className="text-gray-400">Status:</span>
+                    <span className="bg-red-900/50 text-red-300 px-2 py-1 rounded">
+                      {botStatus.remainingRegular} tweets remaining today
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-300">
+                    ✨ Anda masih dapat menggunakan layanan paid menfess untuk mengirim pesan.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!botStatus.isPaidOnly && botStatus.remainingRegular < 5 && (
+            <div className="bg-yellow-900/30 p-4 rounded-lg mb-6">
+              <div className="flex items-start space-x-3">
+                <div className="text-yellow-300 text-sm">⚠️</div>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-yellow-300">Regular Menfess Almost Full</p>
+                  <p className="text-sm text-gray-300">
+                    Karena kebijakan Twitter/X, kami hanya dapat mengirim 17 tweets per hari untuk layanan regular menfess.
+                  </p>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span className="text-gray-400">Remaining today:</span>
+                    <span className="bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">
+                      {botStatus.remainingRegular} tweets
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -112,15 +352,15 @@ const MainPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isEmailVerified}
                   className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
-                  placeholder="Masukan email itb dengan format NIM@mahasiswa.itb.ac.id"
+                  placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
                 />
                 <button
                   type="button"
                   onClick={handleVerifyEmail}
-                  disabled={isEmailVerified}
+                  disabled={isEmailVerified || isSendingOtp}
                   className="px-4 py-2 border rounded hover:bg-blue-900 transition-colors disabled:opacity-50"
                 >
-                  CHECK
+                  {isSendingOtp ? 'SENDING...' : 'CHECK'}
                 </button>
               </div>
               {emailError && (
@@ -131,6 +371,7 @@ const MainPage = () => {
                   {otpMessage}
                 </p>
               )}
+              {renderWhitelistInfo()}
             </div>
 
             {isEmailVerified && (
@@ -148,10 +389,10 @@ const MainPage = () => {
                   <button
                     type="button"
                     onClick={handleVerifyOtp}
-                    disabled={isOtpVerified}
+                    disabled={isOtpVerified || isVerifyingOtp}
                     className="px-4 py-2 border rounded hover:bg-blue-900 transition-colors disabled:opacity-50"
                   >
-                    CHECK
+                    {isVerifyingOtp ? 'CHECKING...' : 'CHECK'}
                   </button>
                 </div>
                 {otpError && (
@@ -163,9 +404,10 @@ const MainPage = () => {
                 <button 
                   type="button" 
                   onClick={handleResendOtp}
-                  className="text-blue-300 hover:underline"
+                  disabled={isSendingOtp || otpCooldown > 0}
+                  className="text-blue-300 hover:underline disabled:opacity-50 disabled:no-underline"
                 >
-                  Resend OTP
+                  {isSendingOtp ? 'SENDING...' : otpCooldown > 0 ? `Wait ${otpCooldown}s` : 'Resend OTP'}
                 </button>
               </div>
             )}
@@ -180,15 +422,16 @@ const MainPage = () => {
                     value="regular"
                     checked={menfessType === 'regular'}
                     onChange={(e) => setMenfessType(e.target.value)}
+                    disabled={botStatus.isPaidOnly}
                     className="mr-2"
                   />
-                  Regular Menfess
+                  Regular Menfess {!botStatus.isPaidOnly && `(${botStatus.remainingRegular} left today)`}
                 </label>
                 <label className="flex items-center">
                   <input
                     type="radio"
                     value="paid"
-                    checked={menfessType === 'paid'}
+                    checked={menfessType === 'paid' || botStatus.isPaidOnly}
                     onChange={(e) => setMenfessType(e.target.value)}
                     className="mr-2"
                   />
@@ -216,10 +459,22 @@ const MainPage = () => {
                 </p>
                 <input
                   type="file"
-                  onChange={(e) => setAttachment(e.target.files[0])}
+                  onChange={handleFileChange}
                   className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-white/20 file:text-white file:bg-transparent hover:file:bg-blue-900 file:transition-colors file-input"
                   accept="image/*"
                 />
+                {attachmentError && (
+                  <p className="text-red-400 text-sm">{attachmentError}</p>
+                )}
+                {attachment && (
+                  <div className="mt-2">
+                    <img
+                      src={URL.createObjectURL(attachment)}
+                      alt="Preview"
+                      className="max-h-32 rounded-lg"
+                    />
+                  </div>
+                )}
               </div>
 
               <label className="flex items-center space-x-2">
@@ -234,13 +489,20 @@ const MainPage = () => {
                 </span>
               </label>
 
+              {submitError && (
+                <p className="error-message text-center">{submitError}</p>
+              )}
+              {submitSuccess && (
+                <p className="success-message text-center">{submitSuccess}</p>
+              )}
+
               <div className="text-center">
                 <button
-                  type="submit"
-                  disabled={!isAgreed || !isEmailVerified || !isOtpVerified}
-                  className="px-6 py-2 bg-white text-[#000072] rounded disabled:opacity-50 hover:bg-gray-100 transition-colors"
+                    type="submit"
+                    disabled={!isAgreed || !isEmailVerified || !isOtpVerified || isSubmitting}
+                    className="px-6 py-2 bg-white text-[#000072] rounded disabled:opacity-50 hover:bg-gray-100 transition-colors"
                 >
-                  SEND
+                    {isSubmitting ? 'SENDING...' : 'SEND'}
                 </button>
               </div>
             </div>
