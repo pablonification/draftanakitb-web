@@ -37,7 +37,7 @@ export async function POST(request) {
     };
 
     const response = await axios.post(
-      'https://tripay.co.id/api-sandbox/transaction/create',
+      'https://tripay.co.id/api/transaction/create',
       payload,
       {
         headers: {
