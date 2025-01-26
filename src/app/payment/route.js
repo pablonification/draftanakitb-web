@@ -19,7 +19,7 @@ export async function POST(request) {
       .digest('hex');
 
     const payload = {
-      method: "QRIS2",
+      method: "QRIS2", 
       merchant_ref: merchant_ref,
       amount: amount,
       customer_name: "DraftAnakITB",
@@ -39,7 +39,7 @@ export async function POST(request) {
     console.log('>>>>>>>>>Payment Request Payload:', JSON.stringify(payload, null, 2));
 
     const response = await axios.post(
-      'https://tripay.co.id/api-sandbox/transaction/detail',
+      'https://tripay.co.id/api-sandbox/transaction/create', // Changed from detail to create endpoint
       payload,
       {
         headers: {
