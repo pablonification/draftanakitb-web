@@ -7,6 +7,11 @@ import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
 // Add whitelist constant at the top
 const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
 
+// Add this helper function after the WHITELISTED_EMAILS constant
+const isVideoFile = (file) => {
+  return file?.type?.startsWith('video/');
+};
+
 const MainPage = () => {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -35,6 +40,7 @@ const MainPage = () => {
   });
   const [personalLimitError, setPersonalLimitError] = useState('');
   const [attachmentError, setAttachmentError] = useState('');
+  const [showPaidInfo, setShowPaidInfo] = useState(false);
 
   useEffect(() => {
     const fetchBotStatus = async () => {
@@ -45,6 +51,10 @@ const MainPage = () => {
           ...data,
           personalLimitExceeded: data.personalLimitExceeded || false
         });
+        // Force paid menfess when global limit is exceeded
+        if (data.isPaidOnly) {
+          setMenfessType('paid');
+        }
       } catch (error) {
         console.error('Error fetching bot status:', error);
       }
@@ -70,9 +80,9 @@ const MainPage = () => {
 
   const getMediaTypeInfo = () => {
     if (menfessType === 'paid') {
-      return "Gambar (JPG, PNG, GIF) atau Video (MP4, max 60 detik, 720p)";
+      return "Pictures (JPG, PNG, GIF) or Video (MP4, 60s max, 720p)";
     }
-    return "Gambar saja (JPG, PNG, GIF)";
+    return "Pictures only (JPG, PNG, GIF)";
   };
 
   const handleFileChange = async (e) => {
@@ -82,8 +92,9 @@ const MainPage = () => {
 
     if (!file) return;
 
-    // Pass isPaid flag based on menfess type
-    const validation = await validateFile(file, menfessType === 'paid');
+    // Use the effective menfess type for validation
+    const effectiveType = botStatus.isPaidOnly ? 'paid' : menfessType;
+    const validation = await validateFile(file, effectiveType === 'paid');
     if (!validation.valid) {
       setAttachmentError(validation.error);
       e.target.value = ''; // Clear the file input
@@ -114,7 +125,9 @@ const MainPage = () => {
       const isWhitelisted = WHITELISTED_EMAILS.includes(email);
       
       // Determine correct menfess type based on bot status and whitelist
-      const effectiveType = isWhitelisted ? 'regular' : (botStatus.isPaidOnly ? 'paid' : menfessType);
+      const effectiveType = botStatus.isPaidOnly ? 'paid' : 
+                          isWhitelisted ? 'regular' : 
+                          menfessType;
 
       const menfessData = {
         email,
@@ -123,7 +136,7 @@ const MainPage = () => {
         attachment: base64Attachment,
         remainingRegular: botStatus.remainingRegular,
         personalLimitExceeded: botStatus.personalLimitExceeded,
-        isWhitelisted // Add this flag to menfessData
+        isWhitelisted
       };
       
       localStorage.setItem('menfessData', JSON.stringify(menfessData));
@@ -266,7 +279,7 @@ const MainPage = () => {
             <div className="text-green-300 text-sm">✨</div>
             <div>
               <p className="text-sm font-semibold text-green-300">Admin/Test Account</p>
-              <p className="text-sm text-gray-300">
+              <p className="text-normal text-gray-300">
                 Email ini memiliki akses khusus untuk bypass limit regular menfess.
               </p>
             </div>
@@ -277,11 +290,31 @@ const MainPage = () => {
     return null;
   };
 
+  // Add these new key press handlers
+  const handleEmailKeyPress = (e) => {
+    if (e.key === 'Enter' && !isEmailVerified && !isSendingOtp) {
+      e.preventDefault();
+      handleVerifyEmail();
+    }
+  };
+
+  const handleOtpKeyPress = (e) => {
+    if (e.key === 'Enter' && !isOtpVerified && !isVerifyingOtp) {
+      e.preventDefault();
+      handleVerifyOtp();
+    }
+  };
+
+  const handlePaidInfoToggle = () => {
+    setShowPaidInfo(prev => !prev);
+  };
+
   return (
     <div className="min-h-screen bg-[#000072] text-white p-4">
       <nav className="flex justify-end space-x-4 mb-8">
         <a href="/" className="hover:underline">HOME</a>
         <a href="/about" className="hover:underline">ABOUT</a>
+        <a href="/faq" className="hover:underline">FAQ</a>
       </nav>
 
       <div className="max-w-2xl mx-auto">
@@ -311,16 +344,16 @@ const MainPage = () => {
                 <div className="text-yellow-300 text-sm">ℹ️</div>
                 <div className="space-y-2">
                   <p className="text-sm font-semibold text-white-300">Regular Menfess Unavailable</p>
-                  <p className="text-sm text-gray-300">
+                  <p className="text-normal text-gray-300">
                     Karena kebijakan baru Twitter/X yang membatasi penggunaan API, kami hanya dapat mengirim maksimal 17 tweets per hari untuk layanan regular menfess. Batas harian ini telah tercapai.
                   </p>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-gray-400">Status:</span>
+                  <div className="flex items-center space-x-2 text-normal">
+                    <span className="text-gray-400">Sisa kuota:</span>
                     <span className="bg-red-900/50 text-red-300 px-2 py-1 rounded">
-                      {botStatus.remainingRegular} tweets remaining today
+                      {botStatus.remainingRegular} tweets
                     </span>
                   </div>
-                  <p className="text-sm text-blue-300">
+                  <p className="text-normal text-blue-300">
                     ✨ Anda masih dapat menggunakan layanan paid menfess untuk mengirim pesan.
                   </p>
                 </div>
@@ -333,12 +366,12 @@ const MainPage = () => {
               <div className="flex items-start space-x-3">
                 <div className="text-yellow-300 text-sm">⚠️</div>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold text-yellow-300">Regular Menfess Almost Full</p>
-                  <p className="text-sm text-gray-300">
+                  <p className="text-sm font-semibold text-yellow-300">Kuota Regular Menfess Hampir Habis</p>
+                  <p className="text-normal text-gray-300">
                     Karena kebijakan Twitter/X, kami hanya dapat mengirim 17 tweets per hari untuk layanan regular menfess.
                   </p>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-gray-400">Remaining today:</span>
+                  <div className="flex items-center space-x-2 text-normal">
+                    <span className="text-normal text-gray-400">Sisa kuota:</span>
                     <span className="bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">
                       {botStatus.remainingRegular} tweets
                     </span>
@@ -356,6 +389,7 @@ const MainPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onKeyPress={handleEmailKeyPress}
                   disabled={isEmailVerified}
                   className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                   placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
@@ -388,6 +422,7 @@ const MainPage = () => {
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
+                    onKeyPress={handleOtpKeyPress}
                     disabled={isOtpVerified}
                     className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                     placeholder="Masukkan kode OTP"
@@ -431,18 +466,48 @@ const MainPage = () => {
                     disabled={botStatus.isPaidOnly}
                     className="mr-2"
                   />
-                  Regular Menfess {!botStatus.isPaidOnly && `(${botStatus.remainingRegular} left today)`}
+                  Regular Menfess
                 </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    value="paid"
-                    checked={menfessType === 'paid' || botStatus.isPaidOnly}
-                    onChange={(e) => setMenfessType(e.target.value)}
-                    className="mr-2"
-                  />
-                  Paid Menfess
-                </label>
+                <div className="relative">
+                  <label 
+                    className="flex items-center cursor-pointer group"
+                    onMouseEnter={() => setShowPaidInfo(true)}
+                    onMouseLeave={() => setShowPaidInfo(false)}
+                    onClick={handlePaidInfoToggle} // for mobile
+                  >
+                    <input
+                      type="radio"
+                      value="paid"
+                      checked={menfessType === 'paid' || botStatus.isPaidOnly}
+                      onChange={(e) => setMenfessType(e.target.value)}
+                      className="mr-2"
+                    />
+                    Paid Menfess
+                    <span className="ml-1 text-gray-400">ℹ️</span>
+                    
+                    {showPaidInfo && (
+                      <>
+                        {/* Mobile version - fixed at bottom */}
+                        <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 p-4 bg-gray-800 text-gray-200">
+                          <p className="text-sm">
+                            Menfess akan dikirim secara manual oleh admin pada pukul 20.00 atau 22.00 WIB.
+                          </p>
+                        </div>
+
+                        {/* Desktop version - tooltip */}
+                        <div className="hidden sm:block absolute z-20 w-72 right-0 bottom-full mb-2
+                          bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-lg p-3">
+                          <p className="text-sm text-gray-200">
+                            Menfess akan dikirim secara manual oleh admin pada pukul 20.00 atau 22.00 WIB.
+                          </p>
+                          <div className="absolute w-3 h-3 bg-gray-800/95 rotate-45 transform 
+                            -translate-y-1.5 right-4 bottom-0 translate-y-full">
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -461,7 +526,7 @@ const MainPage = () => {
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <p className="font-bold text-sm">
+                  <p className="font-bold text-normal">
                     Media Attachment <span className="font-normal text-gray-400">(opsional)</span>
                   </p>
                   <span className="text-xs text-gray-400">
@@ -473,7 +538,7 @@ const MainPage = () => {
                   type="file"
                   onChange={handleFileChange}
                   className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-white/20 file:text-white file:bg-transparent hover:file:bg-blue-900 file:transition-colors"
-                  accept={menfessType === 'paid' ? "image/*,video/mp4" : "image/*"}
+                  accept={botStatus.isPaidOnly || menfessType === 'paid' ? "image/*,video/mp4" : "image/*"}
                 />
                 
                 {attachmentError && (
@@ -506,7 +571,7 @@ const MainPage = () => {
                   onChange={handleCheckboxChange}
                   className="rounded cursor-pointer"
                 />
-                <span className="text-sm">
+                <span className="normal-text">
                   Dengan ini saya menyetujui semua aturan dan ketentuan yang berlaku di platform ini.
                 </span>
               </label>

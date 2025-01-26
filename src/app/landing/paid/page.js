@@ -96,11 +96,36 @@ const PaidMenfessLanding = () => {
     };
   }, [paymentStatus, merchantRef, isMounted]);
 
+  // Add this useEffect for testing
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const testTimer = setTimeout(() => {
+        setPaymentStatus('success');
+        // Clear stored data
+        localStorage.removeItem('menfessData');
+        
+        // Simulate tweet being added to transactions
+        if (menfessData) {
+          fetch('/api/admin/test-transaction', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(menfessData)
+          }).catch(console.error);
+        }
+      }, 15000); // 15 seconds
+
+      return () => clearTimeout(testTimer);
+    }
+  }, [menfessData]);
+
   return (
     <div className="min-h-screen bg-[#000072] text-white p-4">
       <nav className="flex justify-end space-x-4 mb-8">
         <a href="/" className="hover:underline">HOME</a>
         <a href="/about" className="hover:underline">ABOUT</a>
+        <a href="/faq" className="hover:underline">FAQ</a>
       </nav>
 
       <div className="max-w-3xl mx-auto">
@@ -171,7 +196,8 @@ const PaidMenfessLanding = () => {
                 <div className="text-5xl">✅</div>
                 <div>
                   <p className="text-xl font-bold">Payment successful!</p>
-                  <p>Your menfess will be posted shortly.</p>
+                  <p>Menfess anda akan dikirim pada pukul 20.00 atau 22.00 dan anda akan menerima notifikasi lewat email jika menfess anda sudah dikirim.</p>
+                  <p>Jika dalam 3 hari menfess anda belum dikirim, mohon hubungi X:@satpam_itb.</p>
                 </div>
                 <a href="/" className="inline-block mt-4 px-6 py-2 bg-white text-[#000072] rounded-lg hover:bg-gray-100">
                   Back to Home
@@ -184,7 +210,7 @@ const PaidMenfessLanding = () => {
                 <div className="text-5xl">❌</div>
                 <div>
                   <p className="text-xl font-bold">Payment failed!</p>
-                  <p>Please try again or use a different payment method.</p>
+                  <p>Jika saldo anda terpotong tolong hubungi X:@satpamitb.</p>
                 </div>
                 <a href="/" className="inline-block mt-4 px-6 py-2 bg-white text-[#000072] rounded-lg hover:bg-gray-100">
                   Try Again

@@ -60,7 +60,7 @@ export async function PUT(request) {
     // Verify OTP
     const validOTP = await OTPModel.findOne({ email, otp });
     if (!validOTP) {
-      return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 });
+      return NextResponse.json({ error: 'OTP salah atau invalid!' }, { status: 400 });
     }
 
     // Find or create user

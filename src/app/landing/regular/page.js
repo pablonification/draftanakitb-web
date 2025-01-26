@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 const RegularMenfessLanding = () => {
-  const [timeRemaining, setTimeRemaining] = useState(1);
+  const [timeRemaining, setTimeRemaining] = useState(10);
   const [isComplete, setIsComplete] = useState(false);
   const [dots, setDots] = useState('');
   const [error, setError] = useState('');
@@ -200,6 +200,7 @@ const RegularMenfessLanding = () => {
       <nav className="flex justify-end space-x-4 mb-8">
         <a href="/" className="hover:underline">HOME</a>
         <a href="/about" className="hover:underline">ABOUT</a>
+        <a href="/faq" className="hover:underline">FAQ</a>
       </nav>
 
       <div className="max-w-2xl mx-auto">

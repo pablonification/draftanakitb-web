@@ -46,3 +46,25 @@ body {
 .file-input::file-selector-button {
   text-transform: uppercase;
 }
+
+/* Add these new styles */
+input[type="file"] {
+  font-size: 12px !important;
+}
+
+input[type="text"],
+textarea {
+  font-size: 12px !important; /* iOS minimum font size to prevent zoom */
+}
+
+input[type="file"]::file-selector-button {
+  /* center */
+  /* display: flex; */
+  /* justify-content: center;
+  align-items: center; */
+  font-size: 12px !important;
+}
+
+.normal-text {
+  font-size: 12px !important;
+}

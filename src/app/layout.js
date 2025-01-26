@@ -13,23 +13,15 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: 'DraftAnakITB',
-  description: 'Platform Menfess Mahasiswa ITB',
-  openGraph: {
-    title: 'DraftAnakITB',
-    description: 'Platform Menfess Mahasiswa ITB',
-    url: 'https://draftanakitb.com',
-    siteName: 'DraftAnakITB',
-    locale: 'id_ID',
-    type: 'website',
-  },
-  icons: {
-    icon: '/logo.jpg',
-  },
+  description: 'DraftAnakITB Menfess Platform',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

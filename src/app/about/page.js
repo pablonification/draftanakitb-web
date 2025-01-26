@@ -7,8 +7,9 @@ const AboutPage = () => {
     <div className="min-h-screen bg-[#000072] text-white p-4">
       {/* Navigation */}
       <nav className="flex justify-end space-x-4 mb-8">
-      <a href="/" className="hover:underline">HOME</a>
-      <a href="/about" className="hover:underline">ABOUT</a>
+        <a href="/" className="hover:underline">HOME</a>
+        <a href="/about" className="hover:underline">ABOUT</a>
+        <a href="/faq" className="hover:underline">FAQ</a>
       </nav>
 
       <div className="max-w-2xl mx-auto">
