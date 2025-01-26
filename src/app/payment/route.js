@@ -20,8 +20,43 @@ export async function POST(request) {
       vercelForwardedFor: request.headers.get('x-vercel-forwarded-for'),
     });
 
-    const { email, message } = await request.json();
+    const body = await request.json();
     
+    // Process media if it exists with better error handling
+    let mediaData = null;
+    if (body.attachment) {
+      try {
+        // Extract media type and base64 data
+        const [header, base64] = body.attachment.split(',');
+        if (!header || !base64) {
+          throw new Error('Invalid media format');
+        }
+
+        const type = header.split(':')[1]?.split(';')[0];
+        if (!type) {
+          throw new Error('Invalid media type');
+        }
+
+        const filename = `media_${Date.now()}.${type.split('/')[1]}`;
+        
+        mediaData = {
+          type: type,
+          base64: base64,
+          filename: filename
+        };
+
+        console.log('Media processed:', {
+          type: type,
+          filename: filename,
+          base64Length: base64.length
+        });
+      } catch (mediaError) {
+        console.error('Media processing error:', mediaError);
+        // Continue without media if processing fails
+        mediaData = null;
+      }
+    }
+
     const privateKey = process.env.TRIPAY_PRIVATE_KEY;
     const apiKey = process.env.TRIPAY_API_KEY;
     const merchant_code = process.env.TRIPAY_MERCHANT_CODE;
@@ -39,11 +74,11 @@ export async function POST(request) {
       merchant_ref: merchant_ref,
       amount: amount,
       customer_name: "DraftAnakITB",
-      customer_email: email || "placeholder@gmail.com",
+      customer_email: body.email || "placeholder@gmail.com",
       order_items: [
         {
           sku: "PAIDMENFESS",
-          name: message || "PLACEHOLDER TWEET USER",
+          name: body.message || "PLACEHOLDER TWEET USER",
           price: 1000,
           quantity: 1
         }
@@ -70,12 +105,20 @@ export async function POST(request) {
     console.log('>>>>>>>>>>>Tripay Response:', JSON.stringify(response.data, null, 2));
 
     // Create transaction record in database
-    await Transaction.create({
+    const transaction = new Transaction({
       merchantRef: merchant_ref,
-      email: email,
-      message: message,
+      email: body.email,
+      message: body.message,
       amount: amount,
-      status: 'UNPAID'
+      status: 'UNPAID',
+      mediaData: mediaData, // Store the media data in transaction
+      createdAt: new Date()
+    });
+
+    await transaction.save();
+    console.log('Transaction created with media:', {
+      ref: transaction.merchantRef,
+      hasMedia: !!mediaData
     });
 
     // Return the response from TriPay

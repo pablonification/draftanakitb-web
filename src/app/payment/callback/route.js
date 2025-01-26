@@ -23,6 +23,11 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  mediaData: {
+    base64: String,
+    type: String,
+    filename: String
+  },
   amount: {
     type: Number,
     required: true
@@ -113,58 +118,60 @@ export async function POST(request) {
     if (data.status === 'PAID') {
       transaction.tweetStatus = 'pending';
       
-      // Log the attachment data for debugging
-      console.log('Transaction attachment data:', {
-        attachmentUrl: transaction.attachment,
-        hasAttachment: Boolean(transaction.attachment)
+      // Log transaction data for debugging
+      console.log('Transaction data:', {
+        hasMediaData: !!transaction.mediaData,
+        mediaType: transaction.mediaData?.type,
+        messageLength: transaction.message?.length
       });
 
-      // Validate and process attachment URL
+      // Process media data
       let mediaUrl = null;
       let mediaType = null;
+      let mediaData = transaction.mediaData;  // Get directly from transaction
 
-      if (transaction.attachment) {
-        mediaUrl = transaction.attachment;
-        // Determine media type from URL or file extension
-        if (mediaUrl.match(/\.(jpg|jpeg|png|gif)$/i)) {
-          mediaType = 'image';
-        } else if (mediaUrl.match(/\.(mp4|mov|avi)$/i)) {
-          mediaType = 'video';
-        } else {
-          // Default to image if can't determine
-          mediaType = 'image';
-        }
+      if (mediaData && mediaData.base64) {
+        mediaType = mediaData.type;
+        // Create a proper data URL
+        mediaUrl = `data:${mediaData.type};base64,${mediaData.base64}`;
+
+        console.log('Media data processed:', {
+          type: mediaType,
+          filename: mediaData.filename,
+          urlLength: mediaUrl.length,
+          hasBase64: !!mediaData.base64
+        });
       }
 
-      // Create paid tweet entry with validated attachment
+      // Create paid tweet entry with complete media data
       const paidTweet = {
         _id: data.merchant_ref,
         email: transaction.email,
         messageText: transaction.message,
-        mediaUrl: mediaUrl,
+        // Store complete media information
+        mediaData: mediaData ? {
+          type: mediaType,
+          filename: mediaData.filename,
+          base64: mediaData.base64
+        } : null,
         mediaType: mediaType,
+        mediaUrl: mediaUrl,
         tweetStatus: "pending",
         createdAt: new Date(data.paid_at),
         paymentStatus: "completed",
         paymentAmount: transaction.amount,
         notificationSent: false,
-        scheduledTime: "20:00",
-        // Add metadata about attachment
-        attachmentMetadata: mediaUrl ? {
-          originalUrl: mediaUrl,
-          processedAt: new Date(),
-          type: mediaType
-        } : null
+        scheduledTime: "20:00"
       };
 
-      await db.collection('paidTweets').insertOne(paidTweet);
+      // Insert into paidTweets collection
+      const result = await db.collection('paidTweets').insertOne(paidTweet);
       
-      console.log('Payment successful, created paid tweet entry:', {
+      console.log('Paid tweet created:', {
         merchantRef: data.merchant_ref,
-        message: transaction.message,
-        hasAttachment: Boolean(mediaUrl),
-        mediaType: mediaType,
-        mediaUrl: mediaUrl
+        insertedId: result.insertedId,
+        hasMediaData: !!paidTweet.mediaData,
+        mediaType: paidTweet.mediaType
       });
     }
 
