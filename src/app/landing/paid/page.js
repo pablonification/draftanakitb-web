@@ -8,15 +8,7 @@ const PaidMenfessLanding = () => {
   const [paymentStatus, setPaymentStatus] = useState('initializing'); // initializing, pending, success, failed
   const [qrUrl, setQrUrl] = useState('');
   const [merchantRef, setMerchantRef] = useState('');
-  const PAYMENT_AMOUNT = 3000;
-
-  // Add mounted check to prevent checks after component unmount
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
+  const PAYMENT_AMOUNT = 1000;
 
   useEffect(() => {
     const initializePayment = async () => {
@@ -56,69 +48,6 @@ const PaidMenfessLanding = () => {
 
     initializePayment();
   }, []);
-
-  // Check payment status every 5 seconds
-  useEffect(() => {
-    let checkInterval;
-    
-    if (isMounted && paymentStatus === 'pending' && merchantRef) {
-      checkInterval = setInterval(async () => {
-        try {
-          const response = await fetch('/api/check-payment', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ merchantRef })
-          });
-          
-          // Stop checking if component is unmounted
-          if (!isMounted) {
-            clearInterval(checkInterval);
-            return;
-          }
-
-          const data = await response.json();
-          
-          if (data.status === 'PAID') {
-            setPaymentStatus('success');
-            // Clear stored data
-            localStorage.removeItem('menfessData');
-          }
-        } catch (error) {
-          console.error('Error checking payment:', error);
-        }
-      }, 5000);
-    }
-
-    return () => {
-      if (checkInterval) clearInterval(checkInterval);
-    };
-  }, [paymentStatus, merchantRef, isMounted]);
-
-  // Add this useEffect for testing
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      const testTimer = setTimeout(() => {
-        setPaymentStatus('success');
-        // Clear stored data
-        localStorage.removeItem('menfessData');
-        
-        // Simulate tweet being added to transactions
-        if (menfessData) {
-          fetch('/api/admin/test-transaction', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(menfessData)
-          }).catch(console.error);
-        }
-      }, 15000); // 15 seconds
-
-      return () => clearTimeout(testTimer);
-    }
-  }, [menfessData]);
 
   return (
     <div className="min-h-screen bg-[#000072] text-white p-4">
@@ -180,7 +109,12 @@ const PaidMenfessLanding = () => {
                       <li>Payment will be verified automatically</li>
                     </ol>
                     <p className="text-yellow-300 mt-4">Payment will expire in 24 hours</p>
-                    <p className="animate-pulse">Waiting for payment confirmation...</p>
+                    <p>After payment is completed:</p>
+                    <ol className="text-left list-decimal list-inside space-y-1">
+                      <li>Your payment will be verified automatically</li>
+                      <li>Your menfess will be queued for posting</li>
+                      <li>You will receive email notification when posted</li>
+                    </ol>
                   </div>
                 </div>
                 

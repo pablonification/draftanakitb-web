@@ -150,7 +150,7 @@ export default function AdminPanel() {
       setError('Failed to update tweet status');
     } finally {
       setActionLoading(false);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setTimeout(() => setSuccessMessage(''), 1000);
     }
   };
 
@@ -175,7 +175,7 @@ export default function AdminPanel() {
       setError('Failed to send notification');
     } finally {
       setActionLoading(false);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setTimeout(() => setSuccessMessage(''), 1000);
     }
   };
 
