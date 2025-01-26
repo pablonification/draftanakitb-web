@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { tweet } from '@/app/utils/twitterHandler';
 import { connectDB } from '@/app/utils/db';
 import mongoose from 'mongoose';
 
@@ -85,7 +84,7 @@ export async function POST(request) {
     console.log('Callback payload:', JSON.stringify(data, null, 2));
 
     if (!verifySignature(data, callbackSignature)) {
-      console.error('Invalid signature. Expected:', verifySignature(data, ''), 'Received:', callbackSignature);
+      console.error('Invalid signature');
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 403 }
@@ -107,36 +106,18 @@ export async function POST(request) {
     // Update transaction status
     transaction.status = data.status;
     transaction.paidAt = data.paid_at;
-    await transaction.save();
 
-    // If payment is successful, post the menfess
+    // If payment is successful, set tweet status to pending for admin to handle
     if (data.status === 'PAID') {
-      const { message, attachment } = transaction;
-      console.log('Attempting to post tweet for paid transaction:', {
+      transaction.tweetStatus = 'pending';
+      console.log('Payment successful, transaction marked for admin review:', {
         merchantRef: data.merchant_ref,
-        message,
-        hasAttachment: !!attachment
+        message: transaction.message,
+        hasAttachment: !!transaction.attachment
       });
-
-      try {
-        await tweet(message, attachment);
-        
-        // Update transaction with tweet status
-        transaction.tweetStatus = 'sent';
-        await transaction.save();
-
-      } catch (tweetError) {
-        console.error('Tweet posting error:', {
-          merchantRef: data.merchant_ref,
-          error: tweetError.message,
-          stack: tweetError.stack
-        });
-        transaction.tweetStatus = 'failed';
-        transaction.tweetError = tweetError.message;
-        await transaction.save();
-      }
     }
 
+    await transaction.save();
     return NextResponse.json({ success: true });
 
   } catch (error) {
