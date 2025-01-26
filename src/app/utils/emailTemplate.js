@@ -93,17 +93,175 @@ function generateEmailTemplate(otp) {
   export const generateTweetNotification = (tweetUrl) => `
 <!DOCTYPE html>
 <html>
-<body style="font-family: Arial, sans-serif; padding: 20px;">
-  <h2>Your Tweet Has Been Posted! 🎉</h2>
-  <p>Hello!</p>
-  <p>Your paid menfess has been successfully posted to our Twitter account.</p>
-  <p>You can view your tweet here: <a href="${tweetUrl}">${tweetUrl}</a></p>
-  <p>Thank you for using our service!</p>
-  <p>Best regards,<br>DraftAnakITB Team</p>
-  <hr>
-  <p style="font-size: 12px; color: #666;">
-    Note: If you have any issues, please contact us on Twitter @satpam_itb
-  </p>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'IBM Plex Mono', monospace;
+      background-color: #000072;
+      color: #ffffff;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      font-weight: 600;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .header {
+      padding: 20px 0;
+      text-align: center;
+    }
+    .tweet-link {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .tweet-link a {
+      color: #ffffff;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+    .info-box {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .footer {
+      padding: 20px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <div class="container">
+          <div class="header">
+            <h1>DraftAnakITB Notification</h1>
+          </div>
+          <div class="content">
+            <h2 style="margin-bottom: 20px;">Tweet Posted Successfully! 🎉</h2>
+            <p>Your paid menfess has been posted to our Twitter account.</p>
+            
+            <div class="tweet-link">
+              <strong>View your tweet here:</strong><br>
+              <a href="${tweetUrl}" target="_blank" style="color: #ffffff; text-decoration: underline;">${tweetUrl}</a>
+            </div>
+
+            <div class="info-box">
+              <h3>Important Information</h3>
+              <p>Please note:</p>
+              <ul>
+                <li>Paid menfess are posted at 8 PM or 10 PM WIB daily</li>
+                <li>For support, contact @satpam_itb on Twitter</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="footer">
+        <p>© 2024 DraftAnakITB. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+export const generatePaymentConfirmation = () => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'IBM Plex Mono', monospace;
+      background-color: #000072;
+      color: #ffffff;
+    }
+    h1, h2 {
+      margin: 0;
+      font-weight: 600;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .header {
+      padding: 20px 0;
+      text-align: center;
+    }
+    .time-slots {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .footer {
+      padding: 20px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <div class="container">
+          <div class="header">
+            <h1>DraftAnakITB Payment</h1>
+          </div>
+          <h2 style="margin-bottom: 20px;">Payment Confirmed! 🎉</h2>
+          <p>Your paid menfess will be posted during our designated time slots:</p>
+          
+          <div class="time-slots">
+            <ul>
+              <li>8 PM WIB</li>
+              <li>10 PM WIB</li>
+            </ul>
+            <p>Note: Posting time is randomly selected for better engagement.</p>
+          </div>
+          
+          <p>If your message is not posted within 24 hours, please contact @satpam_itb on Twitter.</p>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="footer">
+        <p>© 2024 DraftAnakITB. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
 `;

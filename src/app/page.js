@@ -68,19 +68,25 @@ const MainPage = () => {
     }, 1000);
   };
 
+  const getMediaTypeInfo = () => {
+    if (menfessType === 'paid') {
+      return "Gambar (JPG, PNG, GIF) atau Video (MP4, max 60 detik, 720p)";
+    }
+    return "Gambar saja (JPG, PNG, GIF)";
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     setAttachmentError('');
+    setAttachment(null);
 
-    if (!file) {
-      setAttachment(null);
-      return;
-    }
+    if (!file) return;
 
-    const validation = validateFile(file);
+    // Pass isPaid flag based on menfess type
+    const validation = await validateFile(file, menfessType === 'paid');
     if (!validation.valid) {
       setAttachmentError(validation.error);
-      e.target.value = '';
+      e.target.value = ''; // Clear the file input
       return;
     }
 
@@ -454,25 +460,41 @@ const MainPage = () => {
               </div>
 
               <div className="space-y-2">
-                <p className="font-bold text-sm">
-                  Media Attachment <span className="font-normal text-gray-400">(opsional)</span>
-                </p>
+                <div className="flex justify-between items-center">
+                  <p className="font-bold text-sm">
+                    Media Attachment <span className="font-normal text-gray-400">(opsional)</span>
+                  </p>
+                  <span className="text-xs text-gray-400">
+                    {getMediaTypeInfo()}
+                  </span>
+                </div>
+                
                 <input
                   type="file"
                   onChange={handleFileChange}
-                  className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-white/20 file:text-white file:bg-transparent hover:file:bg-blue-900 file:transition-colors file-input"
-                  accept="image/*"
+                  className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-white/20 file:text-white file:bg-transparent hover:file:bg-blue-900 file:transition-colors"
+                  accept={menfessType === 'paid' ? "image/*,video/mp4" : "image/*"}
                 />
+                
                 {attachmentError && (
                   <p className="text-red-400 text-sm">{attachmentError}</p>
                 )}
+                
                 {attachment && (
                   <div className="mt-2">
-                    <img
-                      src={URL.createObjectURL(attachment)}
-                      alt="Preview"
-                      className="max-h-32 rounded-lg"
-                    />
+                    {isVideoFile(attachment) ? (
+                      <video
+                        src={URL.createObjectURL(attachment)}
+                        className="max-h-32 rounded-lg"
+                        controls
+                      />
+                    ) : (
+                      <img
+                        src={URL.createObjectURL(attachment)}
+                        alt="Preview"
+                        className="max-h-32 rounded-lg"
+                      />
+                    )}
                   </div>
                 )}
               </div>

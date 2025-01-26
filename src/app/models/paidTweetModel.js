@@ -13,7 +13,7 @@ const paidTweetSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    mediaUrl: {  // Changed from mediaPath to mediaUrl
+    mediaUrl: {
         type: String,
         default: null
     },
@@ -37,4 +37,8 @@ const paidTweetSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('PaidTweet', paidTweetSchema);
+// Export both schema and model
+module.exports = {
+    paidTweetSchema,
+    PaidTweet: mongoose.models.PaidTweet || mongoose.model('PaidTweet', paidTweetSchema)
+};
