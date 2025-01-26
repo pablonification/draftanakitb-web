@@ -143,15 +143,6 @@ export default function AdminPanel() {
         setSuccessMessage('Tweet status updated successfully');
         await fetchPaidTweets();
         await fetchAdminStats();
-        
-        // Schedule media cleanup if tweet is marked as posted and has media
-        if (status === 'posted') {
-          const tweet = paidTweets.find(t => t._id === tweetId);
-          if (tweet?.mediaUrl) {
-            scheduleMediaCleanup(tweetId);
-            console.log('Scheduled media cleanup for tweet:', tweetId);
-          }
-        }
       } else {
         setError(data.error || 'Failed to update tweet status');
       }
@@ -264,8 +255,8 @@ export default function AdminPanel() {
   useEffect(() => {
     if (isLoggedIn) {
       fetchAdminStats();
-      // Refresh stats every minute
-      const interval = setInterval(fetchAdminStats, 60000);
+      // Refresh stats every hour (3600000 ms)
+      const interval = setInterval(fetchAdminStats, 3600000); // 1 HOUR
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
@@ -311,28 +302,85 @@ export default function AdminPanel() {
     return url?.startsWith('data:');
   };
 
-  // Add this function after other helper functions
-  const scheduleMediaCleanup = async (tweetId) => {
+  // Replace the cleanup useEffect with this version
+useEffect(() => {
+  let cleanupInterval = null;
+  const ONE_HOUR = 3600000; // 1 hour in milliseconds
+
+  async function cleanupAllPostedMedia() {
+    const currentTime = new Date().toLocaleTimeString();
+    console.log(`[${currentTime}] Running hourly media cleanup...`);
+
     try {
       const token = localStorage.getItem('adminToken');
-      setTimeout(async () => {
+      if (!token || !isLoggedIn || !paidTweets?.length) {
+        console.log('Skipping cleanup - prerequisites not met');
+        return;
+      }
+
+      const postedTweetsWithMedia = paidTweets.filter(
+        tweet => tweet.tweetStatus === 'posted' && 
+                tweet.mediaUrl && 
+                !tweet.mediaDeleted
+      );
+
+      if (postedTweetsWithMedia.length === 0) {
+        console.log('No media to clean up at this time');
+        return;
+      }
+
+      console.log(`Found ${postedTweetsWithMedia.length} tweets with media to clean up`);
+
+      for (const tweet of postedTweetsWithMedia) {
         try {
-          const response = await fetch(`/api/admin/media/${tweetId}`, {
+          const response = await fetch(`/api/admin/media/${tweet._id}`, {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           });
-          
-          if (!response.ok) {
-            console.error('Failed to clean up media for tweet:', tweetId);
+
+          const data = await response.json();
+          if (response.ok && data.success) {
+            console.log(`✅ Cleaned up media for tweet ${tweet._id}`);
           }
-        } catch (error) {
-          console.error('Error cleaning up media:', error);
+        } catch (err) {
+          console.error(`❌ Error cleaning up tweet ${tweet._id}:`, err);
         }
-      }, 1 * 60 * 1000); // 30 minutes
+      }
+
+      await fetchPaidTweets();
+      console.log(`[${currentTime}] Cleanup cycle complete`);
     } catch (error) {
-      console.error('Error scheduling media cleanup:', error);
+      console.error('Cleanup error:', error);
+    }
+  }
+
+  if (isLoggedIn) {
+    // Clear any existing interval first
+    if (cleanupInterval) {
+      clearInterval(cleanupInterval);
+    }
+
+    // Run initial cleanup
+    console.log('Running initial media cleanup...');
+    cleanupAllPostedMedia();
+
+    // Set up hourly interval
+    console.log('Setting up hourly cleanup schedule...');
+    cleanupInterval = setInterval(cleanupAllPostedMedia, ONE_HOUR);
+    console.log('Media cleanup scheduled to run every hour');
+  }
+
+  // Cleanup function
+  return () => {
+    if (cleanupInterval) {
+      clearInterval(cleanupInterval);
+      console.log('Cleanup interval cleared');
     }
   };
+}, [isLoggedIn, paidTweets]); // Dependencies
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -453,7 +501,7 @@ export default function AdminPanel() {
                             title="Copy message"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2z" />
                             </svg>
                           </button>
                         </div>
