@@ -44,23 +44,13 @@ const PaidMenfessLanding = () => {
           throw new Error('No menfess data found');
         }
 
-        // Clean and validate attachment data before sending
-        let cleanedData = { ...data };
+        // Log the attachment data for debugging
         if (data.attachment) {
-          console.log('Validating attachment data:', {
-            originalLength: data.attachment.length,
-            isString: typeof data.attachment === 'string',
-            hasBase64: data.attachment.includes('base64,')
+          console.log('Sending attachment:', {
+            length: data.attachment.length,
+            isBase64: data.attachment.includes('base64'),
+            preview: data.attachment.substring(0, 50) + '...'
           });
-
-          // Ensure we have the full base64 string
-          if (!data.attachment.includes('base64,')) {
-            console.error('Invalid attachment format');
-            throw new Error('Invalid media format');
-          }
-
-          // Don't modify the data, send it as is
-          console.log('Attachment validation passed, sending data');
         }
 
         // Always create new payment

@@ -28,61 +28,63 @@ export async function POST(request) {
       console.log('Processing attachment:', {
         hasAttachment: true,
         attachmentLength: body.attachment.length,
-        startsWith: body.attachment.substring(0, 30),
-        includesBase64: body.attachment.includes('base64,')
+        isString: typeof body.attachment === 'string',
+        startsWithData: body.attachment.startsWith('data:'),
+        mimeType: body.attachment.split(';')[0]
       });
       
       try {
-        // More robust parsing of the data URL
-        if (!body.attachment.includes('base64,')) {
-          throw new Error('Invalid attachment: missing base64 marker');
-        }
-
-        // Split at the first occurrence of base64,
-        const parts = body.attachment.split(/base64,(.+)/);
-        if (parts.length !== 3) {
+        // More robust base64 extraction
+        const matches = body.attachment.match(/^data:([^;]+);base64,(.+)$/);
+        
+        if (!matches) {
+          console.error('Invalid data URL structure');
           throw new Error('Invalid attachment structure');
         }
 
-        const header = parts[0];
-        const base64Data = parts[1];
-        const type = header.split(':')[1]?.split(';')[0];
+        const [, type, base64] = matches;
+        
+        // Additional validation for videos
+        if (type.startsWith('video/')) {
+          console.log('Validating video data:', {
+            type,
+            base64Length: base64.length,
+            estimatedSize: Math.round(base64.length * 0.75 / 1024 / 1024) + 'MB'
+          });
 
-        console.log('Parsed attachment:', {
-          hasHeader: !!header,
-          headerLength: header.length,
-          hasType: !!type,
-          typeValue: type,
-          base64Length: base64Data?.length || 0
-        });
-
-        if (!type || !base64Data || base64Data.trim().length === 0) {
-          throw new Error('Invalid attachment: missing content');
+          // Ensure we have valid base64 data
+          try {
+            const testDecode = atob(base64);
+            if (testDecode.length < 100) { // Sanity check for minimal video size
+              throw new Error('Video data too small to be valid');
+            }
+            console.log('Video data validation passed:', {
+              decodedLength: testDecode.length,
+              seemsValid: true
+            });
+          } catch (e) {
+            console.error('Video base64 validation failed:', e);
+            throw new Error('Invalid video data encoding');
+          }
         }
 
-        // Store the media data
         mediaData = {
           type,
-          base64: base64Data,
+          base64,
           isVideo: type.startsWith('video/')
         };
 
-        console.log('Media data processed:', {
+        console.log('Media processing successful:', {
           type,
           isVideo: type.startsWith('video/'),
-          base64Length: base64Data.length
+          dataLength: base64.length
         });
 
       } catch (mediaError) {
-        console.error('Media processing error details:', {
+        console.error('Detailed media error:', {
           error: mediaError.message,
-          attachment: {
-            total_length: body.attachment.length,
-            preview: body.attachment.substring(0, 50) + '...',
-            has_base64_marker: body.attachment.includes('base64,')
-          }
+          attachment: 'Data URL length: ' + (body.attachment?.length || 0)
         });
-        
         return NextResponse.json(
           { 
             error: 'Media processing failed', 
