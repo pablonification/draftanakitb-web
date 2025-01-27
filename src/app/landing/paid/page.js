@@ -36,33 +36,25 @@ const PaidMenfessLanding = () => {
   useEffect(() => {
     const initializePayment = async () => {
       try {
-        // Check for existing payment session
-        const existingPayment = localStorage.getItem('paymentSession');
-        if (existingPayment) {
-          const paymentData = JSON.parse(existingPayment);
-          // Reuse existing payment data
-          setQrUrl(paymentData.qrUrl);
-          setMerchantRef(paymentData.merchantRef);
-          setPaymentStatus('pending');
-          
-          // Start polling for existing payment
-          const interval = setInterval(() => {
-            checkTransactionStatus(paymentData.merchantRef);
-          }, 5000);
-          setPollInterval(interval);
-          return;
+        // Always clear existing payment session
+        localStorage.removeItem('paymentSession');
+        
+        const data = JSON.parse(localStorage.getItem('menfessData'));
+        if (!data) {
+          throw new Error('No menfess data found');
         }
 
-        const data = JSON.parse(localStorage.getItem('menfessData'));
-        setMenfessData(data);
-
-        // Only create new payment if no existing session
+        // Always create new payment
         const response = await fetch('/payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
           },
-          body: JSON.stringify(data)
+          body: JSON.stringify({
+            ...data,
+            timestamp: Date.now() // Add timestamp to ensure uniqueness
+          })
         });
 
         if (!response.ok) {
