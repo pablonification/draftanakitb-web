@@ -9,6 +9,12 @@ export const validateFile = async (file) => {
 
   if (!file) return { valid: true };
   
+  console.log('Starting file validation:', {
+    type: file.type,
+    size: file.size,
+    name: file.name
+  });
+
   const isVideo = ALLOWED_TYPES.videos.includes(file.type);
   const isImage = ALLOWED_TYPES.images.includes(file.type);
   

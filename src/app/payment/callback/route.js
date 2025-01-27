@@ -94,7 +94,7 @@ export async function POST(request) {
     }
 
     const data = await request.json();
-    console.log('Callback payload:', JSON.stringify(data, null, 2));
+    console.log('Callback payload:', data);
 
     if (!verifySignature(data, callbackSignature)) {
       console.error('Invalid signature');

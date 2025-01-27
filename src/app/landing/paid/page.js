@@ -54,16 +54,16 @@ const PaidMenfessLanding = () => {
         }
 
         // Always create new payment
+        const formData = new FormData();
+        formData.append('email', data.email);
+        formData.append('message', data.message);
+        if (data.attachment) {
+          formData.append('attachment', data.attachment);
+        }
+
         const response = await fetch('/payment', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-          },
-          body: JSON.stringify({
-            ...data,
-            timestamp: Date.now() // Add timestamp to ensure uniqueness
-          })
+          body: formData
         });
 
         if (!response.ok) {

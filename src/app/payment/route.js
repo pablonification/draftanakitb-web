@@ -20,80 +20,24 @@ export async function POST(request) {
       vercelForwardedFor: request.headers.get('x-vercel-forwarded-for'),
     });
 
-    const body = await request.json();
-    
-    // Simplified media handling - just store the original base64 string
+    const formData = await request.formData();
+    const email = formData.get('email');
+    const message = formData.get('message');
     let mediaData = null;
-    if (body.attachment) {
-      console.log('Processing attachment:', {
-        hasAttachment: true,
-        attachmentLength: body.attachment.length,
-        isString: typeof body.attachment === 'string',
-        startsWithData: body.attachment.startsWith('data:'),
-        mimeType: body.attachment.split(';')[0]
-      });
-      
-      try {
-        // More robust base64 extraction
-        const matches = body.attachment.match(/^data:([^;]+);base64,(.+)$/);
-        
-        if (!matches) {
-          console.error('Invalid data URL structure');
-          throw new Error('Invalid attachment structure');
-        }
 
-        const [, type, base64] = matches;
-        
-        // Additional validation for videos
-        if (type.startsWith('video/')) {
-          console.log('Validating video data:', {
-            type,
-            base64Length: base64.length,
-            estimatedSize: Math.round(base64.length * 0.75 / 1024 / 1024) + 'MB'
-          });
+    const file = formData.get('attachment');
+    if (file && file.size > 0) {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      // Convert to base64
+      const base64Content = buffer.toString('base64');
+      const mimeType = file.type || 'video/mp4';
 
-          // Ensure we have valid base64 data
-          try {
-            const testDecode = atob(base64);
-            if (testDecode.length < 100) { // Sanity check for minimal video size
-              throw new Error('Video data too small to be valid');
-            }
-            console.log('Video data validation passed:', {
-              decodedLength: testDecode.length,
-              seemsValid: true
-            });
-          } catch (e) {
-            console.error('Video base64 validation failed:', e);
-            throw new Error('Invalid video data encoding');
-          }
-        }
-
-        mediaData = {
-          type,
-          base64,
-          isVideo: type.startsWith('video/')
-        };
-
-        console.log('Media processing successful:', {
-          type,
-          isVideo: type.startsWith('video/'),
-          dataLength: base64.length
-        });
-
-      } catch (mediaError) {
-        console.error('Detailed media error:', {
-          error: mediaError.message,
-          attachment: 'Data URL length: ' + (body.attachment?.length || 0)
-        });
-        return NextResponse.json(
-          { 
-            error: 'Media processing failed', 
-            details: mediaError.message,
-            code: 'MEDIA_PROCESSING_ERROR'
-          },
-          { status: 400 }
-        );
-      }
+      mediaData = {
+        type: mimeType,
+        base64: base64Content,
+        isVideo: mimeType.startsWith('video/')
+      };
     }
 
     const privateKey = process.env.TRIPAY_PRIVATE_KEY;
@@ -113,11 +57,11 @@ export async function POST(request) {
       merchant_ref: merchant_ref,
       amount: amount,
       customer_name: "DraftAnakITB",
-      customer_email: body.email || "placeholder@gmail.com",
+      customer_email: email || "placeholder@gmail.com",
       order_items: [
         {
           sku: "PAIDMENFESS",
-          name: body.message || "PLACEHOLDER TWEET USER",
+          name: message || "PLACEHOLDER TWEET USER",
           price: 1001,
           quantity: 1
         }
@@ -126,7 +70,7 @@ export async function POST(request) {
       signature: signature
     };
 
-    console.log('>>>>>>>>>Payment Request Payload:', JSON.stringify(payload, null, 2));
+    console.log('>>>>>>>>>Payment Request Payload:', payload);
     console.log('>>>>>>>>>Payment Request Headers:', {
       Authorization: 'Bearer ' + apiKey.substring(0, 8) + '...' // Log partial API key for security
     });
@@ -152,14 +96,14 @@ export async function POST(request) {
       statusText: response.statusText,
       duration: `${requestDuration}ms`,
       headers: response.headers,
-      data: JSON.stringify(response.data, null, 2)
+      data: response.data
     });
 
     // Create transaction record in database
     const transaction = new Transaction({
       merchantRef: merchant_ref,
-      email: body.email,
-      message: body.message,
+      email: email,
+      message: message,
       amount: amount,
       status: 'UNPAID',
       mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store as string
