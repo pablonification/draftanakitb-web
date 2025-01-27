@@ -3,9 +3,9 @@ const { parse } = require('url')
 const next = require('next')
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = 'localhost'
+const hostname = '0.0.0.0'  // Changed from 'localhost' to '0.0.0.0'
 const port = process.env.PORT || 3000
-const app = next({ dev, hostname, port })
+const app = next({ dev })   // Removed hostname and port from next config
 const handle = app.getRequestHandler()
 
 app.prepare().then(() => {
@@ -18,7 +18,7 @@ app.prepare().then(() => {
       res.statusCode = 500
       res.end('Internal Server Error')
     }
-  }).listen(port, (err) => {
+  }).listen(port, hostname, (err) => {  // Added hostname parameter
     if (err) throw err
     console.log(`> Ready on http://${hostname}:${port}`)
   })
