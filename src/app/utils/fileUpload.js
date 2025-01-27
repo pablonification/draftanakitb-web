@@ -68,13 +68,13 @@ const validateVideoFile = (file) => {
 export const processFile = async (file) => {
   if (!file) return null;
 
-  const chunkSize = 1024 * 1024; // 1MB chunks
-  const chunks = Math.ceil(file.size / chunkSize);
+  const CHUNK_SIZE = 512 * 1024; // 512KB
+  const chunks = Math.ceil(file.size / CHUNK_SIZE);
   let processedFile = '';
 
   for (let i = 0; i < chunks; i++) {
-    const start = i * chunkSize;
-    const end = Math.min(start + chunkSize, file.size);
+    const start = i * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, file.size);
     const chunk = file.slice(start, end);
     
     const base64Chunk = await readChunkAsBase64(chunk);

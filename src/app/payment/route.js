@@ -144,3 +144,12 @@ export async function POST(request) {
     );
   }
 }
+
+// Below is the per-route config for Next.js 15+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb'
+    }
+  }
+};
