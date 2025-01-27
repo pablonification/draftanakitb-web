@@ -22,75 +22,27 @@ export async function POST(request) {
 
     const body = await request.json();
     
-    // Simplified media handling - just store the original base64 string
+    // Simplified media handling
     let mediaData = null;
     if (body.attachment) {
-      console.log('Processing attachment:', {
-        hasAttachment: true,
-        attachmentLength: body.attachment.length,
-        isString: typeof body.attachment === 'string',
-        startsWithData: body.attachment.startsWith('data:'),
-        mimeType: body.attachment.split(';')[0]
-      });
-      
       try {
-        // More robust base64 extraction
-        const matches = body.attachment.match(/^data:([^;]+);base64,(.+)$/);
+        const [header, base64Data] = body.attachment.split(',');
+        const type = header.split(':')[1].split(';')[0];
         
-        if (!matches) {
-          console.error('Invalid data URL structure');
-          throw new Error('Invalid attachment structure');
-        }
-
-        const [, type, base64] = matches;
-        
-        // Additional validation for videos
-        if (type.startsWith('video/')) {
-          console.log('Validating video data:', {
-            type,
-            base64Length: base64.length,
-            estimatedSize: Math.round(base64.length * 0.75 / 1024 / 1024) + 'MB'
-          });
-
-          // Ensure we have valid base64 data
-          try {
-            const testDecode = atob(base64);
-            if (testDecode.length < 100) { // Sanity check for minimal video size
-              throw new Error('Video data too small to be valid');
-            }
-            console.log('Video data validation passed:', {
-              decodedLength: testDecode.length,
-              seemsValid: true
-            });
-          } catch (e) {
-            console.error('Video base64 validation failed:', e);
-            throw new Error('Invalid video data encoding');
-          }
+        // Simple validation
+        if (!base64Data || base64Data.length < 100) {
+          throw new Error('Invalid media data');
         }
 
         mediaData = {
           type,
-          base64,
+          data: base64Data,
           isVideo: type.startsWith('video/')
         };
-
-        console.log('Media processing successful:', {
-          type,
-          isVideo: type.startsWith('video/'),
-          dataLength: base64.length
-        });
-
-      } catch (mediaError) {
-        console.error('Detailed media error:', {
-          error: mediaError.message,
-          attachment: 'Data URL length: ' + (body.attachment?.length || 0)
-        });
+      } catch (error) {
+        console.error('Media processing error:', error);
         return NextResponse.json(
-          { 
-            error: 'Media processing failed', 
-            details: mediaError.message,
-            code: 'MEDIA_PROCESSING_ERROR'
-          },
+          { error: 'Invalid media format' },
           { status: 400 }
         );
       }
