@@ -231,7 +231,7 @@ const MainPage = () => {
       setIsSubmitting(false);
     }
   };
-// yes
+// yess
   const validateEmail = (email) => {
     // Allow whitelisted emails to bypass the validation
     if (WHITELISTED_EMAILS.includes(email)) {
