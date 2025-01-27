@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import TermsModal from '../components/TermsModal';
-import { validateFile } from '@/app/utils/fileUpload';
+import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
 import OtpHelpModal from '../components/OtpHelpModal';
 
 // Add whitelist constant at the top
@@ -201,6 +201,11 @@ const MainPage = () => {
     setPersonalLimitError('');
 
     try {
+      let base64Attachment = null;
+      if (attachment) {
+        base64Attachment = await convertFileToBase64(attachment);
+      }
+
       // Check if email is whitelisted
       const isWhitelisted = WHITELISTED_EMAILS.includes(email);
       
@@ -213,6 +218,7 @@ const MainPage = () => {
         email,
         message,
         type: effectiveType,
+        attachment: base64Attachment,
         remainingRegular: botStatus.remainingRegular,
         personalLimitExceeded: botStatus.personalLimitExceeded,
         isWhitelisted
@@ -231,7 +237,7 @@ const MainPage = () => {
       setIsSubmitting(false);
     }
   };
-// yess
+
   const validateEmail = (email) => {
     // Allow whitelisted emails to bypass the validation
     if (WHITELISTED_EMAILS.includes(email)) {

@@ -54,40 +54,16 @@ const PaidMenfessLanding = () => {
         }
 
         // Always create new payment
-        const formData = new FormData();
-        formData.append('email', data.email);
-        formData.append('message', data.message);
-        // Convert Base64 string back to File object if attachment exists
-        if (data.attachment) {
-          const matches = data.attachment.match(/^data:(.+);base64,(.+)$/);
-          if (matches) {
-            const contentType = matches[1];
-            const base64Data = matches[2];
-            const byteCharacters = atob(base64Data);
-            const byteArrays = [];
-
-            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-              const slice = byteCharacters.slice(offset, offset + 512);
-              const byteNumbers = new Array(slice.length);
-              for (let i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              byteArrays.push(byteArray);
-            }
-
-            const blob = new Blob(byteArrays, { type: contentType });
-            const file = new File([blob], 'attachment', { type: contentType });
-
-            formData.append('attachment', file);
-          } else {
-            console.warn('Invalid attachment format');
-          }
-        }
-
         const response = await fetch('/payment', {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          },
+          body: JSON.stringify({
+            ...data,
+            timestamp: Date.now() // Add timestamp to ensure uniqueness
+          })
         });
 
         if (!response.ok) {
