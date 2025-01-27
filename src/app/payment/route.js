@@ -49,7 +49,12 @@ export async function POST(request) {
     const privateKey = process.env.TRIPAY_PRIVATE_KEY;
     const apiKey = process.env.TRIPAY_API_KEY;
     const merchant_code = process.env.TRIPAY_MERCHANT_CODE;
-    const merchant_ref = 'TP' + Date.now();
+    
+    // Generate a truly unique merchant reference
+    const timestamp = Date.now();
+    const randomString = crypto.randomBytes(4).toString('hex');
+    const merchant_ref = `TP${timestamp}${randomString}`;
+    
     const amount = 3220;
     const expiry = parseInt(Math.floor(new Date()/1000) + (60*60));
 
