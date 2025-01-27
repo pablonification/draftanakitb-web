@@ -226,8 +226,8 @@ const MainPage = () => {
       
       localStorage.setItem('menfessData', JSON.stringify(menfessData));
 
-      // Redirect based on effective type
-      window.location.href = effectiveType === 'paid' 
+      // Redirect based on the actual selected type (not the effective type)
+      window.location.href = menfessType === 'paid' 
         ? '/landing/paid'
         : '/landing/regular';
 
