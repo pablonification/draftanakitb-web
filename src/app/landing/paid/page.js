@@ -45,9 +45,19 @@ const PaidMenfessLanding = () => {
         
         // Handle media upload first if present
         if (data.attachment) {
-          console.log('Uploading media...');
+          console.log('Processing media for upload:', {
+            attachmentLength: data.attachment.length,
+            hasBase64: data.attachment.includes('base64,')
+          });
+
           const [header, base64] = data.attachment.split('base64,');
           const type = header.split(':')[1]?.split(';')[0];
+
+          // Check size before uploading
+          const sizeInMB = (base64.length * 0.75) / (1024 * 1024);
+          if (sizeInMB > 8) { // Leave some margin below the 10MB limit
+            throw new Error(`File too large (${sizeInMB.toFixed(2)}MB). Maximum size is 8MB`);
+          }
 
           const uploadResponse = await fetch('/api/upload', {
             method: 'POST',
@@ -61,7 +71,9 @@ const PaidMenfessLanding = () => {
           });
 
           if (!uploadResponse.ok) {
-            throw new Error('Media upload failed');
+            const errorData = await uploadResponse.json();
+            console.error('Upload failed:', errorData);
+            throw new Error(errorData.error || 'Media upload failed');
           }
 
           const uploadResult = await uploadResponse.json();

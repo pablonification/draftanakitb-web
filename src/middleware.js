@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
-  // Only apply to /payment endpoint
-  if (request.nextUrl.pathname === '/payment') {
+  // Apply to both payment and upload endpoints
+  if (request.nextUrl.pathname === '/payment' || request.nextUrl.pathname === '/api/upload') {
     return NextResponse.next({
       headers: {
         'Accept-Encoding': 'gzip, deflate, br',
@@ -14,6 +14,6 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: '/payment'
+  matcher: ['/payment', '/api/upload']
 };
 // bruh

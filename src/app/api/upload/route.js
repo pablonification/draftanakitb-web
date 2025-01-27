@@ -11,25 +11,41 @@ const MediaSchema = new mongoose.Schema({
 
 const Media = mongoose.models.Media || mongoose.model('Media', MediaSchema);
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export async function POST(request) {
   try {
     await connectDB();
-    const body = await request.json();
-
-    console.log('Received upload request:', {
-      hasData: !!body.data,
-      dataLength: body.data?.length,
-      type: body.type
+    
+    // Add request size logging
+    const contentLength = request.headers.get('content-length');
+    console.log('Upload request size:', {
+      contentLength,
+      sizeInMB: contentLength ? (parseInt(contentLength) / (1024 * 1024)).toFixed(2) + 'MB' : 'unknown'
     });
 
-    if (!body.data || !body.type) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const body = await request.json();
+    
+    // Additional validation
+    if (!body.data) {
+      console.error('Missing data in upload request');
+      return NextResponse.json({ error: 'Missing data' }, { status: 400 });
     }
 
-    // Generate unique ID
-    const mediaId = 'media_' + Date.now();
+    if (!body.type || !body.type.match(/^(image|video)\//)) {
+      console.error('Invalid media type:', body.type);
+      return NextResponse.json({ error: 'Invalid media type' }, { status: 400 });
+    }
 
-    // Store media data
+    // Generate unique ID with timestamp and random string
+    const mediaId = `media_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
     const media = new Media({
       id: mediaId,
       type: body.type,
@@ -37,11 +53,28 @@ export async function POST(request) {
     });
 
     await media.save();
-    console.log('Media stored successfully:', { mediaId, type: body.type });
+    console.log('Media stored successfully:', { 
+      mediaId, 
+      type: body.type,
+      size: body.data.length
+    });
 
-    return NextResponse.json({ success: true, mediaId });
+    return NextResponse.json({ 
+      success: true, 
+      mediaId,
+      size: body.data.length
+    });
+    
   } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Upload error:', {
+      message: error.message,
+      stack: error.stack
+    });
+    return NextResponse.json({ 
+      error: 'Upload failed', 
+      details: error.message 
+    }, { 
+      status: 500 
+    });
   }
 }
