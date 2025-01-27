@@ -172,7 +172,7 @@ const PaidMenfessLanding = () => {
                       <li>Check payment details and confirm</li>
                       <li>Payment will be verified automatically</li>
                     </ol>
-                    <p className="text-yellow-300 mt-4">Payment will expire in 24 hours</p>
+                    <p className="text-yellow-300 mt-4">Payment will expire in 30 minutes</p>
                     <p>After payment is completed:</p>
                     <ol className="text-left list-decimal list-inside space-y-1">
                       <li>Your payment will be verified automatically</li>

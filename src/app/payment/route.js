@@ -22,6 +22,26 @@ export async function POST(request) {
 
     const body = await request.json();
     
+    // Find and handle existing unpaid transactions
+    const existingUnpaid = await Transaction.find({ 
+      email: body.email,
+      status: 'UNPAID'
+    });
+
+    // Cancel existing unpaid transactions
+    if (existingUnpaid.length > 0) {
+      console.log(`Found ${existingUnpaid.length} unpaid transactions for ${body.email}, marking as expired`);
+      await Transaction.updateMany(
+        { 
+          email: body.email,
+          status: 'UNPAID'
+        },
+        { 
+          $set: { status: 'EXPIRED' }
+        }
+      );
+    }
+
     // Simplified media handling - just store the original base64 string
     let mediaData = null;
     if (body.attachment) {
@@ -52,11 +72,11 @@ export async function POST(request) {
     
     // Generate a truly unique merchant reference
     const timestamp = Date.now();
-    const randomString = crypto.randomBytes(4).toString('hex');
+    const randomString = crypto.randomBytes(8).toString('hex'); // Increased from 4 to 8 bytes
     const merchant_ref = `TP${timestamp}${randomString}`;
     
     const amount = 1001;
-    const expiry = parseInt(Math.floor(new Date()/1000) + (60*60));
+    const expiry = parseInt(Math.floor(new Date()/1000) + (30*60)); // 30 minutes instead of 60
 
     const signature = crypto
       .createHmac('sha256', privateKey)
@@ -99,6 +119,11 @@ export async function POST(request) {
         }
       }
     );
+
+    // Additional check for successful response
+    if (response.status !== 200 || !response.data.success) {
+      throw new Error(`TriPay API error: ${JSON.stringify(response.data)}`);
+    }
 
     console.log('=== TRIPAY PAYMENT RESPONSE ===');
     console.log('Timestamp:', new Date().toISOString());

@@ -18,17 +18,31 @@ export async function GET(request) {
         await connectDB();
         const Transaction = mongoose.models.Transaction;
         
-        const transaction = await Transaction.findOne({ merchantRef: ref });
+        // More specific query to ensure we get the exact transaction
+        const transaction = await Transaction.findOne({
+            merchantRef: ref,
+            status: { $ne: 'EXPIRED' } // Exclude expired transactions
+        });
         
         console.log('Transaction Status:', {
             ref: ref,
             status: transaction?.status || 'NOT_FOUND',
             email: transaction?.email,
-            amount: transaction?.amount
+            amount: transaction?.amount,
+            createdAt: transaction?.createdAt
         });
 
         if (!transaction) {
             return NextResponse.json({ status: 'NOT_FOUND' });
+        }
+
+        // Check if transaction is old and unpaid
+        const now = new Date();
+        const transactionAge = now - transaction.createdAt;
+        if (transaction.status === 'UNPAID' && transactionAge > 30 * 60 * 1000) { // 30 minutes
+            transaction.status = 'EXPIRED';
+            await transaction.save();
+            return NextResponse.json({ status: 'EXPIRED' });
         }
 
         return NextResponse.json({ status: transaction.status });
