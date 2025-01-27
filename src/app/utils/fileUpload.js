@@ -132,7 +132,9 @@ export const convertFileToBase64 = async (file) => {
     });
 
     try {
-      const buffer = await file.arrayBuffer();
+      // Add video compression before conversion
+      const compressedVideo = await compressVideo(file);
+      const buffer = await compressedVideo.arrayBuffer();
       console.log('Video buffer created, size:', buffer.byteLength);
       
       const base64 = btoa(
@@ -153,6 +155,55 @@ export const convertFileToBase64 = async (file) => {
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = (error) => reject(error);
+  });
+};
+
+// Add new function for video compression
+const compressVideo = async (file) => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    video.onloadedmetadata = () => {
+      // Set canvas size to 720p max
+      const width = Math.min(1280, video.videoWidth);
+      const height = Math.min(720, video.videoHeight);
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw first frame to get mime type
+      ctx.drawImage(video, 0, 0, width, height);
+      
+      // Create compressed video blob
+      const mediaRecorder = new MediaRecorder(canvas.captureStream(), {
+        mimeType: 'video/webm;codecs=h264',
+        videoBitsPerSecond: 1000000 // 1Mbps
+      });
+      
+      const chunks = [];
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        console.log('Compressed video size:', blob.size);
+        resolve(blob);
+      };
+      
+      mediaRecorder.onerror = (error) => {
+        console.error('Media recorder error:', error);
+        reject(error);
+      };
+      
+      mediaRecorder.start();
+      setTimeout(() => mediaRecorder.stop(), video.duration * 1000);
+    };
+    
+    video.onerror = (error) => {
+      console.error('Video loading error:', error);
+      reject(error);
+    };
+    
+    video.src = URL.createObjectURL(file);
   });
 };
 
