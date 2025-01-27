@@ -5,15 +5,12 @@ import { connectDB } from '@/app/utils/db';
 import mongoose from 'mongoose';
 import multer from 'multer';
 import { connectToDatabase } from '@/lib/mongodb';
-import Grid from 'gridfs-stream';
 import { Readable } from 'stream';
+import Transaction from '@/app/models/Transaction'; // Import Transaction model
 
 // Setup multer storage
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
-// Use the same Transaction model as in callback
-const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', require('../payment/callback/route').transactionSchema);
 
 // Wrap the handler with multer middleware
 export const config = {

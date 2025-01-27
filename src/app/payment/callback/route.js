@@ -2,63 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { connectToDatabase } from '@/lib/mongodb';
 import { connectDB } from '@/app/utils/db';
-import mongoose from 'mongoose';
-
-// Define the Transaction model here to ensure it's initialized (here for fix conflict with Next.js)
-const transactionSchema = new mongoose.Schema({
-  merchantRef: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  email: {
-    type: String,
-    required: true
-  },
-  message: {
-    type: String,
-    required: true
-  },
-  attachment: {
-    type: mongoose.Schema.Types.ObjectId, // Changed to ObjectId reference
-    ref: 'uploads',
-    default: null
-  },
-  mediaFileId: { // Existing field to store GridFS file ID
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'uploads',
-    default: null
-  },
-  amount: {
-    type: Number,
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['UNPAID', 'PAID', 'EXPIRED', 'FAILED'],
-    default: 'UNPAID'
-  },
-  paidAt: {
-    type: Date,
-    default: null
-  },
-  tweetStatus: {
-    type: String,
-    enum: ['pending', 'sent', 'failed'],
-    default: 'pending'
-  },
-  tweetError: {
-    type: String,
-    default: null
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-// Initialize the model
-const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', transactionSchema);
+import Transaction from '@/app/models/Transaction'; // Import Transaction model
 
 const verifySignature = (data, signature) => {
   const privateKey = process.env.TRIPAY_PRIVATE_KEY;
@@ -136,7 +80,7 @@ export async function POST(request) {
           mediaFile = await gfs.files.findOne({ _id: transaction.mediaFileId });
           if (mediaFile) {
             mediaType = mediaFile.contentType;
-            mediaUrl = `/api/files/${mediaFile._id}`; // Create an API route to serve the file
+            mediaUrl = `/api/files/${mediaFile._id}`; // Ensure this route is correctly set up
           }
         } catch (e) {
           console.error('Error retrieving media file:', e);
