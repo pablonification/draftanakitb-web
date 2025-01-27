@@ -5,6 +5,11 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-};
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb' // Increased from default 1mb
+    },
+  },
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

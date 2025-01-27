@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import TermsModal from '../components/TermsModal';
-import { validateFile, uploadFileInChunks } from '@/app/utils/fileUpload';
+import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
 import OtpHelpModal from '../components/OtpHelpModal';
 
 // Add whitelist constant at the top
@@ -83,7 +83,6 @@ const MainPage = () => {
   const [emailError, setEmailError] = useState('');
   const [otpError, setOtpError] = useState('');
   const [attachment, setAttachment] = useState(null);
-  const [attachmentFileId, setAttachmentFileId] = useState(null);
   const [isAgreed, setIsAgreed] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
@@ -188,7 +187,6 @@ const MainPage = () => {
     }
 
     setAttachment(file);
-    setAttachmentFileId(null);
   };
 
   const handleSubmit = async (e) => {
@@ -203,22 +201,9 @@ const MainPage = () => {
     setPersonalLimitError('');
 
     try {
-      let finalAttachment = null;
+      let base64Attachment = null;
       if (attachment) {
-        // First, validate
-        const validation = await validateFile(attachment);
-        if (!validation.valid) {
-          setAttachmentError(validation.error);
-          return;
-        }
-        // Then, upload in chunks
-        const result = await uploadFileInChunks(attachment);
-        if (result) {
-          finalAttachment = {
-            fileId: result.fileId,
-            fileType: result.fileType
-          };
-        }
+        base64Attachment = await convertFileToBase64(attachment);
       }
 
       // Check if email is whitelisted
@@ -233,7 +218,7 @@ const MainPage = () => {
         email,
         message,
         type: effectiveType,
-        attachment: finalAttachment, // store fileId instead of base64
+        attachment: base64Attachment,
         remainingRegular: botStatus.remainingRegular,
         personalLimitExceeded: botStatus.personalLimitExceeded,
         isWhitelisted

@@ -1,7 +1,7 @@
 export const validateFile = async (file) => {
-  const MAX_VIDEO_SIZE = 5 * 1024 * 1024; // 5MB
-  const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
-
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for videos
+  const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB for images
+  
   const ALLOWED_TYPES = {
     images: ['image/jpeg', 'image/png', 'image/gif'],
     videos: ['video/mp4']
@@ -9,114 +9,181 @@ export const validateFile = async (file) => {
 
   if (!file) return { valid: true };
   
-  const isVideo = file.type.startsWith('video/');
+  const isVideo = ALLOWED_TYPES.videos.includes(file.type);
   const isImage = ALLOWED_TYPES.images.includes(file.type);
   
   if (!isVideo && !isImage) {
     return {
       valid: false,
-      error: 'File type not supported'
+      error: 'Hanya file gambar (JPG, PNG, GIF) dan video (MP4) yang diperbolehkan'
     };
   }
 
-  const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+  const maxSize = isVideo ? MAX_FILE_SIZE : MAX_IMAGE_SIZE;
   if (file.size > maxSize) {
     return {
       valid: false,
-      error: `File too large (max ${maxSize/1024/1024}MB)`
+      error: `Ukuran file maksimal ${isVideo ? '5MB untuk video' : '1MB untuk gambar'}`
     };
   }
 
   if (isVideo) {
-    return validateVideoFile(file);
+    // For videos, we need to check both size and validity
+    const videoCheck = await validateVideo(file);
+    if (!videoCheck.valid) {
+      return videoCheck;
+    }
+    
+    // Additional size check for video after validation
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        valid: false,
+        error: 'Ukuran video maksimal 5MB'
+      };
+    }
   }
 
   return { valid: true };
 };
 
-const validateVideoFile = (file) => {
+const validateVideo = (file) => {
+  console.log('Starting video validation:', {
+    type: file.type,
+    size: file.size,
+    name: file.name
+  });
+
   return new Promise((resolve) => {
+    if (!file.type.startsWith('video/')) {
+      console.warn('Invalid video type:', file.type);
+      resolve({
+        valid: false,
+        error: 'File bukan video yang valid'
+      });
+      return;
+    }
+
     const video = document.createElement('video');
-    const url = URL.createObjectURL(file);
-    
+    video.preload = 'metadata';
+
     video.onloadedmetadata = () => {
-      URL.revokeObjectURL(url);
+      console.log('Video metadata loaded:', {
+        duration: video.duration,
+        width: video.videoWidth,
+        height: video.videoHeight
+      });
+      
+      window.URL.revokeObjectURL(video.src);
       
       if (video.duration > 60) {
+        console.warn('Video too long:', video.duration);
         resolve({
           valid: false,
-          error: 'Video must be 60 seconds or less'
+          error: 'Durasi video maksimal 60 detik'
         });
         return;
       }
 
+      if (video.videoWidth > 1280 || video.videoHeight > 720) {
+        console.warn('Video resolution too high:', {
+          width: video.videoWidth,
+          height: video.videoHeight
+        });
+        resolve({
+          valid: false,
+          error: 'Resolusi video maksimal 1280x720 (720p)'
+        });
+        return;
+      }
+
+      console.log('Video validation successful');
       resolve({ valid: true });
     };
 
     video.onerror = () => {
-      URL.revokeObjectURL(url);
+      console.error('Video loading error:', video.error);
+      window.URL.revokeObjectURL(video.src);
       resolve({
         valid: false,
-        error: 'Invalid video file'
+        error: 'Format video tidak valid atau rusak'
       });
     };
 
-    video.src = url;
+    try {
+      video.src = URL.createObjectURL(file);
+    } catch (error) {
+      console.error('Error creating video URL:', error);
+      resolve({
+        valid: false,
+        error: 'Gagal memproses video'
+      });
+    }
   });
 };
 
-const CHUNK_SIZE = 512 * 1024; // 512KB
-
-export async function uploadFileInChunks(file) {
+export const convertFileToBase64 = async (file) => {
   if (!file) return null;
 
-  const chunkCount = Math.ceil(file.size / CHUNK_SIZE);
-  let fileId = null;
+  console.log('Starting file conversion:', {
+    type: file.type,
+    size: file.size,
+    name: file.name
+  });
 
-  for (let i = 0; i < chunkCount; i++) {
-    const start = i * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, file.size);
-    const chunk = file.slice(start, end);
-    const base64Chunk = await readAsBase64(chunk);
-
-    const res = await fetch('/api/upload-chunk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fileId,
-        chunkIndex: i,
-        chunkCount,
-        chunkData: base64Chunk,
-        fileType: file.type
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to upload chunk ${i + 1}`);
-    }
-
-    const data = await res.json();
-    fileId = data.fileId; // store the fileId
-    if (data.merged) {
-      return { fileId, fileType: data.fileType };
-    }
-  }
-
-  return null;
-}
-
-function readAsBase64(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    
     reader.onload = () => {
-      // result is data:...base64,...
-      resolve(reader.result.split(',')[1]);
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(blob);
-  });
-}
+      const result = reader.result;
+      
+      // Special handling for video files
+      if (file.type.startsWith('video/')) {
+        console.log('Processing video file:', {
+          originalSize: file.size,
+          base64Length: result.length
+        });
+        
+        // Check if the base64 string is valid
+        const base64Content = result.split('base64,')[1];
+        if (!base64Content) {
+          reject(new Error('Invalid video data'));
+          return;
+        }
 
+        // Additional validation for video data
+        try {
+          const decodedLength = atob(base64Content).length;
+          console.log('Video validation successful:', {
+            decodedLength,
+            originalSize: file.size,
+            ratio: decodedLength / file.size
+          });
+        } catch (e) {
+          console.error('Video base64 validation failed:', e);
+          reject(new Error('Invalid video encoding'));
+          return;
+        }
+      }
+
+      resolve(result);
+    };
+    
+    reader.onerror = (error) => {
+      console.error('File read error:', error);
+      reject(new Error('File read failed'));
+    };
+
+    // Use chunk reading for large files
+    if (file.size > 1024 * 1024 * 2) { // If larger than 2MB
+      const chunk = file.slice(0, file.size);
+      reader.readAsDataURL(chunk);
+    } else {
+      reader.readAsDataURL(file);
+    }
+  });
+};
+
+// Add helper function to check if file is a video
 export const isVideoFile = (file) => {
   const ALLOWED_VIDEO_TYPES = ['video/mp4'];
   return file && ALLOWED_VIDEO_TYPES.includes(file.type);

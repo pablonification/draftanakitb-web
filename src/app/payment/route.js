@@ -22,27 +22,75 @@ export async function POST(request) {
 
     const body = await request.json();
     
-    // Simplified media handling
+    // Simplified media handling - just store the original base64 string
     let mediaData = null;
     if (body.attachment) {
+      console.log('Processing attachment:', {
+        hasAttachment: true,
+        attachmentLength: body.attachment.length,
+        isString: typeof body.attachment === 'string',
+        startsWithData: body.attachment.startsWith('data:'),
+        mimeType: body.attachment.split(';')[0]
+      });
+      
       try {
-        const [header, base64Data] = body.attachment.split(',');
-        const type = header.split(':')[1].split(';')[0];
+        // More robust base64 extraction
+        const matches = body.attachment.match(/^data:([^;]+);base64,(.+)$/);
         
-        // Simple validation
-        if (!base64Data || base64Data.length < 100) {
-          throw new Error('Media data too small or invalid');
+        if (!matches) {
+          console.error('Invalid data URL structure');
+          throw new Error('Invalid attachment structure');
+        }
+
+        const [, type, base64] = matches;
+        
+        // Additional validation for videos
+        if (type.startsWith('video/')) {
+          console.log('Validating video data:', {
+            type,
+            base64Length: base64.length,
+            estimatedSize: Math.round(base64.length * 0.75 / 1024 / 1024) + 'MB'
+          });
+
+          // Ensure we have valid base64 data
+          try {
+            const testDecode = atob(base64);
+            if (testDecode.length < 100) { // Sanity check for minimal video size
+              throw new Error('Video data too small to be valid');
+            }
+            console.log('Video data validation passed:', {
+              decodedLength: testDecode.length,
+              seemsValid: true
+            });
+          } catch (e) {
+            console.error('Video base64 validation failed:', e);
+            throw new Error('Invalid video data encoding');
+          }
         }
 
         mediaData = {
           type,
-          data: base64Data,
+          base64,
           isVideo: type.startsWith('video/')
         };
-      } catch (error) {
-        console.error('Attachment error:', error);
+
+        console.log('Media processing successful:', {
+          type,
+          isVideo: type.startsWith('video/'),
+          dataLength: base64.length
+        });
+
+      } catch (mediaError) {
+        console.error('Detailed media error:', {
+          error: mediaError.message,
+          attachment: 'Data URL length: ' + (body.attachment?.length || 0)
+        });
         return NextResponse.json(
-          { error: 'Invalid attachment' },
+          { 
+            error: 'Media processing failed', 
+            details: mediaError.message,
+            code: 'MEDIA_PROCESSING_ERROR'
+          },
           { status: 400 }
         );
       }
@@ -144,12 +192,3 @@ export async function POST(request) {
     );
   }
 }
-
-// Below is the per-route config for Next.js 15+
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb'
-    }
-  }
-};

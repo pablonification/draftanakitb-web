@@ -133,9 +133,9 @@ export async function POST(request) {
         try {
           mediaData = JSON.parse(transaction.mediaData);
           mediaType = mediaData.type;
-          mediaUrl = `data:${mediaType};base64,${mediaData.data}`;
+          mediaUrl = `data:${mediaData.type};base64,${mediaData.base64}`;
         } catch (e) {
-          console.error('Parsing mediaData error:', e);
+          console.error('Error parsing media data:', e);
         }
       }
 
