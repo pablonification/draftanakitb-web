@@ -26,57 +26,41 @@ export async function POST(request) {
     let mediaData = null;
     if (body.attachment) {
       console.log('Processing attachment:', {
-        attachmentLength: body.attachment.length,
-        attachmentStart: body.attachment.substring(0, 50) + '...'
+        hasAttachment: !!body.attachment,
+        attachmentType: body.attachment.split(';')[0]
       });
       
       try {
-        const [header, base64] = body.attachment.split(',');
+        if (!body.attachment.includes('base64,')) {
+          throw new Error('Invalid attachment format');
+        }
+
+        const [header, base64] = body.attachment.split('base64,');
         const type = header.split(':')[1]?.split(';')[0];
         
+        if (!type || !base64) {
+          throw new Error('Missing attachment data');
+        }
+
         console.log('Attachment parsing:', {
-          hasHeader: !!header,
-          headerType: type,
-          base64Length: base64?.length
+          type,
+          base64Length: base64.length,
+          isValid: !!type && !!base64
         });
 
-        if (type?.startsWith('video/')) {
-          console.log('Processing video content');
-          if (!base64 || base64.length === 0) {
-            console.error('Missing video base64 data');
-            throw new Error('Invalid video data');
-          }
-          
-          try {
-            const decodedLength = atob(base64).length;
-            console.log('Video validation:', {
-              base64Length: base64.length,
-              decodedLength,
-              estimatedSizeMB: (decodedLength / 1024 / 1024).toFixed(2)
-            });
-          } catch (e) {
-            console.error('Base64 validation failed:', e);
-            throw new Error('Invalid video encoding');
-          }
-        }
-        
         // Only store if we have valid data
-        if (header && base64 && type) {
-          mediaData = {
-            type,
-            base64,
-            isVideo: type.startsWith('video/')
-          };
-          console.log('Media processed:', {
-            type,
-            isVideo: type.startsWith('video/'),
-            base64Length: base64.length
-          });
-        }
+        mediaData = {
+          type,
+          base64,
+          isVideo: type.startsWith('video/')
+        };
       } catch (mediaError) {
-        console.error('Media processing error:', mediaError);
+        console.error('Media processing error:', {
+          error: mediaError.message,
+          attachment: body.attachment ? 'present' : 'missing'
+        });
         return NextResponse.json(
-          { error: 'Invalid media data', details: mediaError.message },
+          { error: 'Invalid media format', details: mediaError.message },
           { status: 400 }
         );
       }
