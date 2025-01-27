@@ -1,7 +1,6 @@
 const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
-const express = require('express')
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = '0.0.0.0'
@@ -11,16 +10,16 @@ const app = next({ dev })
 const handle = app.getRequestHandler()
 
 app.prepare().then(() => {
-  const server = express()
-
-  server.use(express.json({ limit: '50mb' }))
-  server.use(express.urlencoded({ limit: '50mb', extended: true }))
-
-  server.all('*', (req, res) => {
-    return handle(req, res)
-  })
-
-  createServer(server).listen(port, hostname, (err) => {
+  createServer(async (req, res) => {
+    try {
+      const parsedUrl = parse(req.url, true)
+      await handle(req, res, parsedUrl)
+    } catch (err) {
+      console.error('Error occurred handling', req.url, err)
+      res.statusCode = 500
+      res.end('Internal Server Error')
+    }
+  }).listen(port, hostname, (err) => {
     if (err) throw err
     
     // Signal that the server is ready
