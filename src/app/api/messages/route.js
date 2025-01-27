@@ -40,13 +40,43 @@ async function checkPersonalLimit(email) {
   return isWithinLimits.personalRegular(lastMessage);
 }
 
-async function checkGlobalLimit() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+async function getDailyMessageCount() {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000;
+  let retries = 0;
 
-  const dailyCount = await DailyMessageCount.findOne({ date: today });
-  const currentCount = dailyCount?.regularCount || 0;
-  
+  while (retries < MAX_RETRIES) {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const dailyCount = await DailyMessageCount.findOne({ date: today });
+      
+      // Validate the count value
+      const count = dailyCount?.regularCount || 0;
+      if (typeof count !== 'number' || isNaN(count)) {
+        throw new Error('Invalid count value retrieved from database');
+      }
+
+      return count;
+    } catch (error) {
+      retries++;
+      console.error(`Error fetching daily count (attempt ${retries}/${MAX_RETRIES}):`, error);
+      
+      if (retries < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * retries));
+        continue;
+      }
+      
+      // If all retries fail, return a safe default
+      console.error('All retries failed for daily count. Using fallback value.');
+      return LIMITS.GLOBAL_REGULAR_DAILY; // Conservative approach: assume limit reached
+    }
+  }
+}
+
+async function checkGlobalLimit() {
+  const currentCount = await getDailyMessageCount();
   return isWithinLimits.globalRegular(currentCount);
 }
 
@@ -69,8 +99,19 @@ export async function POST(request) {
       });
     }
 
-    // Then check global limit
-    const canSendGlobal = await checkGlobalLimit();
+    // Then check global limit with improved handling
+    let currentCount;
+    try {
+      currentCount = await getDailyMessageCount();
+    } catch (error) {
+      console.error('Failed to get daily count, enforcing limit:', error);
+      return NextResponse.json({
+        success: false,
+        error: 'GLOBAL_LIMIT_CHECK_FAILED'
+      });
+    }
+
+    const canSendGlobal = isWithinLimits.globalRegular(currentCount);
     if (!canSendGlobal) {
       return NextResponse.json({
         success: false,
@@ -103,11 +144,33 @@ export async function POST(request) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      await DailyMessageCount.findOneAndUpdate(
-        { date: today },
-        { $inc: { regularCount: 1 } },
-        { upsert: true }
-      );
+      let updateSuccess = false;
+      let updateRetries = 0;
+      while (!updateSuccess && updateRetries < 3) {
+        try {
+          await DailyMessageCount.findOneAndUpdate(
+            { date: today },
+            { $inc: { regularCount: 1 } },
+            { 
+              upsert: true,
+              new: true,
+              runValidators: true
+            }
+          );
+          updateSuccess = true;
+        } catch (error) {
+          updateRetries++;
+          console.error(`Failed to update daily count (attempt ${updateRetries}/3):`, error);
+          if (updateRetries < 3) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * updateRetries));
+          }
+        }
+      }
+
+      if (!updateSuccess) {
+        console.error('Failed to update daily count after all retries');
+        // Continue anyway since the tweet was sent
+      }
 
       // Always update user's last message time
       await User.findOneAndUpdate(
@@ -149,11 +212,15 @@ export async function POST(request) {
 export async function GET() {
   try {
     await connectDB();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    const dailyCount = await DailyMessageCount.findOne({ date: today });
-    const currentCount = dailyCount?.regularCount || 0;
+    let currentCount;
+    try {
+      currentCount = await getDailyMessageCount();
+    } catch (error) {
+      console.error('Error getting daily count for status:', error);
+      currentCount = LIMITS.GLOBAL_REGULAR_DAILY; // Conservative fallback
+    }
+
     const remainingCount = LIMITS.GLOBAL_REGULAR_DAILY - currentCount;
     const isPaidOnly = remainingCount <= 0;
 
