@@ -55,38 +55,23 @@ const transactionSchema = new mongoose.Schema({
   }
 });
 
-
 // Initialize the model
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', transactionSchema);
 
-// Make verifySignature more robust
 const verifySignature = (data, signature) => {
-  try {
-    const privateKey = process.env.TRIPAY_PRIVATE_KEY;
-    if (!privateKey) throw new Error('Missing TRIPAY_PRIVATE_KEY');
-    
-    const jsonString = JSON.stringify(data);
-    const expectedSignature = crypto
-      .createHmac('sha256', privateKey)
-      .update(jsonString)
-      .digest('hex');
+  const privateKey = process.env.TRIPAY_PRIVATE_KEY;
+  const jsonString = JSON.stringify(data);
+  
+  const expectedSignature = crypto
+    .createHmac('sha256', privateKey)
+    .update(jsonString)
+    .digest('hex');
 
-    return signature === expectedSignature;
-  } catch (error) {
-    console.error('Signature verification error:', error);
-    return false;
-  }
+  return signature === expectedSignature;
 };
 
 export async function POST(request) {
   try {
-    // Add cache prevention headers
-    const headers = {
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    };
-
     console.log('=== TRIPAY CALLBACK RECEIVED ===');
     console.log('Timestamp:', new Date().toISOString());
     console.log('Headers:', {
@@ -104,37 +89,18 @@ export async function POST(request) {
       console.error('Missing callback signature');
       return NextResponse.json(
         { error: 'Missing callback signature' },
-        { status: 400, headers }
+        { status: 400 }
       );
     }
 
     const data = await request.json();
     console.log('Callback payload:', JSON.stringify(data, null, 2));
 
-    // Prevent processing of old callbacks
-    const callbackAge = Date.now() - (new Date(data.paid_at || Date.now()).getTime());
-    if (callbackAge > 3600000) { // 1 hour
-      console.error('Callback too old:', callbackAge);
-      return NextResponse.json(
-        { error: 'Callback expired' },
-        { status: 400, headers }
-      );
-    }
-
-    // Add validation for required fields
-    if (!data.merchant_ref || !data.status) {
-      console.error('Missing required fields in callback data');
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400, headers }
-      );
-    }
-
     if (!verifySignature(data, callbackSignature)) {
       console.error('Invalid signature');
       return NextResponse.json(
         { error: 'Invalid signature' },
-        { status: 403, headers }
+        { status: 403 }
       );
     }
 
@@ -146,23 +112,8 @@ export async function POST(request) {
     if (!transaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
-        { status: 404, headers }
+        { status: 404 }
       );
-    }
-
-    // Check for duplicate callback processing
-    if (data.status === 'PAID') {
-      const existingPaidTweet = await db.collection('paidTweets').findOne({
-        _id: data.merchant_ref
-      });
-
-      if (existingPaidTweet) {
-        console.log('Duplicate callback prevented for:', data.merchant_ref);
-        return NextResponse.json(
-          { success: true, duplicate: true },
-          { headers }
-        );
-      }
     }
 
     // Update transaction status
@@ -214,10 +165,7 @@ export async function POST(request) {
     }
 
     await transaction.save();
-    return NextResponse.json(
-      { success: true },
-      { headers }
-    );
+    return NextResponse.json({ success: true });
 
   } catch (error) {
     console.error('=== CALLBACK ERROR ===');
