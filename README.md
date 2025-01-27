@@ -8,6 +8,7 @@ DraftAnakITB Bot is a web application that allows users to send anonymous messag
 - [Installation](#installation)
 - [Usage](#usage)
 - [Environment Variables](#environment-variables)
+- [Running with PM2](#running-with-pm2)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -61,3 +62,27 @@ MAIL_PASSPHRASE="your_email_passphrase"
 LOG_USERNAME="your_log_username"
 LOG_PASSWORD="your_log_password"
 TRIPAY_PRIVATE_KEY="your_tripay_private_key"
+```
+
+## Running with PM2
+
+### Prerequisites
+- Node.js 18.x or later
+- PM2 installed globally (`npm install -g pm2`)
+
+### Installation
+1. Install dependencies:
+    ```sh
+    npm install
+    ```
+
+2. Start the application with PM2:
+    ```sh
+    pm2 start npm --name "draftanakitb-bot" -- run dev
+    ```
+
+3. To make PM2 start on boot:
+    ```sh
+    pm2 startup
+    pm2 save
+    ```
