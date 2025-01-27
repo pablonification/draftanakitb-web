@@ -20,11 +20,13 @@ const transactionSchema = new mongoose.Schema({
     required: true
   },
   attachment: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId, // Changed to ObjectId reference
+    ref: 'uploads',
     default: null
   },
-  mediaData: {
-    type: String,  // Changed from Object to String
+  mediaFileId: { // Existing field to store GridFS file ID
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'uploads',
     default: null
   },
   amount: {
@@ -61,7 +63,7 @@ const Transaction = mongoose.models.Transaction || mongoose.model('Transaction',
 const verifySignature = (data, signature) => {
   const privateKey = process.env.TRIPAY_PRIVATE_KEY;
   const jsonString = JSON.stringify(data);
-  
+
   const expectedSignature = crypto
     .createHmac('sha256', privateKey)
     .update(jsonString)
@@ -80,7 +82,7 @@ export async function POST(request) {
     });
 
     await connectDB();
-    const { db } = await connectToDatabase();
+    const { gfs } = await connectToDatabase();
 
     const callbackSignature = request.headers.get('X-Callback-Signature');
     console.log('Received callback with signature:', callbackSignature);
@@ -107,7 +109,7 @@ export async function POST(request) {
     // Find transaction
     const transaction = await Transaction.findOne({
       merchantRef: data.merchant_ref
-    });
+    }).exec();
 
     if (!transaction) {
       return NextResponse.json(
@@ -124,18 +126,20 @@ export async function POST(request) {
     if (data.status === 'PAID') {
       transaction.tweetStatus = 'pending';
       
-      // Parse stored media data
-      let mediaData = null;
+      // Reference to GridFS file
+      let mediaFile = null;
       let mediaType = null;
       let mediaUrl = null;
 
-      if (transaction.mediaData) {
+      if (transaction.mediaFileId) {
         try {
-          mediaData = JSON.parse(transaction.mediaData);
-          mediaType = mediaData.type;
-          mediaUrl = `data:${mediaData.type};base64,${mediaData.base64}`;
+          mediaFile = await gfs.files.findOne({ _id: transaction.mediaFileId });
+          if (mediaFile) {
+            mediaType = mediaFile.contentType;
+            mediaUrl = `/api/files/${mediaFile._id}`; // Create an API route to serve the file
+          }
         } catch (e) {
-          console.error('Error parsing media data:', e);
+          console.error('Error retrieving media file:', e);
         }
       }
 
@@ -144,7 +148,7 @@ export async function POST(request) {
         _id: data.merchant_ref,
         email: transaction.email,
         messageText: transaction.message,
-        mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store as string
+        mediaFileId: mediaFile ? mediaFile._id : null, // Store reference
         mediaType: mediaType,
         mediaUrl: mediaUrl,
         tweetStatus: "pending",
@@ -155,11 +159,11 @@ export async function POST(request) {
         scheduledTime: "20:00"
       };
 
-      await db.collection('paidTweets').insertOne(paidTweet);
+      await gfs.db.collection('paidTweets').insertOne(paidTweet);
       
       console.log('Payment successful, created paid tweet entry:', {
         merchantRef: data.merchant_ref,
-        hasMedia: !!mediaData,
+        hasMedia: !!mediaFile,
         mediaType
       });
     }

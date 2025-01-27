@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb';
+import Grid from 'gridfs-stream';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const MONGODB_DB = process.env.MONGODB_DB || 'draftanakitb';
@@ -24,26 +25,27 @@ if (!MONGODB_DB) {
 
 let cachedClient = null;
 let cachedDb = null;
+let gfs = null;
 
 export async function connectToDatabase() {
     if (cachedClient && cachedDb) {
-        return { client: cachedClient, db: cachedDb };
+        return { client: cachedClient, db: cachedDb, gfs };
     }
 
     try {
-        // Connect with new MongoClient
         const client = await MongoClient.connect(MONGODB_URI, {
-            maxPoolSize: 10,
-            minPoolSize: 5,
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
         });
 
         const db = client.db(MONGODB_DB);
+        gfs = Grid(db, MongoClient);
+        gfs.collection('uploads'); // Set collection name to 'uploads'
 
-        // Cache the client and db connections
         cachedClient = client;
         cachedDb = db;
 
-        return { client, db };
+        return { client, db, gfs };
     } catch (error) {
         console.error('MongoDB connection error:', error);
         throw error;
