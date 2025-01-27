@@ -25,21 +25,37 @@ export async function POST(request) {
     // Simplified media handling - just store the original base64 string
     let mediaData = null;
     if (body.attachment) {
+      console.log('Processing attachment:', {
+        attachmentLength: body.attachment.length,
+        attachmentStart: body.attachment.substring(0, 50) + '...'
+      });
+      
       try {
         const [header, base64] = body.attachment.split(',');
         const type = header.split(':')[1]?.split(';')[0];
         
-        // Additional validation for video content
-        if (type.startsWith('video/')) {
-          // Verify the base64 data is actually present and valid
+        console.log('Attachment parsing:', {
+          hasHeader: !!header,
+          headerType: type,
+          base64Length: base64?.length
+        });
+
+        if (type?.startsWith('video/')) {
+          console.log('Processing video content');
           if (!base64 || base64.length === 0) {
+            console.error('Missing video base64 data');
             throw new Error('Invalid video data');
           }
           
-          // For videos, we need to ensure the base64 string is valid
           try {
-            atob(base64); // Test if it's valid base64
+            const decodedLength = atob(base64).length;
+            console.log('Video validation:', {
+              base64Length: base64.length,
+              decodedLength,
+              estimatedSizeMB: (decodedLength / 1024 / 1024).toFixed(2)
+            });
           } catch (e) {
+            console.error('Base64 validation failed:', e);
             throw new Error('Invalid video encoding');
           }
         }

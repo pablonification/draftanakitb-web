@@ -47,9 +47,15 @@ export const validateFile = async (file) => {
 };
 
 const validateVideo = (file) => {
+  console.log('Starting video validation:', {
+    type: file.type,
+    size: file.size,
+    name: file.name
+  });
+
   return new Promise((resolve) => {
-    // First check if it's actually a video file
     if (!file.type.startsWith('video/')) {
+      console.warn('Invalid video type:', file.type);
       resolve({
         valid: false,
         error: 'File bukan video yang valid'
@@ -61,10 +67,16 @@ const validateVideo = (file) => {
     video.preload = 'metadata';
 
     video.onloadedmetadata = () => {
+      console.log('Video metadata loaded:', {
+        duration: video.duration,
+        width: video.videoWidth,
+        height: video.videoHeight
+      });
+      
       window.URL.revokeObjectURL(video.src);
       
-      // Check video duration (max 60 seconds)
       if (video.duration > 60) {
+        console.warn('Video too long:', video.duration);
         resolve({
           valid: false,
           error: 'Durasi video maksimal 60 detik'
@@ -72,8 +84,11 @@ const validateVideo = (file) => {
         return;
       }
 
-      // Check video dimensions (max 1280x720)
       if (video.videoWidth > 1280 || video.videoHeight > 720) {
+        console.warn('Video resolution too high:', {
+          width: video.videoWidth,
+          height: video.videoHeight
+        });
         resolve({
           valid: false,
           error: 'Resolusi video maksimal 1280x720 (720p)'
@@ -81,10 +96,12 @@ const validateVideo = (file) => {
         return;
       }
 
+      console.log('Video validation successful');
       resolve({ valid: true });
     };
 
     video.onerror = () => {
+      console.error('Video loading error:', video.error);
       window.URL.revokeObjectURL(video.src);
       resolve({
         valid: false,
@@ -95,6 +112,7 @@ const validateVideo = (file) => {
     try {
       video.src = URL.createObjectURL(file);
     } catch (error) {
+      console.error('Error creating video URL:', error);
       resolve({
         valid: false,
         error: 'Gagal memproses video'
@@ -106,17 +124,25 @@ const validateVideo = (file) => {
 export const convertFileToBase64 = async (file) => {
   if (!file) return null;
 
-  // For videos, ensure we're handling them correctly
   if (file.type.startsWith('video/')) {
+    console.log('Starting video conversion:', {
+      type: file.type,
+      size: file.size,
+      name: file.name
+    });
+
     try {
-      // Read as array buffer first for videos
       const buffer = await file.arrayBuffer();
+      console.log('Video buffer created, size:', buffer.byteLength);
+      
       const base64 = btoa(
         new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
       );
+      console.log('Video converted to base64, length:', base64.length);
+      
       return `data:${file.type};base64,${base64}`;
     } catch (error) {
-      console.error('Error converting video to base64:', error);
+      console.error('Video conversion error:', error);
       throw new Error('Gagal memproses video');
     }
   }
