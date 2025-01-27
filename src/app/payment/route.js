@@ -90,11 +90,7 @@ export async function POST(request) {
         }
       ],
       expired_time: expiry,
-      signature: signature,
-      allow_repeated_payments: false, // Explicitly prevent repeated payments
-      is_customer_va_lifetime: false, // Ensure VA/QRIS is not reusable
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/landing/paid?ref=${merchant_ref}`, // Add return URL
-      expired_time: expiry
+      signature: signature
     };
 
     // Log request payload directly
