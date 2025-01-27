@@ -21,16 +21,14 @@ app.prepare().then(() => {
     }
   }).listen(port, hostname, (err) => {
     if (err) throw err
-    
-    // Signal that the server is ready
+
     if (process.send) {
       process.send('ready')
     }
-    
+
     console.log(`> Ready on http://${hostname}:${port}`)
   })
-  
-  // Handle shutdown gracefully
+
   process.on('SIGINT', () => {
     console.log('Received SIGINT. Cleaning up...')
     process.exit()
