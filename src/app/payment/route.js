@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 
 // Use the same Transaction model as in callback
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', require('../payment/callback/route').transactionSchema);
+const Media = mongoose.models.Media || mongoose.model('Media', require('../api/upload/route').MediaSchema);
 
 export async function POST(request) {
   try {
@@ -22,72 +23,29 @@ export async function POST(request) {
 
     const body = await request.json();
     
-    // Simplified media handling - just store the original base64 string
+    // Handle media through reference
     let mediaData = null;
-    if (body.attachment) {
-      console.log('Processing attachment:', {
-        hasAttachment: !!body.attachment,
-        attachmentLength: body.attachment.length,
-        isString: typeof body.attachment === 'string',
-        startsWith: body.attachment.substring(0, 50),
-        containsBase64: body.attachment.includes('base64,')
-      });
-      
+    if (body.mediaId) {
       try {
-        if (!body.attachment.includes('base64,')) {
-          console.error('Missing base64 marker in attachment');
-          throw new Error('Invalid attachment format: missing base64 encoding');
-        }
-
-        const [header, base64] = body.attachment.split('base64,');
-        const type = header.split(':')[1]?.split(';')[0];
-        
-        if (!type || !base64 || base64.length === 0) {
-          console.error('Invalid attachment parts:', {
-            hasType: !!type,
-            hasBase64: !!base64,
-            base64Length: base64?.length
-          });
-          throw new Error('Invalid attachment: missing data');
-        }
-
-        // Validate base64 content with more detailed logging
-        try {
-          const decoded = atob(base64);
-          console.log('Base64 validation:', {
-            inputLength: base64.length,
-            decodedLength: decoded.length,
-            isValid: true
-          });
-        } catch (e) {
-          console.error('Base64 validation failed:', e);
-          throw new Error('Invalid base64 encoding');
+        const media = await Media.findOne({ id: body.mediaId });
+        if (!media) {
+          throw new Error('Media not found');
         }
 
         mediaData = {
-          type,
-          base64,
-          isVideo: type.startsWith('video/')
+          type: media.type,
+          base64: media.base64,
+          isVideo: media.type.startsWith('video/')
         };
 
-        console.log('Media processing successful:', {
-          type,
-          isVideo: type.startsWith('video/'),
-          dataLength: base64.length
+        console.log('Media retrieved successfully:', {
+          type: media.type,
+          id: body.mediaId
         });
-
       } catch (mediaError) {
-        console.error('Detailed media error:', {
-          message: mediaError.message,
-          attachmentPreview: body.attachment?.substring(0, 50) + '...',
-          attachmentLength: body.attachment?.length
-        });
+        console.error('Media retrieval error:', mediaError);
         return NextResponse.json(
-          { 
-            error: 'Media processing failed', 
-            details: mediaError.message,
-            code: 'MEDIA_PROCESSING_ERROR'
-          },
+          { error: 'Media processing failed', details: mediaError.message },
           { status: 400 }
         );
       }

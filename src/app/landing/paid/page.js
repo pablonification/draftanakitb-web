@@ -36,33 +36,49 @@ const PaidMenfessLanding = () => {
   useEffect(() => {
     const initializePayment = async () => {
       try {
-        // Always clear existing payment session
-        localStorage.removeItem('paymentSession');
-        
         const data = JSON.parse(localStorage.getItem('menfessData'));
         if (!data) {
           throw new Error('No menfess data found');
         }
 
-        // Log the attachment data for debugging
+        let mediaId = null;
+        
+        // Handle media upload first if present
         if (data.attachment) {
-          console.log('Sending attachment:', {
-            length: data.attachment.length,
-            isBase64: data.attachment.includes('base64'),
-            preview: data.attachment.substring(0, 50) + '...'
+          console.log('Uploading media...');
+          const [header, base64] = data.attachment.split('base64,');
+          const type = header.split(':')[1]?.split(';')[0];
+
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type,
+              data: base64
+            })
           });
+
+          if (!uploadResponse.ok) {
+            throw new Error('Media upload failed');
+          }
+
+          const uploadResult = await uploadResponse.json();
+          mediaId = uploadResult.mediaId;
+          console.log('Media uploaded successfully:', { mediaId });
         }
 
-        // Always create new payment
+        // Proceed with payment
         const response = await fetch('/payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
           },
           body: JSON.stringify({
             ...data,
-            timestamp: Date.now() // Add timestamp to ensure uniqueness
+            mediaId, // Send media reference instead of full data
+            timestamp: Date.now()
           })
         });
 
