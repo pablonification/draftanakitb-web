@@ -29,41 +29,36 @@ export async function POST(request) {
         hasAttachment: !!body.attachment,
         attachmentLength: body.attachment.length,
         isString: typeof body.attachment === 'string',
-        startsWith: body.attachment.substring(0, 30)
+        startsWith: body.attachment.substring(0, 50),
+        containsBase64: body.attachment.includes('base64,')
       });
       
       try {
-        // Basic validation first
-        if (typeof body.attachment !== 'string' || !body.attachment.startsWith('data:')) {
-          throw new Error('Invalid attachment: not a valid data URL');
-        }
-
-        let type, base64;
-
-        // Handle both formats: with or without base64 prefix
-        if (body.attachment.includes(';base64,')) {
-          [type, base64] = body.attachment.split(';base64,');
-          type = type.replace('data:', '');
-        } else {
-          console.error('Attachment missing base64 prefix');
+        if (!body.attachment.includes('base64,')) {
+          console.error('Missing base64 marker in attachment');
           throw new Error('Invalid attachment format: missing base64 encoding');
         }
-        
-        console.log('Attachment parsing debug:', {
-          hasType: !!type,
-          typeValue: type,
-          base64Length: base64?.length || 0,
-          base64Preview: base64?.substring(0, 20) + '...'
-        });
 
-        // Validate type and base64
-        if (!type || !base64 || base64.trim().length === 0) {
+        const [header, base64] = body.attachment.split('base64,');
+        const type = header.split(':')[1]?.split(';')[0];
+        
+        if (!type || !base64 || base64.length === 0) {
+          console.error('Invalid attachment parts:', {
+            hasType: !!type,
+            hasBase64: !!base64,
+            base64Length: base64?.length
+          });
           throw new Error('Invalid attachment: missing data');
         }
 
-        // Validate base64 content
+        // Validate base64 content with more detailed logging
         try {
-          atob(base64);
+          const decoded = atob(base64);
+          console.log('Base64 validation:', {
+            inputLength: base64.length,
+            decodedLength: decoded.length,
+            isValid: true
+          });
         } catch (e) {
           console.error('Base64 validation failed:', e);
           throw new Error('Invalid base64 encoding');

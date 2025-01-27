@@ -124,86 +124,44 @@ const validateVideo = (file) => {
 export const convertFileToBase64 = async (file) => {
   if (!file) return null;
 
-  if (file.type.startsWith('video/')) {
-    console.log('Starting video conversion:', {
-      type: file.type,
-      size: file.size,
-      name: file.name
-    });
+  console.log('Starting file conversion:', {
+    type: file.type,
+    size: file.size,
+    name: file.name
+  });
 
-    try {
-      // Add video compression before conversion
-      const compressedVideo = await compressVideo(file);
-      const buffer = await compressedVideo.arrayBuffer();
-      console.log('Video buffer created, size:', buffer.byteLength);
-      
-      const base64 = btoa(
-        new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-      console.log('Video converted to base64, length:', base64.length);
-      
-      return `data:${file.type};base64,${base64}`;
-    } catch (error) {
-      console.error('Video conversion error:', error);
-      throw new Error('Gagal memproses video');
-    }
-  }
-
-  // For other files (images), use the existing method
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-// Add new function for video compression
-const compressVideo = async (file) => {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement('video');
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
     
-    video.onloadedmetadata = () => {
-      // Set canvas size to 720p max
-      const width = Math.min(1280, video.videoWidth);
-      const height = Math.min(720, video.videoHeight);
-      canvas.width = width;
-      canvas.height = height;
-      
-      // Draw first frame to get mime type
-      ctx.drawImage(video, 0, 0, width, height);
-      
-      // Create compressed video blob
-      const mediaRecorder = new MediaRecorder(canvas.captureStream(), {
-        mimeType: 'video/webm;codecs=h264',
-        videoBitsPerSecond: 1000000 // 1Mbps
+    reader.onload = () => {
+      const result = reader.result;
+      // Validate the result before returning
+      if (!result || !result.includes('base64,')) {
+        console.error('Invalid conversion result');
+        reject(new Error('File conversion failed'));
+        return;
+      }
+
+      console.log('File conversion successful:', {
+        resultLength: result.length,
+        hasBase64Prefix: result.includes('base64,'),
+        preview: result.substring(0, 50) + '...'
       });
-      
-      const chunks = [];
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        console.log('Compressed video size:', blob.size);
-        resolve(blob);
-      };
-      
-      mediaRecorder.onerror = (error) => {
-        console.error('Media recorder error:', error);
-        reject(error);
-      };
-      
-      mediaRecorder.start();
-      setTimeout(() => mediaRecorder.stop(), video.duration * 1000);
+
+      resolve(result);
     };
     
-    video.onerror = (error) => {
-      console.error('Video loading error:', error);
+    reader.onerror = (error) => {
+      console.error('File conversion error:', error);
       reject(error);
     };
-    
-    video.src = URL.createObjectURL(file);
+
+    try {
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('ReadAsDataURL error:', error);
+      reject(error);
+    }
   });
 };
 

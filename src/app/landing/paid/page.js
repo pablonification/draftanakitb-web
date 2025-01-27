@@ -44,6 +44,15 @@ const PaidMenfessLanding = () => {
           throw new Error('No menfess data found');
         }
 
+        // Log the attachment data for debugging
+        if (data.attachment) {
+          console.log('Sending attachment:', {
+            length: data.attachment.length,
+            isBase64: data.attachment.includes('base64'),
+            preview: data.attachment.substring(0, 50) + '...'
+          });
+        }
+
         // Always create new payment
         const response = await fetch('/payment', {
           method: 'POST',
