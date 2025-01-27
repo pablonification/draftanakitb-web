@@ -36,61 +36,43 @@ const PaidMenfessLanding = () => {
   useEffect(() => {
     const initializePayment = async () => {
       try {
+        // Always clear existing payment session
+        localStorage.removeItem('paymentSession');
+        
         const data = JSON.parse(localStorage.getItem('menfessData'));
         if (!data) {
           throw new Error('No menfess data found');
         }
 
-        let mediaId = null;
-        
-        // Handle media upload first if present
+        // Clean and validate attachment data before sending
+        let cleanedData = { ...data };
         if (data.attachment) {
-          console.log('Processing media for upload:', {
-            attachmentLength: data.attachment.length,
+          console.log('Validating attachment data:', {
+            originalLength: data.attachment.length,
+            isString: typeof data.attachment === 'string',
             hasBase64: data.attachment.includes('base64,')
           });
 
-          const [header, base64] = data.attachment.split('base64,');
-          const type = header.split(':')[1]?.split(';')[0];
-
-          // Check size before uploading
-          const sizeInMB = (base64.length * 0.75) / (1024 * 1024);
-          if (sizeInMB > 8) { // Leave some margin below the 10MB limit
-            throw new Error(`File too large (${sizeInMB.toFixed(2)}MB). Maximum size is 8MB`);
+          // Ensure we have the full base64 string
+          if (!data.attachment.includes('base64,')) {
+            console.error('Invalid attachment format');
+            throw new Error('Invalid media format');
           }
 
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              type,
-              data: base64
-            })
-          });
-
-          if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            console.error('Upload failed:', errorData);
-            throw new Error(errorData.error || 'Media upload failed');
-          }
-
-          const uploadResult = await uploadResponse.json();
-          mediaId = uploadResult.mediaId;
-          console.log('Media uploaded successfully:', { mediaId });
+          // Don't modify the data, send it as is
+          console.log('Attachment validation passed, sending data');
         }
 
-        // Proceed with payment
+        // Always create new payment
         const response = await fetch('/payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
           },
           body: JSON.stringify({
             ...data,
-            mediaId, // Send media reference instead of full data
-            timestamp: Date.now()
+            timestamp: Date.now() // Add timestamp to ensure uniqueness
           })
         });
 

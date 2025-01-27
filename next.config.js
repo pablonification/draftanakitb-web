@@ -9,13 +9,7 @@ const nextConfig = {
     bodyParser: {
       sizeLimit: '10mb' // Increased from default 1mb
     },
-    responseLimit: false
   },
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '10mb'
-    }
-  }
 }
 
 module.exports = nextConfig
