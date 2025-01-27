@@ -28,52 +28,71 @@ export async function POST(request) {
       console.log('Processing attachment:', {
         hasAttachment: !!body.attachment,
         attachmentLength: body.attachment.length,
-        attachmentStart: body.attachment.substring(0, 100) // Log start of attachment for debugging
+        isString: typeof body.attachment === 'string',
+        startsWith: body.attachment.substring(0, 30)
       });
       
       try {
-        // Fix the base64 splitting logic
-        const dataUrlParts = body.attachment.match(/^data:([^;]+);base64,(.+)$/);
-        
-        if (!dataUrlParts) {
-          console.error('Invalid data URL format');
-          throw new Error('Invalid attachment format');
+        // Basic validation first
+        if (typeof body.attachment !== 'string' || !body.attachment.startsWith('data:')) {
+          throw new Error('Invalid attachment: not a valid data URL');
         }
 
-        const [, type, base64] = dataUrlParts;
+        let type, base64;
+
+        // Handle both formats: with or without base64 prefix
+        if (body.attachment.includes(';base64,')) {
+          [type, base64] = body.attachment.split(';base64,');
+          type = type.replace('data:', '');
+        } else {
+          console.error('Attachment missing base64 prefix');
+          throw new Error('Invalid attachment format: missing base64 encoding');
+        }
         
-        console.log('Attachment parsing:', {
-          type,
-          base64Length: base64?.length,
-          isValid: !!type && !!base64,
-          isVideo: type?.startsWith('video/')
+        console.log('Attachment parsing debug:', {
+          hasType: !!type,
+          typeValue: type,
+          base64Length: base64?.length || 0,
+          base64Preview: base64?.substring(0, 20) + '...'
         });
 
-        if (!type || !base64) {
-          console.error('Missing attachment components:', { hasType: !!type, hasBase64: !!base64 });
-          throw new Error('Missing attachment data');
+        // Validate type and base64
+        if (!type || !base64 || base64.trim().length === 0) {
+          throw new Error('Invalid attachment: missing data');
         }
 
-        // Only store if we have valid data
+        // Validate base64 content
+        try {
+          atob(base64);
+        } catch (e) {
+          console.error('Base64 validation failed:', e);
+          throw new Error('Invalid base64 encoding');
+        }
+
         mediaData = {
           type,
           base64,
           isVideo: type.startsWith('video/')
         };
 
-        console.log('Media data created successfully:', {
+        console.log('Media processing successful:', {
           type,
-          dataLength: base64.length,
-          isVideo: type.startsWith('video/')
+          isVideo: type.startsWith('video/'),
+          dataLength: base64.length
         });
 
       } catch (mediaError) {
-        console.error('Media processing error:', {
-          error: mediaError.message,
-          attachment: 'Data URL length: ' + (body.attachment?.length || 0)
+        console.error('Detailed media error:', {
+          message: mediaError.message,
+          attachmentPreview: body.attachment?.substring(0, 50) + '...',
+          attachmentLength: body.attachment?.length
         });
         return NextResponse.json(
-          { error: 'Invalid media format', details: mediaError.message },
+          { 
+            error: 'Media processing failed', 
+            details: mediaError.message,
+            code: 'MEDIA_PROCESSING_ERROR'
+          },
           { status: 400 }
         );
       }
