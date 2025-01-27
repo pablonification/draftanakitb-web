@@ -29,20 +29,40 @@ export async function POST(request) {
         const [header, base64] = body.attachment.split(',');
         const type = header.split(':')[1]?.split(';')[0];
         
+        // Additional validation for video content
+        if (type.startsWith('video/')) {
+          // Verify the base64 data is actually present and valid
+          if (!base64 || base64.length === 0) {
+            throw new Error('Invalid video data');
+          }
+          
+          // For videos, we need to ensure the base64 string is valid
+          try {
+            atob(base64); // Test if it's valid base64
+          } catch (e) {
+            throw new Error('Invalid video encoding');
+          }
+        }
+        
         // Only store if we have valid data
         if (header && base64 && type) {
           mediaData = {
             type,
-            base64
+            base64,
+            isVideo: type.startsWith('video/')
           };
           console.log('Media processed:', {
             type,
+            isVideo: type.startsWith('video/'),
             base64Length: base64.length
           });
         }
       } catch (mediaError) {
         console.error('Media processing error:', mediaError);
-        mediaData = null;
+        return NextResponse.json(
+          { error: 'Invalid media data', details: mediaError.message },
+          { status: 400 }
+        );
       }
     }
 

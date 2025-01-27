@@ -1,4 +1,4 @@
-export const validateFile = (file) => {
+export const validateFile = async (file) => {
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for videos
   const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB for images
   
@@ -28,15 +28,35 @@ export const validateFile = (file) => {
   }
 
   if (isVideo) {
-    // Add video-specific validation
-    return validateVideo(file);
+    // For videos, we need to check both size and validity
+    const videoCheck = await validateVideo(file);
+    if (!videoCheck.valid) {
+      return videoCheck;
+    }
+    
+    // Additional size check for video after validation
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        valid: false,
+        error: 'Ukuran video maksimal 5MB'
+      };
+    }
   }
 
   return { valid: true };
 };
 
-const validateVideo = async (file) => {
+const validateVideo = (file) => {
   return new Promise((resolve) => {
+    // First check if it's actually a video file
+    if (!file.type.startsWith('video/')) {
+      resolve({
+        valid: false,
+        error: 'File bukan video yang valid'
+      });
+      return;
+    }
+
     const video = document.createElement('video');
     video.preload = 'metadata';
 
@@ -65,23 +85,44 @@ const validateVideo = async (file) => {
     };
 
     video.onerror = () => {
+      window.URL.revokeObjectURL(video.src);
       resolve({
         valid: false,
-        error: 'Format video tidak valid'
+        error: 'Format video tidak valid atau rusak'
       });
     };
 
-    video.src = URL.createObjectURL(file);
+    try {
+      video.src = URL.createObjectURL(file);
+    } catch (error) {
+      resolve({
+        valid: false,
+        error: 'Gagal memproses video'
+      });
+    }
   });
 };
 
-export const convertFileToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    if (!file) {
-      resolve(null);
-      return;
-    }
+export const convertFileToBase64 = async (file) => {
+  if (!file) return null;
 
+  // For videos, ensure we're handling them correctly
+  if (file.type.startsWith('video/')) {
+    try {
+      // Read as array buffer first for videos
+      const buffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      return `data:${file.type};base64,${base64}`;
+    } catch (error) {
+      console.error('Error converting video to base64:', error);
+      throw new Error('Gagal memproses video');
+    }
+  }
+
+  // For other files (images), use the existing method
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
