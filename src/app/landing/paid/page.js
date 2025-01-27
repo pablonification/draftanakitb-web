@@ -36,7 +36,7 @@ const PaidMenfessLanding = () => {
   useEffect(() => {
     const initializePayment = async () => {
       try {
-        // Always clear existing payment session
+        // Clear any previous session
         localStorage.removeItem('paymentSession');
         
         const data = JSON.parse(localStorage.getItem('menfessData'));

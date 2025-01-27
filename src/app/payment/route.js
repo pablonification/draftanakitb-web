@@ -31,7 +31,7 @@ export async function POST(request) {
         
         // Simple validation
         if (!base64Data || base64Data.length < 100) {
-          throw new Error('Invalid media data');
+          throw new Error('Media data too small or invalid');
         }
 
         mediaData = {
@@ -40,9 +40,9 @@ export async function POST(request) {
           isVideo: type.startsWith('video/')
         };
       } catch (error) {
-        console.error('Media processing error:', error);
+        console.error('Attachment error:', error);
         return NextResponse.json(
-          { error: 'Invalid media format' },
+          { error: 'Invalid attachment' },
           { status: 400 }
         );
       }
