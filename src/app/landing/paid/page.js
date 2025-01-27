@@ -8,7 +8,7 @@ const PaidMenfessLanding = () => {
   const [paymentStatus, setPaymentStatus] = useState('initializing'); // initializing, pending, success, failed
   const [qrUrl, setQrUrl] = useState('');
   const [merchantRef, setMerchantRef] = useState('');
-  const PAYMENT_AMOUNT = 1000;
+  const PAYMENT_AMOUNT = 3200;
 
   // Add polling interval state
   const [pollInterval, setPollInterval] = useState(null);
@@ -194,7 +194,7 @@ const PaidMenfessLanding = () => {
                 <div className="text-5xl">✅</div>
                 <div>
                   <p className="text-xl font-bold">Payment successful!</p>
-                  <p>Menfess anda akan dikirim pada pukul 20.00 atau 22.00 dan anda akan menerima notifikasi lewat email jika menfess anda sudah dikirim.</p>
+                  <p>Menfess anda akan dikirim pada pukul 20.00 atau 22.00 dan anda akan menerima notifikasi lewat email jika menfess anda sudah dikirim (tolong cek di junk email atau tandai sebagai BUKAN SAMPAH).</p>
                   <p>Jika dalam 3 hari menfess anda belum dikirim, mohon hubungi X:@satpam_itb.</p>
                 </div>
                 <a href="/" className="inline-block mt-4 px-6 py-2 bg-white text-[#000072] rounded-lg hover:bg-gray-100">

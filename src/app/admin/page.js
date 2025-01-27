@@ -13,6 +13,8 @@ export default function AdminPanel() {
   const [successMessage, setSuccessMessage] = useState('');
   const [adminName, setAdminName] = useState('');
   const [adminStats, setAdminStats] = useState(null);
+  const [regularTweets, setRegularTweets] = useState([]);
+  const [activeTab, setActiveTab] = useState('paid'); // 'paid' or 'regular'
   const router = useRouter();
 
   useEffect(() => {
@@ -124,6 +126,27 @@ export default function AdminPanel() {
     }
   };
 
+  const fetchRegularTweets = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+
+      const response = await fetch('/api/admin/regular', {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setRegularTweets(data.tweets);
+      }
+    } catch (error) {
+      console.error('Error fetching regular tweets:', error);
+    }
+  };
+
   const handleStatusUpdate = async (tweetId, status, tweetUrl = '') => {
     try {
       setActionLoading(true);
@@ -219,6 +242,44 @@ export default function AdminPanel() {
     }
   };
 
+  // Add this function after handleAddTestData
+const handleAddRegularTestData = async () => {
+  try {
+    setActionLoading(true);
+    setError('');
+    
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('Not authorized. Please login again.');
+    }
+
+    console.log('Adding regular test data...');
+    const response = await fetch('/api/admin/test', {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ type: 'regular' })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to add test data');
+    }
+
+    setSuccessMessage(`Successfully added ${data.insertedCount} test regular tweets`);
+    await fetchRegularTweets();
+    
+  } catch (error) {
+    console.error('Error adding regular test data:', error);
+    setError(error.message);
+  } finally {
+    setActionLoading(false);
+  }
+};
+
   const fetchAdminStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -257,6 +318,20 @@ export default function AdminPanel() {
       fetchAdminStats();
       // Refresh stats every hour (3600000 ms)
       const interval = setInterval(fetchAdminStats, 3600000); // 1 HOUR
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn]);
+
+  // Add to useEffect
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchPaidTweets();
+      fetchRegularTweets();
+      // Refresh data every 5 minutes
+      const interval = setInterval(() => {
+        fetchPaidTweets();
+        fetchRegularTweets();
+      }, 300000);
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
@@ -437,9 +512,15 @@ useEffect(() => {
               <div className="space-x-4">
                 <button 
                   onClick={handleAddTestData} 
-                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 mr-2"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
                 >
-                  Add Test Data
+                  Add Paid Test
+                </button>
+                <button 
+                  onClick={handleAddRegularTestData} 
+                  className="bg-purple-600/80 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                >
+                  Add Regular Test
                 </button>
                 <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
                   Logout
@@ -455,37 +536,195 @@ useEffect(() => {
       </div>
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {error && (
-          <div className="bg-red-900/50 border-l-4 border-red-500 text-red-200 p-4 rounded mb-6">
-            {error}
-          </div>
-        )}
+        <div className="mb-6 flex space-x-4">
+          <button
+            onClick={() => setActiveTab('paid')}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === 'paid' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-700 text-gray-300'
+            }`}
+          >
+            Paid Menfess
+          </button>
+          <button
+            onClick={() => setActiveTab('regular')}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === 'regular' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-700 text-gray-300'
+            }`}
+          >
+            Regular Menfess
+          </button>
+        </div>
 
-        {successMessage && (
-          <div className="fixed top-4 right-4 bg-green-900/90 text-green-200 px-4 py-2 rounded-md border border-green-600 shadow-lg">
-            {successMessage}
-          </div>
-        )}
+        {activeTab === 'paid' ? (
+          <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden border border-gray-700">
+            <ul className="divide-y divide-gray-700">
+              {Array.isArray(paidTweets) && paidTweets.length > 0 ? (
+                paidTweets.map((tweet) => (
+                  <li key={tweet._id} className="p-6 hover:bg-gray-700/50 transition duration-150">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-gray-200">
+                            Email: {tweet.email}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-gray-300">
+                              Message: {tweet.messageText}
+                            </p>
+                            <button
+                              onClick={async () => {
+                                if (await copyToClipboard(tweet.messageText)) {
+                                  setSuccessMessage('Message copied to clipboard!');
+                                  setTimeout(() => setSuccessMessage(''), 1000);
+                                }
+                              }}
+                              className="p-1 rounded hover:bg-gray-600 transition-colors"
+                              title="Copy message"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          </div>
+                          {tweet.mediaUrl && (
+                            <div className="mt-2">
+                              {isVideoFile(tweet.mediaUrl) ? (
+                                <div className="relative">
+                                  <video
+                                    key={tweet.mediaUrl} // Add key to force remount
+                                    className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
+                                    controls
+                                    playsInline
+                                    preload="metadata"
+                                    controlsList="nodownload"
+                                    onError={(e) => console.error('Video Error:', e)}
+                                  >
+                                    <source 
+                                      src={tweet.mediaUrl} 
+                                      type="video/mp4"
+                                    />
+                                    {/* Fallback content */}
+                                    <div className="bg-gray-700 p-2 rounded text-sm text-gray-300">
+                                      Video cannot be previewed.
+                                      <a 
+                                        href={tweet.mediaUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="ml-2 text-blue-400 hover:underline"
+                                      >
+                                        Open in new tab
+                                      </a>
+                                    </div>
+                                  </video>
+                                </div>
+                              ) : (
+                                <img
+                                  src={tweet.mediaUrl}
+                                  alt="Tweet media"
+                                  className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
+                                />
+                              )}
+                              <div className="mt-2 space-x-2">
+                                <a
+                                  href={tweet.mediaUrl}
+                                  download={`media-${tweet._id}${isVideoFile(tweet.mediaUrl) ? '.mp4' : '.jpg'}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                                >
+                                  Download Media
+                                </a>
+                                {!isBase64Url(tweet.mediaUrl) && (
+                                  <a
+                                    href={tweet.mediaUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                                  >
+                                    Open in New Tab
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                          tweet.tweetStatus === 'posted' 
+                            ? 'bg-green-900/50 text-green-200 border border-green-600'
+                            : tweet.tweetStatus === 'pending'
+                              ? 'bg-yellow-900/50 text-yellow-200 border border-yellow-600'
+                              : 'bg-red-900/50 text-red-200 border border-red-600'
+                        }`}>
+                          {tweet.tweetStatus.toUpperCase()}
+                        </span>
+                      </div>
 
-        {actionLoading && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-            <div className="bg-gray-800 p-4 rounded-lg shadow-xl">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            </div>
-          </div>
-        )}
+                      <div className="flex items-center space-x-4">
+                        <select
+                          value={tweet.tweetStatus}
+                          onChange={(e) => handleStatusUpdate(tweet._id, e.target.value)}
+                          className="rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 py-2"
+                          disabled={actionLoading}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="posted">Posted</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
 
-        <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden border border-gray-700">
-          <ul className="divide-y divide-gray-700">
-            {Array.isArray(paidTweets) && paidTweets.length > 0 ? (
-              paidTweets.map((tweet) => (
+                        {tweet.tweetStatus === 'posted' && (
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              placeholder="Tweet URL"
+                              value={tweet.tweetUrl || ''}
+                              onChange={(e) => handleStatusUpdate(tweet._id, 'posted', e.target.value)}
+                              className="w-full rounded-md border-gray-600 bg-gray-700 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 py-2"
+                            />
+                          </div>
+                        )}
+
+                        {tweet.tweetStatus === 'posted' && tweet.tweetUrl && !tweet.notificationSent && (
+                          <button
+                            onClick={() => handleSendNotification(tweet._id)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 disabled:opacity-50"
+                            disabled={actionLoading}
+                          >
+                            {actionLoading ? 'Sending...' : 'Send Notification'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li className="px-6 py-8 text-center text-gray-400 bg-gray-800/50">
+                  No paid tweets found
+                </li>
+              )}
+            </ul>
+          </div>
+        ) : (
+          <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden border border-gray-700">
+            <ul className="divide-y divide-gray-700">
+              {regularTweets.map((tweet) => (
                 <li key={tweet._id} className="p-6 hover:bg-gray-700/50 transition duration-150">
                   <div className="space-y-4">
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-200">
-                          Email: {tweet.email}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-gray-200">
+                            Email: {tweet.email}
+                          </p>
+                          {tweet.mediaUrl && (
+                            <span className="px-2 py-0.5 text-xs bg-blue-900/50 text-blue-300 rounded-full border border-blue-600">
+                              Has Attachment
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <p className="text-sm text-gray-300">
                             Message: {tweet.messageText}
@@ -501,127 +740,40 @@ useEffect(() => {
                             title="Copy message"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </button>
                         </div>
+                        <p className="text-xs text-gray-400">
+                          Sent: {new Date(tweet.createdAt).toLocaleString()}
+                        </p>
+                        {tweet.tweetId && (
+                          <a 
+                            href={`https://twitter.com/x/status/${tweet.tweetId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline text-sm"
+                          >
+                            View Tweet ↗
+                          </a>
+                        )}
                         {tweet.mediaUrl && (
                           <div className="mt-2">
-                            {isVideoFile(tweet.mediaUrl) ? (
-                              <div className="relative">
-                                <video
-                                  key={tweet.mediaUrl} // Add key to force remount
-                                  className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
-                                  controls
-                                  playsInline
-                                  preload="metadata"
-                                  controlsList="nodownload"
-                                  onError={(e) => console.error('Video Error:', e)}
-                                >
-                                  <source 
-                                    src={tweet.mediaUrl} 
-                                    type="video/mp4"
-                                  />
-                                  {/* Fallback content */}
-                                  <div className="bg-gray-700 p-2 rounded text-sm text-gray-300">
-                                    Video cannot be previewed.
-                                    <a 
-                                      href={tweet.mediaUrl} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="ml-2 text-blue-400 hover:underline"
-                                    >
-                                      Open in new tab
-                                    </a>
-                                  </div>
-                                </video>
-                              </div>
-                            ) : (
-                              <img
-                                src={tweet.mediaUrl}
-                                alt="Tweet media"
-                                className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
-                              />
-                            )}
-                            <div className="mt-2 space-x-2">
-                              <a
-                                href={tweet.mediaUrl}
-                                download={`media-${tweet._id}${isVideoFile(tweet.mediaUrl) ? '.mp4' : '.jpg'}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-                              >
-                                Download Media
-                              </a>
-                              {!isBase64Url(tweet.mediaUrl) && (
-                                <a
-                                  href={tweet.mediaUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-                                >
-                                  Open in New Tab
-                                </a>
-                              )}
-                            </div>
+                            <img
+                              src={tweet.mediaUrl}
+                              alt="Tweet media"
+                              className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
+                            />
                           </div>
                         )}
                       </div>
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        tweet.tweetStatus === 'posted' 
-                          ? 'bg-green-900/50 text-green-200 border border-green-600'
-                          : tweet.tweetStatus === 'pending'
-                            ? 'bg-yellow-900/50 text-yellow-200 border border-yellow-600'
-                            : 'bg-red-900/50 text-red-200 border border-red-600'
-                      }`}>
-                        {tweet.tweetStatus.toUpperCase()}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                      <select
-                        value={tweet.tweetStatus}
-                        onChange={(e) => handleStatusUpdate(tweet._id, e.target.value)}
-                        className="rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 py-2"
-                        disabled={actionLoading}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="posted">Posted</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-
-                      {tweet.tweetStatus === 'posted' && (
-                        <div className="flex-1">
-                          <input
-                            type="text"
-                            placeholder="Tweet URL"
-                            value={tweet.tweetUrl || ''}
-                            onChange={(e) => handleStatusUpdate(tweet._id, 'posted', e.target.value)}
-                            className="w-full rounded-md border-gray-600 bg-gray-700 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 py-2"
-                          />
-                        </div>
-                      )}
-
-                      {tweet.tweetStatus === 'posted' && tweet.tweetUrl && !tweet.notificationSent && (
-                        <button
-                          onClick={() => handleSendNotification(tweet._id)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 disabled:opacity-50"
-                          disabled={actionLoading}
-                        >
-                          {actionLoading ? 'Sending...' : 'Send Notification'}
-                        </button>
-                      )}
                     </div>
                   </div>
                 </li>
-              ))
-            ) : (
-              <li className="px-6 py-8 text-center text-gray-400 bg-gray-800/50">
-                No paid tweets found
-              </li>
-            )}
-          </ul>
-        </div>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

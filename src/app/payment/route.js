@@ -50,7 +50,7 @@ export async function POST(request) {
     const apiKey = process.env.TRIPAY_API_KEY;
     const merchant_code = process.env.TRIPAY_MERCHANT_CODE;
     const merchant_ref = 'TP' + Date.now();
-    const amount = 1000;
+    const amount = 3200;
     const expiry = parseInt(Math.floor(new Date()/1000) + (60*60));
 
     const signature = crypto
@@ -68,7 +68,7 @@ export async function POST(request) {
         {
           sku: "PAIDMENFESS",
           name: body.message || "PLACEHOLDER TWEET USER",
-          price: 1000,
+          price: 3200,
           quantity: 1
         }
       ],

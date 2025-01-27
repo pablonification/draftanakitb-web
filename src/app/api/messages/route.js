@@ -4,6 +4,7 @@ import { tweet } from '@/app/utils/twitterHandler';
 import { NextResponse } from 'next/server';
 import { DailyMessageCount } from '@/app/models/dailyMessageCount';
 import { LIMITS, isWithinLimits } from '@/app/config/limits';
+import { RegularTweet } from '@/app/models/regularTweetModel';
 
 // Mock tweet function for development
 const mockTweet = async (message, attachment) => {
@@ -124,6 +125,8 @@ export async function POST(request) {
       validateMessage(message);
       
       let tweetResponse;
+      let mediaUrl = null;
+
       if (process.env.DEV_MODE === 'true') {
         tweetResponse = await mockTweet(message, attachment);
       } else {
@@ -135,10 +138,20 @@ export async function POST(request) {
           const [mimeTypeHeader, base64Data] = attachment.split(',');
           mediaType = mimeTypeHeader.split(':')[1].split(';')[0];
           mediaBuffer = Buffer.from(base64Data, 'base64');
+          mediaUrl = attachment; // Store the base64 image
         }
         
         tweetResponse = await tweet(message, mediaBuffer, mediaType);
       }
+
+      // Log regular tweet with consistent structure
+      await RegularTweet.create({
+        email,
+        messageText: message,
+        mediaUrl,
+        tweetId: tweetResponse.data?.id,
+        createdAt: new Date() // Explicitly set creation date
+      });
 
       // Always update counters
       const today = new Date();

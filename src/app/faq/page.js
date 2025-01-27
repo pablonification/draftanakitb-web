@@ -39,6 +39,10 @@ const FAQPage = () => {
     {
       q: "Bagaimana jika pembayaran gagal tapi saldo terpotong?",
       a: "Silakan hubungi kami segera di @satpam_itb dengan menyertakan bukti pembayaran dan detail transaksi."
+    },
+    {
+      q: "Saya tidak menerima kode OTP di email ITB saya?",
+      a: "Kode OTP biasanya masuk ke folder JUNK/SPAM di Email Outlook ITB. Setelah menemukan email OTP:\n1. Klik tombol 'Bukan Sampah' atau 'Not Junk'\n2. Ini akan membantu agar email OTP selanjutnya masuk ke Inbox utama\n3. Jika masih belum menerima OTP setelah 5 menit, gunakan tombol 'Resend OTP'"
     }
   ];
 

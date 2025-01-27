@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import TermsModal from '../components/TermsModal';
 import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
+import OtpHelpModal from '../components/OtpHelpModal';
 
 // Add whitelist constant at the top
 const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
@@ -13,69 +14,19 @@ const isVideoFile = (file) => {
 };
 
 // Replace the OtpHelpTooltip component
-const OtpHelpTooltip = () => {
-  const [showMobileTooltip, setShowMobileTooltip] = useState(false);
-
-  return (
-    <div className="relative group">
-      <div 
-        className="cursor-help ml-2 text-blue-300"
-        onClick={() => setShowMobileTooltip(prev => !prev)} // for mobile
-      >
-        <span>ℹ️ Belum menerima OTP?</span>
-      </div>
-      
-      {/* Desktop tooltip */}
-      <div className="hidden group-hover:md:block absolute z-50 w-[400px] p-4 mt-2 -left-1/2 
-        bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700">
-        <h4 className="font-semibold text-blue-300 mb-2">Tidak menerima kode OTP?</h4>
-        <p className="text-sm text-gray-300 mb-3">
-          Kode OTP biasanya masuk ke folder JUNK/SPAM di Email Outlook ITB anda.
-          Silakan cek folder tersebut seperti pada gambar di bawah ini:
-        </p>
-        <Image
-          src="/junk.png"
-          alt="Junk Email Location"
-          width={350}
-          height={200}
-          className="rounded-lg border border-gray-600"
-        />
-        <div className="absolute w-3 h-3 bg-gray-800 rotate-45 transform 
-          -translate-y-1.5 left-[80px] -top-1 border-t border-l border-gray-700">
-        </div>
-      </div>
-
-      {/* Mobile tooltip */}
-      {showMobileTooltip && (
-        <div className="md:hidden fixed inset-x-0 bottom-0 z-50 p-4 bg-gray-800/95 backdrop-blur-sm border-t border-gray-700">
-          <div className="max-w-lg mx-auto space-y-3">
-            <div className="flex justify-between items-start">
-              <h4 className="font-semibold text-blue-300">Tidak menerima kode OTP?</h4>
-              <button 
-                onClick={() => setShowMobileTooltip(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-sm text-gray-300">
-              Kode OTP biasanya masuk ke folder JUNK/SPAM di Email Outlook ITB anda.
-            </p>
-            <div className="relative w-full max-w-[300px] mx-auto">
-              <Image
-                src="/junk.png"
-                alt="Junk Email Location"
-                width={300}
-                height={170}
-                className="rounded-lg border border-gray-600"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+const OtpHelpButton = ({ onClick }) => (
+  <button
+    type="button" // Add this to prevent form submission
+    onClick={(e) => {
+      e.preventDefault(); // Add this to prevent form events
+      onClick();
+    }}
+    className="ml-2 text-blue-300 hover:text-blue-400 transition-colors flex items-center gap-1"
+  >
+    <span>ℹ️</span>
+    <span className="text-sm">Belum menerima OTP?</span>
+  </button>
+);
 
 // Add this new component after OtpHelpTooltip
 const PaidMenfessTooltip = () => {
@@ -147,28 +98,50 @@ const MainPage = () => {
   const [botStatus, setBotStatus] = useState({ 
     status: 'ON', 
     isPaidOnly: false, 
-    remainingRegular: 17,
+    remainingRegular: 0, // Changed default to 0
     personalLimitExceeded: false 
   });
   const [personalLimitError, setPersonalLimitError] = useState('');
   const [attachmentError, setAttachmentError] = useState('');
   const [showPaidInfo, setShowPaidInfo] = useState(false);
+  const [showOtpHelp, setShowOtpHelp] = useState(false);
 
   useEffect(() => {
     const fetchBotStatus = async () => {
       try {
-        const response = await fetch('/api/messages');
+        const response = await fetch('/api/messages', {
+          // Add these options to handle network errors
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         setBotStatus({
-          ...data,
+          status: data.status || 'ON',
+          isPaidOnly: data.isPaidOnly || false,
+          remainingRegular: data.remainingRegular || 0, // Changed default to 0
           personalLimitExceeded: data.personalLimitExceeded || false
         });
+        
         // Force paid menfess when global limit is exceeded
         if (data.isPaidOnly) {
           setMenfessType('paid');
         }
       } catch (error) {
         console.error('Error fetching bot status:', error);
+        // Set default values if fetch fails
+        setBotStatus({
+          status: 'ON',
+          isPaidOnly: true, // Default to paid only when error occurs
+          remainingRegular: 0,
+          personalLimitExceeded: false
+        });
       }
     };
 
@@ -524,13 +497,13 @@ const MainPage = () => {
                 </p>
               )}
               {renderWhitelistInfo()}
-            </div>
 
+            </div>
             {isEmailVerified && (
               <div className="space-y-2">
                 <div className="flex items-center">
                   <label className="block font-semibold">OTP</label>
-                  <OtpHelpTooltip />
+                  <OtpHelpButton onClick={() => setShowOtpHelp(true)} />
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -668,24 +641,28 @@ const MainPage = () => {
               {submitSuccess && (
                 <p className="success-message text-center">{submitSuccess}</p>
               )}
-
-              <div className="text-center">
-                <button
-                    type="submit"
-                    disabled={!isAgreed || !isEmailVerified || !isOtpVerified || isSubmitting}
-                    className="px-6 py-2 bg-white text-[#000072] rounded disabled:opacity-50 hover:bg-gray-100 transition-colors"
-                >
-                    {isSubmitting ? 'SENDING...' : 'SEND'}
-                </button>
-              </div>
-            </div>
-          </form>
+          {/* <div className="text-center"> */}
+          <div className="text-center">
+            <button
+                type="submit"
+                disabled={!isAgreed || !isEmailVerified || !isOtpVerified || isSubmitting}
+                className="px-6 py-2 bg-white text-[#000072] rounded disabled:opacity-50 hover:bg-gray-100 transition-colors"
+            >
+                {isSubmitting ? 'SENDING...' : 'SEND'}
+            </button>
+          </div>
         </div>
+      </form>
       </div>
-      <TermsModal 
+      </div>
+      <TermsModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         onAccept={handleAcceptTerms}
+      />
+      <OtpHelpModal
+        isOpen={showOtpHelp}
+        onClose={() => setShowOtpHelp(false)}
       />
     </div>
   );
