@@ -127,7 +127,67 @@ const validateVideo = (file) => {
   });
 };
 
-// Remove convertFileToBase64 as it's no longer needed
+export const convertFileToBase64 = async (file) => {
+  if (!file) return null;
+
+  console.log('Starting file conversion:', {
+    type: file.type,
+    size: file.size,
+    name: file.name
+  });
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+      const result = reader.result;
+      
+      // Special handling for video files
+      if (file.type.startsWith('video/')) {
+        console.log('Processing video file:', {
+          originalSize: file.size,
+          base64Length: result.length
+        });
+        
+        // Check if the base64 string is valid
+        const base64Content = result.split('base64,')[1];
+        if (!base64Content) {
+          reject(new Error('Invalid video data'));
+          return;
+        }
+
+        // Additional validation for video data
+        try {
+          const decodedLength = atob(base64Content).length;
+          console.log('Video validation successful:', {
+            decodedLength,
+            originalSize: file.size,
+            ratio: decodedLength / file.size
+          });
+        } catch (e) {
+          console.error('Video base64 validation failed:', e);
+          reject(new Error('Invalid video encoding'));
+          return;
+        }
+      }
+
+      resolve(result);
+    };
+    
+    reader.onerror = (error) => {
+      console.error('File read error:', error);
+      reject(new Error('File read failed'));
+    };
+
+    // Use chunk reading for large files
+    if (file.size > 1024 * 1024 * 2) { // If larger than 2MB
+      const chunk = file.slice(0, file.size);
+      reader.readAsDataURL(chunk);
+    } else {
+      reader.readAsDataURL(file);
+    }
+  });
+};
 
 // Add helper function to check if file is a video
 export const isVideoFile = (file) => {

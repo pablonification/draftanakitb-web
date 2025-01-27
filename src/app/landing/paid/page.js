@@ -47,9 +47,9 @@ const PaidMenfessLanding = () => {
         // Log the attachment data for debugging
         if (data.attachment) {
           console.log('Sending attachment:', {
-            name: data.attachment.name,
-            type: data.attachment.type,
-            size: data.attachment.size,
+            length: data.attachment.length,
+            isBase64: data.attachment.includes('base64'),
+            preview: data.attachment.substring(0, 50) + '...'
           });
         }
 
@@ -58,7 +58,7 @@ const PaidMenfessLanding = () => {
         formData.append('email', data.email);
         formData.append('message', data.message);
         if (data.attachment) {
-          formData.append('attachment', data.attachment); // Ensure it's a File object
+          formData.append('attachment', data.attachment);
         }
 
         const response = await fetch('/payment', {

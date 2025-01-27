@@ -2,12 +2,66 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { connectToDatabase } from '@/lib/mongodb';
 import { connectDB } from '@/app/utils/db';
-import Transaction from '@/app/models/Transaction'; // Import Transaction model
+import mongoose from 'mongoose';
+
+// Define the Transaction model here to ensure it's initialized (here for fix conflict with Next.js)
+const transactionSchema = new mongoose.Schema({
+  merchantRef: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  message: {
+    type: String,
+    required: true
+  },
+  attachment: {
+    type: String,
+    default: null
+  },
+  mediaData: {
+    type: String,  // Changed from Object to String
+    default: null
+  },
+  amount: {
+    type: Number,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['UNPAID', 'PAID', 'EXPIRED', 'FAILED'],
+    default: 'UNPAID'
+  },
+  paidAt: {
+    type: Date,
+    default: null
+  },
+  tweetStatus: {
+    type: String,
+    enum: ['pending', 'sent', 'failed'],
+    default: 'pending'
+  },
+  tweetError: {
+    type: String,
+    default: null
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Initialize the model
+const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', transactionSchema);
 
 const verifySignature = (data, signature) => {
   const privateKey = process.env.TRIPAY_PRIVATE_KEY;
   const jsonString = JSON.stringify(data);
-
+  
   const expectedSignature = crypto
     .createHmac('sha256', privateKey)
     .update(jsonString)
@@ -26,7 +80,7 @@ export async function POST(request) {
     });
 
     await connectDB();
-    const { gfs } = await connectToDatabase();
+    const { db } = await connectToDatabase();
 
     const callbackSignature = request.headers.get('X-Callback-Signature');
     console.log('Received callback with signature:', callbackSignature);
@@ -53,7 +107,7 @@ export async function POST(request) {
     // Find transaction
     const transaction = await Transaction.findOne({
       merchantRef: data.merchant_ref
-    }).exec();
+    });
 
     if (!transaction) {
       return NextResponse.json(
@@ -70,20 +124,18 @@ export async function POST(request) {
     if (data.status === 'PAID') {
       transaction.tweetStatus = 'pending';
       
-      // Reference to GridFS file
-      let mediaFile = null;
+      // Parse stored media data
+      let mediaData = null;
       let mediaType = null;
       let mediaUrl = null;
 
-      if (transaction.mediaFileId) {
+      if (transaction.mediaData) {
         try {
-          mediaFile = await gfs.files.findOne({ _id: transaction.mediaFileId });
-          if (mediaFile) {
-            mediaType = mediaFile.contentType;
-            mediaUrl = `/api/files/${mediaFile._id}`; // Ensure this route is correctly set up
-          }
+          mediaData = JSON.parse(transaction.mediaData);
+          mediaType = mediaData.type;
+          mediaUrl = `data:${mediaData.type};base64,${mediaData.base64}`;
         } catch (e) {
-          console.error('Error retrieving media file:', e);
+          console.error('Error parsing media data:', e);
         }
       }
 
@@ -92,7 +144,7 @@ export async function POST(request) {
         _id: data.merchant_ref,
         email: transaction.email,
         messageText: transaction.message,
-        mediaFileId: mediaFile ? mediaFile._id : null, // Store reference
+        mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store as string
         mediaType: mediaType,
         mediaUrl: mediaUrl,
         tweetStatus: "pending",
@@ -103,11 +155,11 @@ export async function POST(request) {
         scheduledTime: "20:00"
       };
 
-      await gfs.db.collection('paidTweets').insertOne(paidTweet);
+      await db.collection('paidTweets').insertOne(paidTweet);
       
       console.log('Payment successful, created paid tweet entry:', {
         merchantRef: data.merchant_ref,
-        hasMedia: !!mediaFile,
+        hasMedia: !!mediaData,
         mediaType
       });
     }
