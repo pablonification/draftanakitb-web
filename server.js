@@ -3,9 +3,10 @@ const { parse } = require('url')
 const next = require('next')
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = '0.0.0.0'  // Changed from 'localhost' to '0.0.0.0'
-const port = process.env.PORT || 3000
-const app = next({ dev })   // Removed hostname and port from next config
+const hostname = '0.0.0.0'
+const port = parseInt(process.env.PORT, 10) || 3000
+
+const app = next({ dev })
 const handle = app.getRequestHandler()
 
 app.prepare().then(() => {
@@ -18,8 +19,20 @@ app.prepare().then(() => {
       res.statusCode = 500
       res.end('Internal Server Error')
     }
-  }).listen(port, hostname, (err) => {  // Added hostname parameter
+  }).listen(port, hostname, (err) => {
     if (err) throw err
+    
+    // Signal that the server is ready
+    if (process.send) {
+      process.send('ready')
+    }
+    
     console.log(`> Ready on http://${hostname}:${port}`)
+  })
+  
+  // Handle shutdown gracefully
+  process.on('SIGINT', () => {
+    console.log('Received SIGINT. Cleaning up...')
+    process.exit()
   })
 })

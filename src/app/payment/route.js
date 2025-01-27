@@ -50,7 +50,7 @@ export async function POST(request) {
     const apiKey = process.env.TRIPAY_API_KEY;
     const merchant_code = process.env.TRIPAY_MERCHANT_CODE;
     const merchant_ref = 'TP' + Date.now();
-    const amount = 1001;
+    const amount = 3220;
     const expiry = parseInt(Math.floor(new Date()/1000) + (60*60));
 
     const signature = crypto
@@ -68,7 +68,7 @@ export async function POST(request) {
         {
           sku: "PAIDMENFESS",
           name: body.message || "PLACEHOLDER TWEET USER",
-          price: 1001,
+          price: 3220,
           quantity: 1
         }
       ],
@@ -76,7 +76,11 @@ export async function POST(request) {
       signature: signature
     };
 
-    console.log('>>>>>>>>>Payment Request Payload:', JSON.stringify(payload, null, 2));
+    console.log('=== TRIPAY PAYMENT REQUEST ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Customer Email:', body.email);
+    console.log('Merchant Reference:', merchant_ref);
+    console.log('Request Payload:', JSON.stringify(payload, null, 2));
 
     const response = await axios.post(
       'https://tripay.co.id/api/transaction/create', // Changed from detail to create endpoint
@@ -91,7 +95,10 @@ export async function POST(request) {
       }
     );
 
-    console.log('>>>>>>>>>>>Tripay Response:', JSON.stringify(response.data, null, 2));
+    console.log('=== TRIPAY PAYMENT RESPONSE ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Status:', response.status);
+    console.log('Response Data:', JSON.stringify(response.data, null, 2));
 
     // Create transaction record in database
     const transaction = new Transaction({
@@ -105,8 +112,12 @@ export async function POST(request) {
     });
 
     await transaction.save();
-    console.log('Transaction created with media:', {
+    console.log('=== TRANSACTION CREATED ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Transaction:', {
       ref: transaction.merchantRef,
+      email: transaction.email,
+      amount: transaction.amount,
       hasMedia: !!mediaData
     });
 

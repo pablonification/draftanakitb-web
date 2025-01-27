@@ -72,6 +72,13 @@ const verifySignature = (data, signature) => {
 
 export async function POST(request) {
   try {
+    console.log('=== TRIPAY CALLBACK RECEIVED ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Headers:', {
+      signature: request.headers.get('X-Callback-Signature'),
+      event: request.headers.get('X-Callback-Event'),
+    });
+
     await connectDB();
     const { db } = await connectToDatabase();
 
@@ -161,10 +168,10 @@ export async function POST(request) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('Callback processing error:', {
-      message: error.message,
-      stack: error.stack
-    });
+    console.error('=== CALLBACK ERROR ===');
+    console.error('Timestamp:', new Date().toISOString());
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }

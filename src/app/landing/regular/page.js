@@ -234,7 +234,7 @@ const RegularMenfessLanding = () => {
 
               {/* Google Adsense Placeholder */}
               <div className="bg-gray-200 p-4 rounded-md text-center">
-                ADS PLACEHOLDER
+                ADS
               </div>
 
               <div className="bg-gray-300 rounded-md h-4 relative">

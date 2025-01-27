@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: 'DraftAnakITB',
-  description: 'Platform menfess anonymous untuk mahasiswa ITB. Kirim pesan dan opinimu secara anonim ke Twitter!',
+  title: 'DraftAnakITB Bot',
+  description: 'Send anonymous messages to Twitter through DraftAnakITB Bot',
   metadataBase: new URL('https://draftanakitb.live'),
   applicationName: 'DraftAnakITB',
   authors: [{ name: 'DraftAnakITB Team' }],
@@ -66,6 +66,9 @@ export const metadata = {
     'og:discord:site_name': 'DraftAnakITB',
     'og:discord:image_width': '1200',
     'og:discord:image_height': '630',
+    
+    // Google AdSense
+    'google-adsense-account': 'ca-pub-9161286456755540'
   },
 
   // Icons
@@ -88,12 +91,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="id">
+    <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         {/* Additional verification tags */}
         <meta name="facebook-domain-verification" content="your-fb-verification-code" />
         <meta name="google-site-verification" content="your-google-verification-code" />
+        <meta name="google-adsense-account" content="ca-pub-9161286456755540" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
