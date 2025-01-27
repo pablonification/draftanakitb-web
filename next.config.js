@@ -7,7 +7,7 @@ const nextConfig = {
   },
   api: {
     bodyParser: {
-      sizeLimit: '10mb' // Increased from default 1mb
+      sizeLimit: '10mb', // Increase as needed to accommodate larger videos
     },
   },
 }

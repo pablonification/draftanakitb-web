@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import axios from 'axios';
 import { connectDB } from '@/app/utils/db';
 import mongoose from 'mongoose';
+import { GridFSBucket, ObjectId } from 'mongodb';
 
 // Use the same Transaction model as in callback
 const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', require('../payment/callback/route').transactionSchema);
@@ -29,14 +30,28 @@ export async function POST(request) {
     if (file && file.size > 0) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      // Convert to base64
-      const base64Content = buffer.toString('base64');
       const mimeType = file.type || 'video/mp4';
 
+      // Initialize GridFSBucket
+      const { db } = await connectToDatabase();
+      const bucket = new GridFSBucket(db, { bucketName: 'videos' });
+
+      // Upload the file to GridFS
+      const uploadStream = bucket.openUploadStream(file.name, {
+        contentType: mimeType,
+      });
+
+      uploadStream.end(buffer);
+
+      await new Promise((resolve, reject) => {
+        uploadStream.on('finish', resolve);
+        uploadStream.on('error', reject);
+      });
+
+      // Store the file ID and type in mediaData
       mediaData = {
+        fileId: uploadStream.id,
         type: mimeType,
-        base64: base64Content,
-        isVideo: mimeType.startsWith('video/')
       };
     }
 
@@ -106,7 +121,7 @@ export async function POST(request) {
       message: message,
       amount: amount,
       status: 'UNPAID',
-      mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store as string
+      mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store GridFS reference as string
       createdAt: new Date()
     });
 

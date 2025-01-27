@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { connectToDatabase } from '@/lib/mongodb';
 import { connectDB } from '@/app/utils/db';
 import mongoose from 'mongoose';
+import { GridFSBucket, ObjectId } from 'mongodb';
 
 // Define the Transaction model here to ensure it's initialized (here for fix conflict with Next.js)
 const transactionSchema = new mongoose.Schema({
@@ -133,9 +134,28 @@ export async function POST(request) {
         try {
           mediaData = JSON.parse(transaction.mediaData);
           mediaType = mediaData.type;
-          mediaUrl = `data:${mediaData.type};base64,${mediaData.base64}`;
+          
+          // Retrieve the file from GridFS
+          const bucket = new GridFSBucket(db, { bucketName: 'videos' });
+          const downloadStream = bucket.openDownloadStream(ObjectId(mediaData.fileId));
+
+          let fileBuffer = Buffer.alloc(0);
+
+          downloadStream.on('data', (chunk) => {
+            fileBuffer = Buffer.concat([fileBuffer, chunk]);
+          });
+
+          await new Promise((resolve, reject) => {
+            downloadStream.on('end', resolve);
+            downloadStream.on('error', reject);
+          });
+
+          // Convert Buffer to Base64 URL for usage
+          const base64 = fileBuffer.toString('base64');
+          mediaUrl = `data:${mediaType};base64,${base64}`;
+
         } catch (e) {
-          console.error('Error parsing media data:', e);
+          console.error('Error retrieving media from GridFS:', e);
         }
       }
 
