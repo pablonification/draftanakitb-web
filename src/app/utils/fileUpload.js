@@ -65,36 +65,57 @@ const validateVideoFile = (file) => {
   });
 };
 
-export const processFile = async (file) => {
+const CHUNK_SIZE = 512 * 1024; // 512KB
+
+export async function uploadFileInChunks(file) {
   if (!file) return null;
 
-  const CHUNK_SIZE = 512 * 1024; // 512KB
-  const chunks = Math.ceil(file.size / CHUNK_SIZE);
-  let processedFile = '';
+  const chunkCount = Math.ceil(file.size / CHUNK_SIZE);
+  let fileId = null;
 
-  for (let i = 0; i < chunks; i++) {
+  for (let i = 0; i < chunkCount; i++) {
     const start = i * CHUNK_SIZE;
     const end = Math.min(start + CHUNK_SIZE, file.size);
     const chunk = file.slice(start, end);
-    
-    const base64Chunk = await readChunkAsBase64(chunk);
-    processedFile += base64Chunk;
+    const base64Chunk = await readAsBase64(chunk);
+
+    const res = await fetch('/api/upload-chunk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileId,
+        chunkIndex: i,
+        chunkCount,
+        chunkData: base64Chunk,
+        fileType: file.type
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to upload chunk ${i + 1}`);
+    }
+
+    const data = await res.json();
+    fileId = data.fileId; // store the fileId
+    if (data.merged) {
+      return { fileId, fileType: data.fileType };
+    }
   }
 
-  return `data:${file.type};base64,${processedFile}`;
-};
+  return null;
+}
 
-const readChunkAsBase64 = (chunk) => {
+function readAsBase64(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const base64 = reader.result.split(',')[1];
-      resolve(base64);
+      // result is data:...base64,...
+      resolve(reader.result.split(',')[1]);
     };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(chunk);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(blob);
   });
-};
+}
 
 export const isVideoFile = (file) => {
   const ALLOWED_VIDEO_TYPES = ['video/mp4'];
