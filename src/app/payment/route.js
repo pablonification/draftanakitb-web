@@ -27,26 +27,32 @@ export async function POST(request) {
     if (body.attachment) {
       console.log('Processing attachment:', {
         hasAttachment: !!body.attachment,
-        attachmentType: body.attachment.split(';')[0]
+        attachmentLength: body.attachment.length,
+        attachmentStart: body.attachment.substring(0, 100) // Log start of attachment for debugging
       });
       
       try {
-        if (!body.attachment.includes('base64,')) {
+        // Fix the base64 splitting logic
+        const dataUrlParts = body.attachment.match(/^data:([^;]+);base64,(.+)$/);
+        
+        if (!dataUrlParts) {
+          console.error('Invalid data URL format');
           throw new Error('Invalid attachment format');
         }
 
-        const [header, base64] = body.attachment.split('base64,');
-        const type = header.split(':')[1]?.split(';')[0];
+        const [, type, base64] = dataUrlParts;
         
-        if (!type || !base64) {
-          throw new Error('Missing attachment data');
-        }
-
         console.log('Attachment parsing:', {
           type,
-          base64Length: base64.length,
-          isValid: !!type && !!base64
+          base64Length: base64?.length,
+          isValid: !!type && !!base64,
+          isVideo: type?.startsWith('video/')
         });
+
+        if (!type || !base64) {
+          console.error('Missing attachment components:', { hasType: !!type, hasBase64: !!base64 });
+          throw new Error('Missing attachment data');
+        }
 
         // Only store if we have valid data
         mediaData = {
@@ -54,10 +60,17 @@ export async function POST(request) {
           base64,
           isVideo: type.startsWith('video/')
         };
+
+        console.log('Media data created successfully:', {
+          type,
+          dataLength: base64.length,
+          isVideo: type.startsWith('video/')
+        });
+
       } catch (mediaError) {
         console.error('Media processing error:', {
           error: mediaError.message,
-          attachment: body.attachment ? 'present' : 'missing'
+          attachment: 'Data URL length: ' + (body.attachment?.length || 0)
         });
         return NextResponse.json(
           { error: 'Invalid media format', details: mediaError.message },
