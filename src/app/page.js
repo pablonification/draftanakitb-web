@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import TermsModal from '../components/TermsModal';
-import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
+import { validateFile, processFile } from '@/app/utils/fileUpload';
 import OtpHelpModal from '../components/OtpHelpModal';
 
 // Add whitelist constant at the top
@@ -203,7 +203,7 @@ const MainPage = () => {
     try {
       let base64Attachment = null;
       if (attachment) {
-        base64Attachment = await convertFileToBase64(attachment);
+        base64Attachment = await processFile(attachment);
       }
 
       // Check if email is whitelisted
