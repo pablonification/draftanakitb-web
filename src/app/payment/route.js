@@ -55,7 +55,7 @@ export async function POST(request) {
     const randomString = crypto.randomBytes(4).toString('hex');
     const merchant_ref = `TP${timestamp}${randomString}`;
     
-    const amount = 3220;
+    const amount = 1001;
     const expiry = parseInt(Math.floor(new Date()/1000) + (60*60));
 
     const signature = crypto
@@ -73,7 +73,7 @@ export async function POST(request) {
         {
           sku: "PAIDMENFESS",
           name: body.message || "PLACEHOLDER TWEET USER",
-          price: 3220,
+          price: 1001,
           quantity: 1
         }
       ],
