@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb';
+import { initializeCronJobs } from '../utils/cronJobs';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const MONGODB_DB = process.env.MONGODB_DB || 'draftanakitb';
@@ -42,6 +43,9 @@ export async function connectToDatabase() {
         // Cache the client and db connections
         cachedClient = client;
         cachedDb = db;
+
+        // Initialize cron jobs after successful connection
+        initializeCronJobs();
 
         return { client, db };
     } catch (error) {

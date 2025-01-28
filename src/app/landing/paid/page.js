@@ -194,12 +194,22 @@ const PaidMenfessLanding = () => {
               <div className="text-[#80ffdb] space-y-4 bg-white/10 p-6 rounded-lg max-w-lg mx-auto">
                 <div className="text-5xl">✅</div>
                 <div>
-                  <p className="text-xl font-bold">Payment successful!</p>
-                  <p>Menfess anda akan dikirim pada pukul 20.00 atau 22.00 dan anda akan menerima notifikasi lewat email jika menfess anda sudah dikirim (tolong cek di junk email atau tandai sebagai BUKAN SAMPAH).</p>
-                  <p>Jika dalam 3 hari menfess anda belum dikirim, mohon hubungi X:@satpam_itb.</p>
+                  <p className="text-xl font-bold">Pembayaran Berhasil</p>
+                  <div className="space-y-2 text-left mt-4">
+                    <p>Terima kasih atas pembayaran Anda. Menfess Anda telah berhasil diproses.</p>
+                    <p><strong>Apa selanjutnya?</strong></p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Menfess Anda akan dijadwalkan untuk diposting pada pukul 20:00 atau 22:00 WIB</li>
+                      <li>Anda akan menerima notifikasi email saat menfess telah diposting</li>
+                      <li>Mohon periksa folder spam/junk dan tandai email kami sebagai "Bukan Spam"</li>
+                    </ul>
+                    <p className="mt-4 text-yellow-300">
+                      Catatan: Jika dalam waktu 3 hari menfess Anda belum diposting, silakan hubungi kami di <strong>@satpam_itb</strong> di X (Twitter).
+                    </p>
+                  </div>
                 </div>
                 <a href="/" className="inline-block mt-4 px-6 py-2 bg-white text-[#000072] rounded-lg hover:bg-gray-100">
-                  Back to Home
+                  Kembali ke Beranda
                 </a>
               </div>
             )}
@@ -208,11 +218,19 @@ const PaidMenfessLanding = () => {
               <div className="text-red-400 space-y-4 bg-white/10 p-6 rounded-lg max-w-lg mx-auto">
                 <div className="text-5xl">❌</div>
                 <div>
-                  <p className="text-xl font-bold">Payment failed!</p>
-                  <p>Jika saldo anda terpotong tolong hubungi X:@satpamitb.</p>
+                  <p className="text-xl font-bold">Pembayaran Gagal</p>
+                  <div className="space-y-2 text-left mt-4">
+                    <p>Mohon maaf, terjadi kendala dalam memproses pembayaran Anda.</p>
+                    <p><strong>Apa yang harus dilakukan?</strong></p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Pastikan metode pembayaran Anda memiliki saldo yang cukup</li>
+                      <li>Jika saldo Anda terpotong namun pembayaran gagal, segera hubungi kami di <strong>@satpam_itb</strong> di X (Twitter)</li>
+                      <li>Anda dapat mencoba mengirim menfess kembali dengan metode pembayaran yang berbeda</li>
+                    </ul>
+                  </div>
                 </div>
                 <a href="/" className="inline-block mt-4 px-6 py-2 bg-white text-[#000072] rounded-lg hover:bg-gray-100">
-                  Try Again
+                  Coba Lagi
                 </a>
               </div>
             )}

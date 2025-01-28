@@ -4,6 +4,7 @@ import Image from 'next/image';
 import TermsModal from '../components/TermsModal';
 import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
 import OtpHelpModal from '../components/OtpHelpModal';
+import Script from 'next/script';
 
 // Add whitelist constant at the top
 const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
@@ -663,6 +664,11 @@ const MainPage = () => {
       <OtpHelpModal
         isOpen={showOtpHelp}
         onClose={() => setShowOtpHelp(false)}
+      />
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9161286456755540"
+        crossorigin="anonymous"
       />
     </div>
   );
