@@ -118,7 +118,7 @@ export async function POST(request) {
         {
           sku: "PAIDMENFESS",
           name: body.message || "PLACEHOLDER TWEET USER",
-          price: 3001,
+          price: 3001 ,
           quantity: 1
         }
       ],

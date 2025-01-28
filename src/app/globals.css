@@ -52,9 +52,20 @@ input[type="file"] {
   font-size: 12px !important;
 }
 
-input[type="text"],
-textarea {
-  font-size: 12px !important; /* iOS minimum font size to prevent zoom */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  textarea {
+    font-size: 16px !important; /* Prevent mobile zoom */
+  }
+}
+
+@media (min-width: 769px) {
+  input[type="text"],
+  input[type="email"],
+  textarea {
+    font-size: 12px !important; /* Ensure 12px on wider devices */
+  }
 }
 
 input[type="file"]::file-selector-button {

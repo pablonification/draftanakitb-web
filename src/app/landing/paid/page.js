@@ -206,7 +206,7 @@ const PaidMenfessLanding = () => {
                         <li>Mohon periksa folder spam/junk dan tandai email kami sebagai "Bukan Spam"</li>
                       </ul>
                       <p className="mt-4 text-yellow-300">
-                        Catatan: Jika dalam waktu 3 hari menfess Anda belum diposting, silakan hubungi kami di <strong>@satpam_itb</strong> di X (Twitter).
+                        Catatan: Jika dalam waktu 3 hari menfess Anda belum diposting, silakan hubungi kami di <strong>@satpam_itb</strong> di X (Twitter) dan sertakan bukti pembayaran juga isi tweet yang kalian kirim.
                       </p>
                     </div>
                   </div>
