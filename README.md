@@ -9,6 +9,7 @@ DraftAnakITB Bot is a web application that allows users to send anonymous messag
 - [Usage](#usage)
 - [Environment Variables](#environment-variables)
 - [Running with PM2](#running-with-pm2)
+- [Deployment on DigitalOcean](#deployment-on-digitalocean)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -86,3 +87,49 @@ TRIPAY_PRIVATE_KEY="your_tripay_private_key"
     pm2 startup
     pm2 save
     ```
+
+## Deployment on DigitalOcean
+
+Deploying the application on a DigitalOcean Ubuntu droplet using PM2.
+
+### Prerequisites
+- DigitalOcean Ubuntu Droplet
+- SSH access to the droplet
+- Git installed on the server
+- PM2 installed globally (`npm install -g pm2`)
+
+### Deployment Steps
+
+1. **Clone the Repository**:
+    ```sh
+    git clone https://github.com/yourusername/draftanakitb-bot.git
+    cd draftanakitb-bot
+    ```
+
+2. **Install Dependencies**:
+    ```sh
+    npm install
+    ```
+
+3. **Build the Application**:
+    ```sh
+    npm run build
+    ```
+
+4. **Start the Application with PM2**:
+    ```sh
+    pm2 start ecosystem.config.js
+    ```
+
+### Handling New Git Pushes
+
+If there is a new push on Git, execute the following commands:
+
+```sh
+git pull origin main
+npm install
+npm run build
+pm2 reload draftanakitb-web
+pm2 list
+pm2 logs draftanakitb-web --timestamp
+```

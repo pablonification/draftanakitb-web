@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import Image from 'next/image';
+import Script from 'next/script';
 
 const FAQPage = () => {
   const faqs = [
@@ -47,57 +48,64 @@ const FAQPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#000072] text-white p-4">
-      <nav className="flex justify-end space-x-4 mb-8">
-        <a href="/" className="hover:underline">HOME</a>
-        <a href="/about" className="hover:underline">ABOUT</a>
-        <a href="/faq" className="hover:underline">FAQ</a>
-      </nav>
+    <>
+      <div className="min-h-screen bg-[#000072] text-white p-4">
+        <nav className="flex justify-end space-x-4 mb-8">
+          <a href="/" className="hover:underline">HOME</a>
+          <a href="/about" className="hover:underline">ABOUT</a>
+          <a href="/faq" className="hover:underline">FAQ</a>
+        </nav>
 
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <Image
-            src="/logo.jpg"
-            alt="DraftAnakITB Logo"
-            width={100}
-            height={100}
-            className="mx-auto rounded-full"
-            priority
-          />
-          <h1 className="text-2xl font-bold mt-4">Frequently Asked Questions</h1>
-        </div>
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <Image
+              src="/logo.jpg"
+              alt="DraftAnakITB Logo"
+              width={100}
+              height={100}
+              className="mx-auto rounded-full"
+              priority
+            />
+            <h1 className="text-2xl font-bold mt-4">Frequently Asked Questions</h1>
+          </div>
 
-        <div className="space-y-6">
-          {faqs.map((faq, index) => (
-            <div 
-              key={index} 
-              className="bg-blue-900/30 p-4 rounded-lg hover:bg-blue-900/40 transition-colors"
-            >
-              <h3 className="text-lg font-semibold text-blue-300 mb-2">
-                {faq.q}
-              </h3>
-              <p className="text-gray-300 whitespace-pre-line">
-                {faq.a}
+          <div className="space-y-6">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index} 
+                className="bg-blue-900/30 p-4 rounded-lg hover:bg-blue-900/40 transition-colors"
+              >
+                <h3 className="text-lg font-semibold text-blue-300 mb-2">
+                  {faq.q}
+                </h3>
+                <p className="text-gray-300 whitespace-pre-line">
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+
+            <div className="text-center mt-8 p-4 bg-gray-800/50 rounded-lg">
+              <p className="text-sm">
+                Masih ada pertanyaan lain? Silakan hubungi kami di{' '}
+                <a 
+                  href="https://x.com/satpam_itb" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-300 hover:underline"
+                >
+                  @satpam_itb
+                </a>
               </p>
             </div>
-          ))}
-
-          <div className="text-center mt-8 p-4 bg-gray-800/50 rounded-lg">
-            <p className="text-sm">
-              Masih ada pertanyaan lain? Silakan hubungi kami di{' '}
-              <a 
-                href="https://x.com/satpam_itb" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-300 hover:underline"
-              >
-                @satpam_itb
-              </a>
-            </p>
           </div>
         </div>
       </div>
-    </div>
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9161286456755540"
+        crossorigin="anonymous"
+      />
+    </>
   );
 };
 

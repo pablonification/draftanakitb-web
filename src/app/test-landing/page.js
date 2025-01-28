@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Script from 'next/script';
 
 const TestLandingPage = () => {
   const [timeRemaining, setTimeRemaining] = useState(10);
@@ -29,6 +30,11 @@ const TestLandingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#000072] text-white p-4">
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9161286456755540"
+        crossorigin="anonymous"
+      />
       <nav className="flex justify-end space-x-4 mb-8">
         <a href="/" className="hover:underline">HOME</a>
         <a href="/about" className="hover:underline">ABOUT</a>
