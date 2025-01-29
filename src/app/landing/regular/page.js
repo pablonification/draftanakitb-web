@@ -15,14 +15,17 @@ const Copyright = () => (
 // Add custom SVG icons
 const SuccessIcon = () => (
   <svg 
-    className="w-12 h-12 text-green-400 mx-auto mb-2" 
+    className="w-16 h-16 text-green-400 mx-auto mb-4" 
     viewBox="0 0 24 24" 
     fill="none" 
     stroke="currentColor" 
     strokeWidth="1.5"
   >
-    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
   </svg>
 );
 
@@ -53,7 +56,7 @@ const InfoIcon = () => (
 const RegularMenfessLanding = () => {
   const [timeRemaining, setTimeRemaining] = useState(10);
   const [isComplete, setIsComplete] = useState(false);
-  const [dots, setDots] = useState('');
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [menfessData, setMenfessData] = useState(null);
   const [errorDetails, setErrorDetails] = useState({
@@ -80,6 +83,7 @@ const RegularMenfessLanding = () => {
     if (timeRemaining > 0) {
       const timer = setTimeout(() => {
         setTimeRemaining(timeRemaining - 1);
+        setProgress((10 - timeRemaining + 1) * 10);
       }, 1000);
       return () => clearTimeout(timer);
     } else {
@@ -87,16 +91,6 @@ const RegularMenfessLanding = () => {
       handleTweetSend();
     }
   }, [timeRemaining]);
-
-  useEffect(() => {
-    // Dots animation effect
-    if (!isComplete) {
-      const dotsTimer = setInterval(() => {
-        setDots(prev => prev.length >= 3 ? '' : prev + '.');
-      }, 500);
-      return () => clearInterval(dotsTimer);
-    }
-  }, [isComplete]);
 
   const handleTweetSend = async () => {
     if (!menfessData) return;
@@ -358,7 +352,7 @@ const RegularMenfessLanding = () => {
                   <div className="flex items-center justify-center gap-4">
                     <TimerIcon />
                     <h4 className="text-2xl font-semibold bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
-                      {isComplete ? 'PROCESSING' : `SENDING${dots}`}
+                      {isComplete ? 'PROCESSING' : `SENDING`}
                     </h4>
                   </div>
                   <div className="mt-6 space-y-3 text-center">
@@ -366,9 +360,17 @@ const RegularMenfessLanding = () => {
                       Your menfess will be sent to Twitter shortly.
                     </p>
                     {!isComplete && (
-                      <p className="normal-text text-blue-200">
-                        Please wait <span className="font-semibold text-blue-100">{timeRemaining}</span> seconds before your menfess is posted.
-                      </p>
+                      <div className="space-y-6">
+                        <p className="normal-text text-blue-200">
+                          Please wait <span className="font-semibold text-blue-100">{timeRemaining}</span> seconds before your menfess is posted.
+                        </p>
+                        <div className="w-full bg-gray-800/50 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-500 to-blue-300 rounded-full transition-all duration-1000 ease-linear"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -382,7 +384,7 @@ const RegularMenfessLanding = () => {
                   {isComplete && (
                     <div className="text-center transform scale-100 animate-fadeIn">
                       <div className="flex flex-col items-center justify-center animate-slideUp">
-                        <SuccessIcon className="animate-pulse-slow" />
+                        <SuccessIcon />
                         <p className="normal-text text-green-300 font-medium animate-fadeIn">
                           Menfess sent successfully!
                         </p>
@@ -394,20 +396,6 @@ const RegularMenfessLanding = () => {
                         >
                           Back to Home
                         </a>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {!isComplete && (
-                    <div className="relative">
-                      <div className="bg-gray-800/50 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-300 animate-shimmer"
-                          style={{
-                            animation: 'progress 10s linear forwards',
-                            animationPlayState: isComplete ? 'paused' : 'running'
-                          }}
-                        ></div>
                       </div>
                     </div>
                   )}
