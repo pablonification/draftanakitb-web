@@ -329,16 +329,27 @@ const PaidMenfessLanding = () => {
 
               {paymentStatus === 'success' && (
                 <div className="text-center transform scale-100 animate-fadeIn">
-                  <div className="flex flex-col items-center justify-center animate-slideUp">
-                    <SuccessIcon className="animate-pulse-slow" />
+                  <div className="flex flex-col items-center justify-center">
+                    <SuccessIcon />
                     <p className="normal-text text-green-300 font-medium">
-                      Menfess sent successfully!
+                      Payment successful!
                     </p>
+                    <div className="mt-4 space-y-2">
+                      <p className="normal-text text-gray-300">
+                        Your menfess will be sent at 20.00 or 22.00 WIB
+                      </p>
+                      <p className="normal-text text-gray-300">
+                        Merchant Ref: <span className="text-blue-300 font-medium">{merchantRef}</span>
+                      </p>
+                      <p className="normal-text text-gray-400 text-sm">
+                        If your menfess is not posted within 3 days, please contact @satpam_itb with a screenshot of this page
+                      </p>
+                    </div>
                   </div>
                   <div className="mt-6 flex justify-center">
                     <a 
                       href="/"
-                      className="hidden sm:block px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all-smooth shadow-lg hover:shadow-xl text-center hover-scale"
+                      className="px-6 py-2 bg-white text-[#000072] rounded hover:bg-gray-100 transition-colors"
                     >
                       Back to Home
                     </a>
