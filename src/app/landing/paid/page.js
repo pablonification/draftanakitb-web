@@ -3,13 +3,87 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 
+// Update Copyright component
+const Copyright = () => (
+  <div className="fixed bottom-0 left-0 right-0 py-4 border-t border-white/10 bg-[#000072]">
+    <p className="normal-text text-center text-gray-400">
+      © {new Date().getFullYear()} DraftAnakITB. All rights reserved.
+    </p>
+  </div>
+);
+
+// Update SVG icons with consistent sizing and styling
+const ErrorIcon = () => (
+  <svg 
+    className="w-16 h-16 text-red-400 mx-auto" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5"
+  >
+    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const QRIcon = () => (
+  <svg 
+    className="w-8 h-8 text-blue-300" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5"
+  >
+    <path d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// Update TimerIcon with spinning animation
+const TimerIcon = () => (
+  <svg 
+    className="w-8 h-8 text-yellow-300 animate-spin-slow" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5"
+  >
+    <path d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const WarningIcon = () => (
+  <svg 
+    className="w-8 h-8 text-yellow-300" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5"
+  >
+    <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const SuccessIcon = () => (
+  <svg 
+    className="w-12 h-12 text-green-400 mx-auto mb-2" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5"
+  >
+    <circle cx="12" cy="12" r="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const PaidMenfessLanding = () => {
   const [error, setError] = useState('');
   const [menfessData, setMenfessData] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState('initializing'); // initializing, pending, success, failed
   const [qrUrl, setQrUrl] = useState('');
   const [merchantRef, setMerchantRef] = useState('');
-  const PAYMENT_AMOUNT = 3001;
+  const PAYMENT_AMOUNT = 3000;
 
   // Add polling interval state
   const [pollInterval, setPollInterval] = useState(null);
@@ -117,123 +191,158 @@ const PaidMenfessLanding = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-[#000072] text-white p-4">
-        <nav className="flex justify-end space-x-4 mb-8">
-          <a href="/" className="hover:underline">HOME</a>
-          <a href="/about" className="hover:underline">ABOUT</a>
-          <a href="/faq" className="hover:underline">FAQ</a>
+      <div className="min-h-screen bg-gradient-to-br from-[#000072] via-[#000060] to-[#000045] text-white p-4 pb-16">
+        <nav className="max-w-7xl mx-auto flex justify-end space-x-6 mb-12 px-4 animate-slideUp">
+          <a href="/" className="text-gray-300 hover:text-white transition-all-smooth hover-scale">HOME</a>
+          <a href="/about" className="text-gray-300 hover:text-white transition-all-smooth hover-scale">ABOUT</a>
+          <a href="/faq" className="text-gray-300 hover:text-white transition-all-smooth hover-scale">FAQ</a>
         </nav>
 
         <div className="max-w-3xl mx-auto">
-          {/* Logo section */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-12 hover-scale">
             <Image
               src="/logo.jpg"
               alt="DraftAnakITB Logo"
               width={100}
               height={100}
-              className="mx-auto rounded-full"
+              className="mx-auto shadow-lg transition-all-smooth"
               priority
             />
           </div>
 
           <div className="space-y-8">
             {error && (
-              <div className="text-red-500 text-center">
-                <p>{error}</p>
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 backdrop-blur-sm animate-fadeIn">
+                <p className="normal-text text-red-400 text-center">{error}</p>
               </div>
             )}
 
-            <div className="text-center space-y-4">
-              <h4 className="text-2xl font-bold">PAID MENFESS</h4>
-              <p className="text-lg">Amount to pay: Rp {PAYMENT_AMOUNT.toLocaleString()}</p>
+            <div className="text-center space-y-6 animate-slideUp">
+              <div className="space-y-3">
+                <h4 className="text-3xl font-bold bg-gradient-to-r from-blue-200 via-blue-300 to-blue-200 bg-clip-text text-transparent hover-scale">
+                  PAID MENFESS
+                </h4>
+                <p className="normal-text text-gray-300">
+                  Amount to pay: <span className="text-2xl font-semibold bg-gradient-to-r from-blue-300 to-blue-200 bg-clip-text text-transparent animate-pulse-slow">Rp {PAYMENT_AMOUNT.toLocaleString()}</span>
+                </p>
+              </div>
               
               {paymentStatus === 'initializing' && (
-                <div className="animate-pulse">
-                  <p>Initializing payment...</p>
-                  <p className="text-sm">Please wait while we prepare your QR code</p>
+                <div className="animate-pulse bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] p-8 hover-scale">
+                  <div className="flex items-center justify-center gap-4">
+                    <TimerIcon />
+                    <div className="text-left">
+                      <p className="normal-text font-medium text-blue-200">Initializing payment...</p>
+                      <p className="normal-text text-sm text-gray-400">Please wait while we prepare your QR code</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {paymentStatus === 'pending' && qrUrl && (
-                <div className="space-y-6">
-                  <div className="bg-white/10 p-6 rounded-lg max-w-lg mx-auto">
-                    <h5 className="text-xl mb-4">Scan QRIS to Pay</h5>
-                    <div className="bg-white p-6 rounded-lg inline-block">
+                <div className="bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] overflow-hidden animate-fadeIn hover-scale">
+                  <div className="p-8 border-b border-white/10">
+                    <div className="flex items-center justify-center gap-3 mb-8">
+                      <QRIcon />
+                      <h5 className="text-2xl font-semibold bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
+                        Scan QRIS to Pay
+                      </h5>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl inline-block shadow-lg transition-all-smooth hover:scale-105">
                       <img 
                         src={qrUrl}
                         alt="QRIS Payment QR Code"
-                        className="mx-auto w-[300px] h-[300px]"
+                        className="w-[250px] h-[250px] mx-auto"
                       />
                     </div>
-                    <div className="mt-4 space-y-2 text-sm">
-                      <p className="font-semibold">How to pay:</p>
-                      <ol className="text-left list-decimal list-inside space-y-1">
-                        <li>Open your mobile banking or e-wallet app</li>
-                        <li>Choose QRIS/Scan QR payment option</li>
-                        <li>Scan the QR code above</li>
-                        <li>Check payment details and confirm</li>
-                        <li>Payment will be verified automatically</li>
-                      </ol>
-                      <p className="text-yellow-300 mt-4">Payment will expire in 30 minutes</p>
-                      <p>After payment is completed:</p>
-                      <ol className="text-left list-decimal list-inside space-y-1">
-                        <li>Your payment will be verified automatically</li>
-                        <li>Your menfess will be queued for posting</li>
-                        <li>You will receive email notification when posted</li>
-                      </ol>
+                  </div>
+                  <div className="p-8 space-y-6 bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30">
+                    <div className="flex items-start gap-4">
+                      <TimerIcon />
+                      <div className="flex-1 text-left">
+                        <p className="normal-text font-medium text-blue-200">Payment Status</p>
+                        <p className="normal-text text-gray-300">Waiting for your payment...</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <WarningIcon />
+                      <div className="flex-1 text-left">
+                        <p className="normal-text font-medium text-blue-200">Important Notes</p>
+                        <ul className="normal-text text-gray-300 space-y-2 mt-2">
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                            QR Code will expire in 5 minutes
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                            Do not close this page until payment is completed
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                            After payment, your menfess will be processed at 20.00 or 22.00 WIB
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="text-xs text-gray-300">
-                    <p>Supported payment methods:</p>
-                    <p>GoPay, OVO, DANA, LinkAja, ShopeePay, and other QRIS-supported apps</p>
+                </div>
+              )}
+
+              {paymentStatus === 'failed' && (
+                <div className="bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] overflow-hidden animate-fadeIn hover-scale">
+                  <div className="p-8 border-b border-white/10">
+                    <ErrorIcon />
+                    <h5 className="text-2xl font-bold text-red-400 mt-4">Payment Failed</h5>
+                  </div>
+                  <div className="p-8 space-y-6">
+                    <p className="normal-text text-gray-300 text-center">
+                      We apologize, but there was an issue processing your payment.
+                    </p>
+                    <div className="bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30 rounded-xl p-6">
+                      <p className="normal-text font-medium text-blue-200 mb-4">What should you do?</p>
+                      <ul className="normal-text text-gray-300 space-y-3">
+                        <li className="flex items-center gap-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          Ensure your payment method has sufficient balance
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          If your balance was deducted but payment failed, contact us at @satpam_itb on X (Twitter)
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          You can try sending menfess again with a different payment method
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="text-center mt-8">
+                      <a 
+                        href="/" 
+                        className="inline-block min-w-[200px] px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        Try Again
+                      </a>
+                    </div>
                   </div>
                 </div>
               )}
 
               {paymentStatus === 'success' && (
-                <div className="text-[#80ffdb] space-y-4 bg-white/10 p-6 rounded-lg max-w-lg mx-auto">
-                  <div className="text-5xl">✅</div>
-                  <div>
-                    <p className="text-xl font-bold">Pembayaran Berhasil</p>
-                    <div className="space-y-2 text-left mt-4">
-                      <p>Terima kasih atas pembayaran Anda. Menfess Anda telah berhasil diproses.</p>
-                      <p><strong>Apa selanjutnya?</strong></p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Menfess Anda akan dijadwalkan untuk diposting pada pukul 20:00 atau 22:00 WIB</li>
-                        <li>Anda akan menerima notifikasi email saat menfess telah diposting</li>
-                        <li>Mohon periksa folder spam/junk dan tandai email kami sebagai "Bukan Spam"</li>
-                      </ul>
-                      <p className="mt-4 text-yellow-300">
-                        Catatan: Jika dalam waktu 3 hari menfess Anda belum diposting, silakan hubungi kami di <strong>@satpam_itb</strong> di X (Twitter) dan sertakan bukti pembayaran juga isi tweet yang kalian kirim.
-                      </p>
-                    </div>
+                <div className="text-center transform scale-100 animate-fadeIn">
+                  <div className="flex flex-col items-center justify-center animate-slideUp">
+                    <SuccessIcon className="animate-pulse-slow" />
+                    <p className="normal-text text-green-300 font-medium">
+                      Menfess sent successfully!
+                    </p>
                   </div>
-                  <a href="/" className="inline-block mt-4 px-6 py-2 bg-white text-[#000072] rounded-lg hover:bg-gray-100">
-                    Kembali ke Beranda
-                  </a>
-                </div>
-              )}
-
-              {paymentStatus === 'failed' && (
-                <div className="text-red-400 space-y-4 bg-white/10 p-6 rounded-lg max-w-lg mx-auto">
-                  <div className="text-5xl">❌</div>
-                  <div>
-                    <p className="text-xl font-bold">Pembayaran Gagal</p>
-                    <div className="space-y-2 text-left mt-4">
-                      <p>Mohon maaf, terjadi kendala dalam memproses pembayaran Anda.</p>
-                      <p><strong>Apa yang harus dilakukan?</strong></p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Pastikan metode pembayaran Anda memiliki saldo yang cukup</li>
-                        <li>Jika saldo Anda terpotong namun pembayaran gagal, segera hubungi kami di <strong>@satpam_itb</strong> di X (Twitter)</li>
-                        <li>Anda dapat mencoba mengirim menfess kembali dengan metode pembayaran yang berbeda</li>
-                      </ul>
-                    </div>
+                  <div className="mt-6 flex justify-center">
+                    <a 
+                      href="/"
+                      className="hidden sm:block px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all-smooth shadow-lg hover:shadow-xl text-center hover-scale"
+                    >
+                      Back to Home
+                    </a>
                   </div>
-                  <a href="/" className="inline-block mt-4 px-6 py-2 bg-white text-[#000072] rounded-lg hover:bg-gray-100">
-                    Coba Lagi
-                  </a>
                 </div>
               )}
             </div>
@@ -248,5 +357,23 @@ const PaidMenfessLanding = () => {
     </>
   );
 };
+
+// Move global styles here, outside of the component
+const globalStyles = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+`;
+
+// Add styles to the document head
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = globalStyles;
+  document.head.appendChild(style);
+}
 
 export default PaidMenfessLanding;

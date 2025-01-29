@@ -22,7 +22,11 @@ const mockTweet = async (message, attachment) => {
 function validateMessage(message) {
   const triggerWords = ['itb!', 'maba!', 'misuh!', 'bucin!', 'itbparkir!'];
   
-  const hasTriggerWord = triggerWords.some(word => message.toLowerCase().includes(word));
+  // Convert message to lowercase for case-insensitive comparison
+  const lowerMessage = message.toLowerCase().trim();
+  
+  // Check if message contains any of the trigger words
+  const hasTriggerWord = triggerWords.some(word => lowerMessage.includes(word));
   
   if (!hasTriggerWord) {
     throw new Error('Pesan harus mengandung salah satu trigger word berikut: itb!, maba!, misuh!, bucin!, atau itbparkir!');
@@ -94,9 +98,15 @@ export async function POST(request) {
     // Check personal limit first
     const canSendPersonal = await checkPersonalLimit(email);
     if (!canSendPersonal) {
+      const user = await User.findOne({ email });
+      const lastMessageDate = new Date(user.lastRegularMessage);
+      const nextAvailable = new Date(lastMessageDate);
+      nextAvailable.setDate(lastMessageDate.getDate() + LIMITS.PERSONAL_REGULAR_DAYS);
+      
       return NextResponse.json({
         success: false,
-        error: 'PERSONAL_LIMIT_EXCEEDED'
+        error: 'PERSONAL_LIMIT_EXCEEDED',
+        nextAvailable: nextAvailable.toISOString()
       });
     }
 

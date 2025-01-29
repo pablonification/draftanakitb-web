@@ -3,6 +3,15 @@ import React from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 
+// Update Copyright component
+const Copyright = () => (
+  <div className="fixed bottom-0 left-0 right-0 py-4 border-t border-white/10 bg-[#000072]">
+    <p className="normal-text text-center text-gray-400">
+      © {new Date().getFullYear()} DraftAnakITB. All rights reserved.
+    </p>
+  </div>
+);
+
 const FAQPage = () => {
   const faqs = [
     {
@@ -49,62 +58,77 @@ const FAQPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-[#000072] text-white p-4">
-        <nav className="flex justify-end space-x-4 mb-8">
-          <a href="/" className="hover:underline">HOME</a>
-          <a href="/about" className="hover:underline">ABOUT</a>
-          <a href="/faq" className="hover:underline">FAQ</a>
+      <div className="min-h-screen bg-gradient-to-b from-[#000072] to-[#000050] text-white p-4 pb-16">
+        <nav className="max-w-7xl mx-auto flex justify-end space-x-6 mb-12 px-4">
+          <a href="/" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">HOME</a>
+          <a href="/about" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">ABOUT</a>
+          <a href="/faq" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">FAQ</a>
         </nav>
 
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
             <Image
               src="/logo.jpg"
               alt="DraftAnakITB Logo"
               width={100}
               height={100}
-              className="mx-auto rounded-full"
+              className="mx-auto shadow-lg"
               priority
             />
-            <h1 className="text-2xl font-bold mt-4">Frequently Asked Questions</h1>
+            <h1 className="text-3xl font-bold mt-6 bg-gradient-to-r from-blue-200 to-blue-400 bg-clip-text text-transparent">
+              Frequently Asked Questions
+            </h1>
+            <p className="mt-4 text-gray-300 max-w-xl mx-auto">
+              Temukan jawaban untuk pertanyaan yang sering diajukan tentang layanan DraftAnakITB
+            </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="grid gap-4">
             {faqs.map((faq, index) => (
               <div 
                 key={index} 
-                className="bg-blue-900/30 p-4 rounded-lg hover:bg-blue-900/40 transition-colors"
+                className="bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 overflow-hidden hover:border-white/20 transition-all duration-300"
               >
-                <h3 className="text-lg font-semibold text-blue-300 mb-2">
-                  {faq.q}
-                </h3>
-                <p className="text-gray-300 whitespace-pre-line">
-                  {faq.a}
-                </p>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-blue-200 mb-3 flex items-start gap-3">
+                    <span className="bg-blue-500/20 text-blue-300 px-2.5 py-0.5 rounded-full text-sm">
+                      Q{index + 1}
+                    </span>
+                    {faq.q}
+                  </h3>
+                  <p className="text-gray-300 whitespace-pre-line pl-11">
+                    {faq.a}
+                  </p>
+                </div>
               </div>
             ))}
+          </div>
 
-            <div className="text-center mt-8 p-4 bg-gray-800/50 rounded-lg">
-              <p className="text-sm">
-                Masih ada pertanyaan lain? Silakan hubungi kami di{' '}
-                <a 
-                  href="https://x.com/satpam_itb" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-300 hover:underline"
-                >
-                  @satpam_itb
-                </a>
-              </p>
-            </div>
+          <div className="mt-12 text-center p-6 bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10">
+            <p className="text-lg text-blue-200 mb-3">
+              Masih ada pertanyaan lain?
+            </p>
+            <p className="text-gray-300">
+              Silakan hubungi kami di{' '}
+              <a 
+                href="https://x.com/satpam_itb" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-300 hover:text-blue-200 hover:underline transition-colors"
+              >
+                @satpam_itb
+              </a>
+            </p>
           </div>
         </div>
       </div>
+
       <Script
         async
         src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9161286456755540"
         crossorigin="anonymous"
       />
+      {/* <Copyright /> */}
     </>
   );
 };

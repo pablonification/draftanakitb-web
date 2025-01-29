@@ -3,6 +3,15 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 
+// Update Copyright component
+const Copyright = () => (
+  <div className="fixed bottom-0 left-0 right-0 py-4 border-t border-white/10 bg-[#000072]">
+    <p className="normal-text text-center text-gray-400">
+      © {new Date().getFullYear()} DraftAnakITB. All rights reserved.
+    </p>
+  </div>
+);
+
 const TestLandingPage = () => {
   const [timeRemaining, setTimeRemaining] = useState(10);
   const [isComplete, setIsComplete] = useState(false);
@@ -29,7 +38,7 @@ const TestLandingPage = () => {
   }, [isComplete]);
 
   return (
-    <div className="min-h-screen bg-[#000072] text-white p-4">
+    <div className="min-h-screen bg-[#000072] text-white p-4 pb-16">
       <Script
         async
         src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9161286456755540"
@@ -48,7 +57,7 @@ const TestLandingPage = () => {
             alt="DraftAnakITB Logo"
             width={100}
             height={100}
-            className="mx-auto rounded-full"
+            className="mx-auto shadow-lg"
             priority
           />
         </div>
@@ -95,6 +104,7 @@ const TestLandingPage = () => {
           )}
         </div>
       </div>
+      {/* <Copyright /> */}
     </div>
   );
 };

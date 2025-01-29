@@ -10,13 +10,19 @@ export default function AdminPanel() {
   const [paidTweets, setPaidTweets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [adminName, setAdminName] = useState('');
   const [adminStats, setAdminStats] = useState(null);
   const [regularTweets, setRegularTweets] = useState([]);
-  const [activeTab, setActiveTab] = useState('paid'); // 'paid' or 'regular'
+  const [activeTab, setActiveTab] = useState('paid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState('message');
+  const [currentPage, setCurrentPage] = useState(1);
+  const tweetsPerPage = 10;
   const router = useRouter();
+  const [urlInputs, setUrlInputs] = useState({});
+  const [urlUpdateTimeout, setUrlUpdateTimeout] = useState(null);
 
   useEffect(() => {
     checkAuth();
@@ -149,10 +155,13 @@ export default function AdminPanel() {
   };
 
   const handleStatusUpdate = async (tweetId, status, tweetUrl = '') => {
+    const loadingKey = `status_${tweetId}`;
     try {
-      setActionLoading(true);
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/admin/tweets/${tweetId}`, {
+      const endpoint = activeTab === 'paid' ? `/api/admin/tweets/${tweetId}` : `/api/admin/regular/${tweetId}`;
+      
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +174,11 @@ export default function AdminPanel() {
       
       if (response.ok) {
         setSuccessMessage('Tweet status updated successfully');
-        await fetchPaidTweets();
+        if (activeTab === 'paid') {
+          await fetchPaidTweets();
+        } else {
+          await fetchRegularTweets();
+        }
         await fetchAdminStats();
       } else {
         setError(data.error || 'Failed to update tweet status');
@@ -173,14 +186,15 @@ export default function AdminPanel() {
     } catch (error) {
       setError('Failed to update tweet status');
     } finally {
-      setActionLoading(false);
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
       setTimeout(() => setSuccessMessage(''), 1000);
     }
   };
 
   const handleSendNotification = async (tweetId) => {
+    const loadingKey = `notify_${tweetId}`;
     try {
-      setActionLoading(true);
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`/api/admin/notify/${tweetId}`, {
         method: 'POST',
@@ -198,14 +212,15 @@ export default function AdminPanel() {
     } catch (error) {
       setError('Failed to send notification');
     } finally {
-      setActionLoading(false);
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
       setTimeout(() => setSuccessMessage(''), 1000);
     }
   };
 
   const handleAddTestData = async () => {
+    const loadingKey = 'add_paid_test';
     try {
-      setActionLoading(true);
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
       setError('');
       
       const token = localStorage.getItem('adminToken');
@@ -231,7 +246,6 @@ export default function AdminPanel() {
 
       setSuccessMessage(`Successfully added ${data.insertedCount} test tweets`);
       
-      // Add a longer delay before fetching to ensure database operations are complete
       await new Promise(resolve => setTimeout(resolve, 2000));
       await fetchPaidTweets();
       
@@ -239,47 +253,47 @@ export default function AdminPanel() {
       console.error('Error adding test data:', error);
       setError(error.message);
     } finally {
-      setActionLoading(false);
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
     }
   };
 
-  // Add this function after handleAddTestData
-const handleAddRegularTestData = async () => {
-  try {
-    setActionLoading(true);
-    setError('');
-    
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      throw new Error('Not authorized. Please login again.');
-    }
+  const handleAddRegularTestData = async () => {
+    const loadingKey = 'add_regular_test';
+    try {
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
+      setError('');
+      
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('Not authorized. Please login again.');
+      }
 
-    console.log('Adding regular test data...');
-    const response = await fetch('/api/admin/test', {
-      method: 'POST',
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ type: 'regular' })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to add test data');
-    }
+      console.log('Adding regular test data...');
+      const response = await fetch('/api/admin/test', {
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ type: 'regular' })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add test data');
+      }
 
-    setSuccessMessage(`Successfully added ${data.insertedCount} test regular tweets`);
-    await fetchRegularTweets();
-    
-  } catch (error) {
-    console.error('Error adding regular test data:', error);
-    setError(error.message);
-  } finally {
-    setActionLoading(false);
-  }
-};
+      setSuccessMessage(`Successfully added ${data.insertedCount} test regular tweets`);
+      await fetchRegularTweets();
+      
+    } catch (error) {
+      console.error('Error adding regular test data:', error);
+      setError(error.message);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
+    }
+  };
 
   const fetchAdminStats = async () => {
     try {
@@ -392,42 +406,239 @@ const handleAddRegularTestData = async () => {
     }
   }, [isLoggedIn]);
 
+  // Add custom SVG icons at the top
+  const DashboardIcon = () => (
+    <svg 
+      className="w-6 h-6 text-blue-400" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="1.5"
+    >
+      <path d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  const LogoutIcon = () => (
+    <svg 
+      className="w-5 h-5" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="1.5"
+    >
+      <path d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  const TestDataIcon = () => (
+    <svg 
+      className="w-5 h-5" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="1.5"
+    >
+      <path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  const CopyIcon = () => (
+    <svg 
+      className="w-4 h-4" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="1.5"
+    >
+      <path d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  const NotificationIcon = () => (
+    <svg 
+      className="w-5 h-5" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="1.5"
+    >
+      <path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  const handleDelete = async (tweetId) => {
+    const loadingKey = `delete_${tweetId}`;
+    try {
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
+      const token = localStorage.getItem('adminToken');
+      const endpoint = activeTab === 'paid' ? `/api/admin/tweets/${tweetId}` : `/api/admin/regular/${tweetId}`;
+      
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setSuccessMessage('Tweet deleted successfully');
+        if (activeTab === 'paid') {
+          await fetchPaidTweets();
+        } else {
+          await fetchRegularTweets();
+        }
+        await fetchAdminStats();
+      } else {
+        setError(data.error || 'Failed to delete tweet');
+      }
+    } catch (error) {
+      setError('Failed to delete tweet');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
+      setTimeout(() => setSuccessMessage(''), 1000);
+    }
+  };
+
+  // Update filter function
+  const filterTweets = (tweets) => {
+    if (!searchQuery) return tweets;
+    const query = searchQuery.toLowerCase();
+    return tweets.filter(tweet => {
+      if (searchType === 'email') {
+        return tweet.email.toLowerCase().includes(query);
+      } else {
+        return tweet.messageText.toLowerCase().includes(query);
+      }
+    });
+  };
+
+  // Add pagination logic
+  const getPaginatedTweets = (tweets) => {
+    const filteredTweets = filterTweets(tweets);
+    const indexOfLastTweet = currentPage * tweetsPerPage;
+    const indexOfFirstTweet = indexOfLastTweet - tweetsPerPage;
+    return {
+      paginatedTweets: filteredTweets.slice(indexOfFirstTweet, indexOfLastTweet),
+      totalPages: Math.ceil(filteredTweets.length / tweetsPerPage)
+    };
+  };
+
+  // Add pagination controls component
+  const PaginationControls = ({ totalPages }) => {
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    
+    return (
+      <div className="flex items-center justify-center gap-2 p-6 border-t border-white/5">
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-3 py-1 rounded-lg bg-black/40 text-gray-300 hover:bg-black/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          Previous
+        </button>
+        {pages.map(page => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+              currentPage === page
+                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/20'
+                : 'bg-black/40 text-gray-300 hover:bg-black/60'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 rounded-lg bg-black/40 text-gray-300 hover:bg-black/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
+  // Reset page when tab or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  const handleUrlInputChange = (tweetId, value) => {
+    // Update local state immediately for smooth typing
+    setUrlInputs(prev => ({ ...prev, [tweetId]: value }));
+    
+    // Clear any existing timeout
+    if (urlUpdateTimeout) {
+      clearTimeout(urlUpdateTimeout);
+    }
+    
+    // Set new timeout for the API call
+    const timeoutId = setTimeout(() => {
+      handleStatusUpdate(tweetId, 'posted', value);
+    }, 1000); // Wait 1 second after typing stops
+    
+    setUrlUpdateTimeout(timeoutId);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (urlUpdateTimeout) {
+        clearTimeout(urlUpdateTimeout);
+      }
+    };
+  }, [urlUpdateTimeout]);
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
-        <div className="bg-gray-800/90 backdrop-blur-sm p-8 rounded-lg shadow-2xl w-96 border border-gray-700">
-          <h1 className="text-3xl font-bold mb-6 text-center text-white">Admin Login</h1>
+      <div className="min-h-screen bg-gradient-to-br from-[#000030] via-[#000025] to-[#000020] flex items-center justify-center">
+        <div className="bg-black/40 backdrop-blur-sm p-8 rounded-xl shadow-2xl w-96 border border-white/10">
+          <div className="text-center mb-8">
+            <DashboardIcon />
+            <h1 className="text-3xl font-bold mt-4 bg-gradient-to-r from-blue-200 to-blue-400 bg-clip-text text-transparent">
+              Admin Login
+            </h1>
+          </div>
+          
           {error && (
-            <div className="bg-red-900/50 border-l-4 border-red-500 text-red-200 p-4 rounded mb-4">
-              {error}
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
+              <p className="text-sm text-red-400 text-center">{error}</p>
             </div>
           )}
+          
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-2">Username</label>
+              <label className="block text-sm font-medium text-blue-300 mb-2">Username</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full px-4 py-3 rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="Enter your username"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-200 mb-2">Password</label>
+              <label className="block text-sm font-medium text-blue-300 mb-2">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-4 py-3 rounded-md border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="Enter your password"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
               Login
             </button>
@@ -439,277 +650,310 @@ const handleAddRegularTestData = async () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-900">
-        <div className="bg-gray-800 shadow-lg border-b border-gray-700">
+      <div className="min-h-screen bg-gradient-to-br from-[#000030] via-[#000025] to-[#000020] text-white">
+        <div className="bg-black/40 backdrop-blur-sm border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-6">
-              <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold text-white">Paid Menfess Dashboard</h1>
-                <div className="space-x-4">
+              <div className="flex justify-between items-center mb-6 max-sm:flex-col max-sm:gap-4">
+                  <div className="flex items-center gap-3">
+                    <DashboardIcon />
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-200 to-blue-400 bg-clip-text text-transparent">
+                      Admin Dashboard
+                    </h1>
+                  </div>
+                <div className="flex items-center gap-2 max-sm:flex-wrap max-sm:justify-center">
                   <button 
-                    onClick={handleAddTestData} 
-                    className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                    onClick={handleAddTestData}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-sm"
                   >
-                    Add Paid Test
+                    <TestDataIcon />
+                    <span>Add Paid Test</span>
                   </button>
                   <button 
-                    onClick={handleAddRegularTestData} 
-                    className="bg-purple-600/80 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                    onClick={handleAddRegularTestData}
+                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-sm"
                   >
-                    Add Regular Test
+                    <TestDataIcon />
+                    <span>Add Regular Test</span>
                   </button>
-                  <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
-                    Logout
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 rounded-xl transition-all text-sm"
+                  >
+                    <LogoutIcon />
+                    <span>Logout</span>
                   </button>
                 </div>
               </div>
               
-              <div className="flex items-center justify-between bg-gray-700/50 p-4 rounded-lg">
+              <div className="bg-black/40 backdrop-blur-sm p-6 rounded-xl border border-white/10">
                 {statsDisplay}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="mb-6 flex space-x-4">
-            <button
-              onClick={() => setActiveTab('paid')}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === 'paid' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-700 text-gray-300'
-              }`}
-            >
-              Paid Menfess
-            </button>
-            <button
-              onClick={() => setActiveTab('regular')}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === 'regular' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-700 text-gray-300'
-              }`}
-            >
-              Regular Menfess
-            </button>
-          </div>
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <div className="space-y-6">
+            {/* Search and filter section */}
+            <div className="flex items-center gap-4 max-sm:flex-col">
+              <div className="flex-1 w-full">
+                <div className="flex gap-2 max-sm:flex-col">
+                  <div className="w-40 max-sm:w-full">
+                    <select
+                      value={searchType}
+                      onChange={(e) => setSearchType(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                    >
+                      <option value="message">Search by Message</option>
+                      <option value="email">Search by Email</option>
+                    </select>
+                  </div>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={searchType === 'email' ? "Search by email..." : "Search in messages..."}
+                      className="w-full px-4 py-2 pl-10 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                    />
+                    <svg 
+                      className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Tab buttons */}
+              <div className="inline-flex p-0.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 max-sm:w-full shrink-0 w-[172px]">
+                  <button
+                    onClick={() => setActiveTab('paid')}
+                    className={`w-20 px-3 py-2 rounded-lg transition-all text-sm ${
+                      activeTab === 'paid' 
+                        ? 'bg-blue-500/20 text-blue-300' 
+                        : 'text-gray-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    Paid
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('regular')}
+                    className={`w-20 px-3 py-2 rounded-lg transition-all text-sm ${
+                      activeTab === 'regular' 
+                        ? 'bg-blue-500/20 text-blue-300' 
+                        : 'text-gray-300 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    Regular
+                  </button>
+              </div>
+            </div>
 
-          {activeTab === 'paid' ? (
-            <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden border border-gray-700">
-              <ul className="divide-y divide-gray-700">
-                {Array.isArray(paidTweets) && paidTweets.length > 0 ? (
-                  paidTweets.map((tweet) => (
-                    <li key={tweet._id} className="p-6 hover:bg-gray-700/50 transition duration-150">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-gray-200">
-                              Email: {tweet.email}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm text-gray-300">
-                                Message: {tweet.messageText}
-                              </p>
-                              <button
-                                onClick={async () => {
-                                  if (await copyToClipboard(tweet.messageText)) {
-                                    setSuccessMessage('Message copied to clipboard!');
-                                    setTimeout(() => setSuccessMessage(''), 1000);
-                                  }
-                                }}
-                                className="p-1 rounded hover:bg-gray-600 transition-colors"
-                                title="Copy message"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                              </button>
-                            </div>
-                            {tweet.mediaUrl && (
-                              <div className="mt-2">
-                                {isVideoFile(tweet.mediaUrl) ? (
-                                  <div className="relative">
-                                    <video
-                                      key={tweet.mediaUrl} // Add key to force remount
-                                      className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
-                                      controls
-                                      playsInline
-                                      preload="metadata"
-                                      controlsList="nodownload"
-                                      onError={(e) => console.error('Video Error:', e)}
-                                    >
-                                      <source 
-                                        src={tweet.mediaUrl} 
-                                        type="video/mp4"
-                                      />
-                                      {/* Fallback content */}
-                                      <div className="bg-gray-700 p-2 rounded text-sm text-gray-300">
-                                        Video cannot be previewed.
-                                        <a 
-                                          href={tweet.mediaUrl} 
-                                          target="_blank" 
-                                          rel="noopener noreferrer"
-                                          className="ml-2 text-blue-400 hover:underline"
-                                        >
-                                          Open in new tab
-                                        </a>
-                                      </div>
-                                    </video>
-                                  </div>
-                                ) : (
-                                  <img
-                                    src={tweet.mediaUrl}
-                                    alt="Tweet media"
-                                    className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
-                                  />
-                                )}
-                                <div className="mt-2 space-x-2">
-                                  <a
-                                    href={tweet.mediaUrl}
-                                    download={`media-${tweet._id}${isVideoFile(tweet.mediaUrl) ? '.mp4' : '.jpg'}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-                                  >
-                                    Download Media
-                                  </a>
-                                  {!isBase64Url(tweet.mediaUrl) && (
-                                    <a
-                                      href={tweet.mediaUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-block px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
-                                    >
-                                      Open in New Tab
-                                    </a>
+            <div className="bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+              <ul className="divide-y divide-white/5">
+                {(() => {
+                  const tweets = activeTab === 'paid' ? paidTweets : regularTweets;
+                  const { paginatedTweets, totalPages } = getPaginatedTweets(tweets);
+                  
+                  if (paginatedTweets.length === 0) {
+                    return (
+                      <li className="p-6 text-center text-gray-400">
+                        {searchQuery ? 'No tweets found matching your search.' : 'No tweets available.'}
+                      </li>
+                    );
+                  }
+
+                  return (
+                    <>
+                      {paginatedTweets.map((tweet) => (
+                        <li key={tweet._id} className="p-6 hover:bg-black/60 transition-all">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  <p className="text-sm text-blue-300">
+                                    {tweet.email}
+                                  </p>
+                                  {tweet.mediaUrl && (
+                                    <span className="px-2 py-0.5 text-xs bg-blue-500/10 text-blue-300 rounded-full border border-blue-500/20">
+                                      Has Media
+                                    </span>
+                                  )}
+                                  {activeTab === 'paid' ? (
+                                    tweet.tweetUrl && (
+                                      <a
+                                        href={tweet.tweetUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-2 py-0.5 text-xs bg-green-500/10 text-green-300 rounded-full border border-green-500/20 hover:bg-green-500/20 transition-all"
+                                      >
+                                        View Tweet
+                                      </a>
+                                    )
+                                  ) : (
+                                    tweet.tweetId && (
+                                      <a 
+                                        href={`https://twitter.com/x/status/${tweet.tweetId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-2 py-0.5 text-xs bg-green-500/10 text-green-300 rounded-full border border-green-500/20 hover:bg-green-500/20 transition-all"
+                                      >
+                                        View Tweet
+                                      </a>
+                                    )
                                   )}
                                 </div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm text-gray-300">
+                                    {tweet.messageText}
+                                  </p>
+                                  <button
+                                    onClick={async () => {
+                                      if (await copyToClipboard(tweet.messageText)) {
+                                        setSuccessMessage('Message copied to clipboard!');
+                                        setTimeout(() => setSuccessMessage(''), 1000);
+                                      }
+                                    }}
+                                    className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-gray-300 transition-all"
+                                    title="Copy message"
+                                  >
+                                    <CopyIcon />
+                                  </button>
+                                </div>
+                                <p className="text-xs text-gray-400">
+                                  Sent: {new Date(activeTab === 'paid' ? (tweet.postedAt || tweet.createdAt) : tweet.createdAt).toLocaleString()}
+                                </p>
+                                
+                                {tweet.mediaUrl && (
+                                  <div className="mt-3">
+                                    {isVideoFile(tweet.mediaUrl) ? (
+                                      <div className="relative">
+                                        <video
+                                          key={tweet.mediaUrl}
+                                          className="max-h-64 w-auto rounded-xl shadow-lg"
+                                          controls
+                                          playsInline
+                                          preload="metadata"
+                                        >
+                                          <source src={tweet.mediaUrl} type="video/mp4" />
+                                        </video>
+                                      </div>
+                                    ) : (
+                                      <img
+                                        src={tweet.mediaUrl}
+                                        alt="Tweet media"
+                                        className="max-h-64 w-auto rounded-xl shadow-lg"
+                                      />
+                                    )}
+                                    <div className="mt-3 flex gap-2">
+                                      <a
+                                        href={tweet.mediaUrl}
+                                        download={`media-${tweet._id}${isVideoFile(tweet.mediaUrl) ? '.mp4' : '.jpg'}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-all"
+                                      >
+                                        Download Media
+                                      </a>
+                                      {!isBase64Url(tweet.mediaUrl) && (
+                                        <a
+                                          href={tweet.mediaUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-all"
+                                        >
+                                          Open in New Tab
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            tweet.tweetStatus === 'posted' 
-                              ? 'bg-green-900/50 text-green-200 border border-green-600'
-                              : tweet.tweetStatus === 'pending'
-                                ? 'bg-yellow-900/50 text-yellow-200 border border-yellow-600'
-                                : 'bg-red-900/50 text-red-200 border border-red-600'
-                          }`}>
-                            {tweet.tweetStatus.toUpperCase()}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center space-x-4">
-                          <select
-                            value={tweet.tweetStatus}
-                            onChange={(e) => handleStatusUpdate(tweet._id, e.target.value)}
-                            className="rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 py-2"
-                            disabled={actionLoading}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="posted">Posted</option>
-                            <option value="rejected">Rejected</option>
-                          </select>
-
-                          {tweet.tweetStatus === 'posted' && (
-                            <div className="flex-1">
-                              <input
-                                type="text"
-                                placeholder="Tweet URL"
-                                value={tweet.tweetUrl || ''}
-                                onChange={(e) => handleStatusUpdate(tweet._id, 'posted', e.target.value)}
-                                className="w-full rounded-md border-gray-600 bg-gray-700 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 py-2"
-                              />
+                              
+                              {activeTab === 'paid' && (
+                                <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                  tweet.tweetStatus === 'posted' 
+                                    ? 'bg-green-500/10 text-green-300 border border-green-500/20'
+                                    : tweet.tweetStatus === 'pending'
+                                      ? 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/20'
+                                      : 'bg-red-500/10 text-red-300 border border-red-500/20'
+                                }`}>
+                                  {tweet.tweetStatus.toUpperCase()}
+                                </span>
+                              )}
                             </div>
-                          )}
 
-                          {tweet.tweetStatus === 'posted' && tweet.tweetUrl && !tweet.notificationSent && (
-                            <button
-                              onClick={() => handleSendNotification(tweet._id)}
-                              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200 disabled:opacity-50"
-                              disabled={actionLoading}
-                            >
-                              {actionLoading ? 'Sending...' : 'Send Notification'}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="px-6 py-8 text-center text-gray-400 bg-gray-800/50">
-                    No paid tweets found
-                  </li>
-                )}
-              </ul>
-            </div>
-          ) : (
-            <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden border border-gray-700">
-              <ul className="divide-y divide-gray-700">
-                {regularTweets.map((tweet) => (
-                  <li key={tweet._id} className="p-6 hover:bg-gray-700/50 transition duration-150">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-gray-200">
-                              Email: {tweet.email}
-                            </p>
-                            {tweet.mediaUrl && (
-                              <span className="px-2 py-0.5 text-xs bg-blue-900/50 text-blue-300 rounded-full border border-blue-600">
-                                Has Attachment
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm text-gray-300">
-                              Message: {tweet.messageText}
-                            </p>
-                            <button
-                              onClick={async () => {
-                                if (await copyToClipboard(tweet.messageText)) {
-                                  setSuccessMessage('Message copied to clipboard!');
-                                  setTimeout(() => setSuccessMessage(''), 1000);
-                                }
-                              }}
-                              className="p-1 rounded hover:bg-gray-600 transition-colors"
-                              title="Copy message"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
-                            </button>
-                          </div>
-                          <p className="text-xs text-gray-400">
-                            Sent: {new Date(tweet.createdAt).toLocaleString()}
-                          </p>
-                          {tweet.tweetId && (
-                            <a 
-                              href={`https://twitter.com/x/status/${tweet.tweetId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:underline text-sm"
-                            >
-                              View Tweet ↗
-                            </a>
-                          )}
-                          {tweet.mediaUrl && (
-                            <div className="mt-2">
-                              <img
-                                src={tweet.mediaUrl}
-                                alt="Tweet media"
-                                className="mt-2 max-h-64 w-auto rounded-lg shadow-md"
-                              />
+                            <div className="flex items-center justify-between gap-4">
+                              {activeTab === 'paid' ? (
+                                <div className="flex-1 flex flex-wrap items-center gap-2">
+                                  <select
+                                    value={tweet.tweetStatus}
+                                    onChange={(e) => handleStatusUpdate(tweet._id, e.target.value)}
+                                    className="w-full sm:w-auto px-4 py-2 rounded-xl border border-white/10 bg-black/40 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                    disabled={loadingStates[`status_${tweet._id}`]}
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="posted">Posted</option>
+                                    <option value="rejected">Rejected</option>
+                                  </select>
+
+                                  {tweet.tweetStatus === 'posted' && (
+                                    <div className="flex-1 min-w-[200px] sm:min-w-[400px] lg:min-w-[500px]">
+                                      <input
+                                        type="text"
+                                        placeholder="Tweet URL"
+                                        value={urlInputs[tweet._id] ?? tweet.tweetUrl ?? ''}
+                                        onChange={(e) => handleUrlInputChange(tweet._id, e.target.value)}
+                                        className="w-full px-4 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                        disabled={loadingStates[`status_${tweet._id}`]}
+                                      />
+                                    </div>
+                                  )}
+
+                                  {tweet.tweetStatus === 'posted' && tweet.tweetUrl && !tweet.notificationSent && (
+                                    <button
+                                      onClick={() => handleSendNotification(tweet._id)}
+                                      className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all disabled:opacity-50 text-sm shrink-0"
+                                      disabled={loadingStates[`notify_${tweet._id}`]}
+                                    >
+                                      <NotificationIcon />
+                                      <span>{loadingStates[`notify_${tweet._id}`] ? 'Sending...' : 'Send Notification'}</span>
+                                    </button>
+                                  )}
+                                </div>
+                              ) : <div className="flex-1" />}
+
+                              <button
+                                onClick={() => handleDelete(tweet._id)}
+                                className="flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 rounded-xl transition-all disabled:opacity-50 text-sm shrink-0"
+                                disabled={loadingStates[`delete_${tweet._id}`]}
+                              >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                  <path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                <span>{loadingStates[`delete_${tweet._id}`] ? 'Deleting...' : 'Delete'}</span>
+                              </button>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ))}
+                          </div>
+                        </li>
+                      ))}
+                    </>
+                  );
+                })()}
               </ul>
+              {/* Pagination controls */}
+              {getPaginatedTweets(activeTab === 'paid' ? paidTweets : regularTweets).totalPages > 1 && (
+                <PaginationControls 
+                  totalPages={getPaginatedTweets(activeTab === 'paid' ? paidTweets : regularTweets).totalPages} 
+                />
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
       <Script

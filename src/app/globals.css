@@ -56,7 +56,23 @@ input[type="file"] {
   input[type="text"],
   input[type="email"],
   textarea {
-    font-size: 16px !important; /* Prevent mobile zoom */
+    -webkit-text-size-adjust: none;
+    font-size: 12px !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transform: scale(1);
+  }
+
+  /* Create a wrapper class for inputs */
+  .input-wrapper {
+    transform: scale(1);
+    transform-origin: left top;
+    touch-action: manipulation;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    font-size: 12px !important;
   }
 }
 
@@ -64,7 +80,12 @@ input[type="file"] {
   input[type="text"],
   input[type="email"],
   textarea {
-    font-size: 12px !important; /* Ensure 12px on wider devices */
+    font-size: 12px !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    font-size: 12px !important;
   }
 }
 
