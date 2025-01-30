@@ -24,7 +24,7 @@ const FAQPage = () => {
     },
     {
       q: "Apa perbedaan Regular dan Paid Menfess?",
-      a: "Regular Menfess gratis tapi terbatas 17 tweet per hari dan 1 tweet per hari per user. Paid Menfess berbayar Rp3.000 dengan keuntungan: bisa kirim video, dijamin terkirim, dan diproses manual oleh admin pada jam 20.00 atau 22.00 WIB."
+      a: "Regular Menfess gratis tapi terbatas 17 tweet per hari dan 1 tweet per hari per user. Paid Menfess berbayar Rp2.500 dengan keuntungan: bisa kirim video, dijamin terkirim, dan diproses manual oleh admin pada jam 20.00 atau 22.00 WIB."
     },
     {
       q: "Kenapa ada batasan 17 tweet per hari?",
