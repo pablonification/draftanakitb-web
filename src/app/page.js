@@ -502,8 +502,8 @@ const MainPage = () => {
       
       localStorage.setItem('menfessData', JSON.stringify(menfessData));
 
-      // Redirect based on the actual selected type (not the effective type)
-      window.location.href = menfessType === 'paid' 
+      // Redirect based on the effective type, not the selected type
+      window.location.href = effectiveType === 'paid' 
         ? '/landing/paid'
         : '/landing/regular';
 
@@ -706,7 +706,7 @@ const MainPage = () => {
       <Head>
         <meta 
           name="viewport" 
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" 
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" 
         />
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-[#000072] via-[#000060] to-[#000045] text-white p-4 pb-16">
@@ -801,6 +801,11 @@ const MainPage = () => {
                   disabled={isEmailVerified}
                   className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                   placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck="false"
                 />
                 <button
                   type="button"
@@ -837,6 +842,12 @@ const MainPage = () => {
                     disabled={isOtpVerified}
                     className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                     placeholder="Masukkan kode OTP"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck="false"
+                    pattern="[0-9]*"
                   />
                   <button
                     type="button"
@@ -923,6 +934,9 @@ const MainPage = () => {
                   required
                   className="w-full h-32 p-4 bg-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none"
                   placeholder='🚀 Silakan ketik pesanmu disini dengan triggerword itb! maba! misuh! bucin! atau itbparkir! untuk mengirim menfess ke Twitter. Contoh menfess: "itb! please ada yang bisa ajarin sender kimia ga?? sender udah hopless banget buat besok uas dan gatau harus ngapain lagi 😭 😭 apa pasrah aja ya??" Maksimal 280 kata.'
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck="false"
                 />
               </div>
               </div>

@@ -7,15 +7,17 @@ const TermsModal = ({ isOpen, onClose, onAccept }) => {
   const checkScroll = () => {
     const element = contentRef.current;
     if (element) {
-      const isScrolledToBottom = 
-        Math.ceil(element.scrollHeight - element.scrollTop) <= element.clientHeight;
-      setCanAccept(isScrolledToBottom);
+      const isAtBottom = 
+        Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 1;
+      setCanAccept(isAtBottom);
     }
   };
 
   useEffect(() => {
     if (isOpen) {
       setCanAccept(false);
+      // Check initial scroll position
+      checkScroll();
     }
   }, [isOpen]);
 
