@@ -792,15 +792,16 @@ const MainPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="block font-semibold">Email</label>
-              <div className="input-wrapper">
+            <div className="flex items-center gap-2 input-wrapper">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={handleEmailKeyPress}
                   disabled={isEmailVerified}
-                  className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
+                  className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50 text-base md:text-sm"
                   placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
+                  inputMode="email"
                   autoComplete="email"
                   autoCorrect="off"
                   autoCapitalize="none"
@@ -832,15 +833,16 @@ const MainPage = () => {
                   <label className="block font-semibold">OTP</label>
                   <OtpHelpButton onClick={() => setShowOtpHelp(true)} />
                 </div>
-                <div className="input-wrapper">
+              <div className="flex items-center gap-2 input-wrapper">
                   <input
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     onKeyDown={handleOtpKeyPress}
                     disabled={isOtpVerified}
-                    className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
+                    className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50 text-base md:text-sm"
                     placeholder="Masukkan kode OTP"
+                    inputMode="numeric"
                     autoComplete="one-time-code"
                     autoCorrect="off"
                     autoCapitalize="none"
@@ -924,13 +926,13 @@ const MainPage = () => {
                 <label className="block font-semibold">
                   Pesan <span className="text-red-400">*</span>
                 </label>
-              <div className="w-full bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 input-wrapper textarea-wrapper">
+              <div className="w-full bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 input-wrapper">
                 <textarea
                   value={message}
                   onChange={handleMessageChange}
                   maxLength={280}
                   required
-                  className="w-full h-32 p-4 bg-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none"
+                  className="w-full h-32 p-4 bg-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none text-base md:text-sm"
                   placeholder='🚀 Silakan ketik pesanmu disini dengan triggerword itb! maba! misuh! bucin! atau itbparkir! untuk mengirim menfess ke Twitter. Contoh menfess: "itb! please ada yang bisa ajarin sender kimia ga?? sender udah hopless banget buat besok uas dan gatau harus ngapain lagi 😭 😭 apa pasrah aja ya??" Maksimal 280 kata.'
                   autoCorrect="off"
                   autoCapitalize="none"
