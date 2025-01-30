@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: 'DraftAnakITB Bot',
   description: 'Send anonymous messages to Twitter through DraftAnakITB Bot',
-  metadataBase: new URL('https://draftanakitb.live'),
+  metadataBase: new URL('https://draftanakitb.tech'),
   applicationName: 'DraftAnakITB',
   authors: [{ name: 'DraftAnakITB Team' }],
   keywords: ['menfess', 'ITB', 'mahasiswa', 'anonymous', 'twitter', 'social media'],
@@ -22,7 +22,7 @@ export const metadata = {
   // Open Graph
   openGraph: {
     type: 'website',
-    url: 'https://draftanakitb.live',
+    url: 'https://draftanakitb.tech',
     title: 'DraftAnakITB - Platform Menfess ITB',
     description: 'Platform menfess anonymous untuk mahasiswa ITB. Kirim pesan dan opinimu secara anonim ke Twitter!',
     siteName: 'DraftAnakITB',
