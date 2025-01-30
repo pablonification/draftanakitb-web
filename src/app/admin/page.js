@@ -93,6 +93,7 @@ export default function AdminPanel() {
   };
 
   const fetchPaidTweets = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
       if (!token) {
@@ -101,7 +102,6 @@ export default function AdminPanel() {
         return;
       }
 
-      console.log('Fetching tweets with token:', token);
       const response = await fetch('/api/admin/tweets', {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -111,17 +111,14 @@ export default function AdminPanel() {
       });
       
       const data = await response.json();
-      console.log('Tweets API response:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch tweets');
       }
 
       if (data.success && Array.isArray(data.tweets)) {
-        console.log('Setting tweets:', data.tweets.length, 'items');
         setPaidTweets(data.tweets);
       } else {
-        console.error('Invalid tweets data:', data);
         throw new Error('Invalid response format');
       }
     } catch (error) {
@@ -594,8 +591,16 @@ export default function AdminPanel() {
     };
   }, [urlUpdateTimeout]);
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  // Update the initial loading state
+  if (!isLoggedIn && loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#000030] via-[#000025] to-[#000020] flex items-center justify-center">
+        <div className="flex items-center justify-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-3">Loading...</span>
+        </div>
+      </div>
+    );
   }
 
   if (!isLoggedIn) {
@@ -652,37 +657,38 @@ export default function AdminPanel() {
     <>
       <div className="min-h-screen bg-gradient-to-br from-[#000030] via-[#000025] to-[#000020] text-white">
         <div className="bg-black/40 backdrop-blur-sm border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-6">
-              <div className="flex justify-between items-center mb-6 max-sm:flex-col max-sm:gap-4">
-                  <div className="flex items-center gap-3">
-                    <DashboardIcon />
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-200 to-blue-400 bg-clip-text text-transparent">
-                      Admin Dashboard
-                    </h1>
-                  </div>
-                <div className="flex items-center gap-2 max-sm:flex-wrap max-sm:justify-center">
-                  <button 
-                    onClick={handleAddTestData}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-sm"
-                  >
-                    <TestDataIcon />
-                    <span>Add Paid Test</span>
-                  </button>
-                  <button 
-                    onClick={handleAddRegularTestData}
-                    className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-sm"
-                  >
-                    <TestDataIcon />
-                    <span>Add Regular Test</span>
-                  </button>
-                  <button 
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 rounded-xl transition-all text-sm"
-                  >
-                    <LogoutIcon />
-                    <span>Logout</span>
-                  </button>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="absolute right-4 top-0 sm:top-4 h-16 flex items-center gap-2">
+              <button 
+                onClick={handleAddTestData}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-sm"
+              >
+                <TestDataIcon />
+                <span>Add Paid Test</span>
+              </button>
+              <button 
+                onClick={handleAddRegularTestData}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-sm"
+              >
+                <TestDataIcon />
+                <span>Add Regular Test</span>
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 p-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 rounded-xl transition-all text-sm"
+              >
+                <LogoutIcon />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+
+            <div className="py-6 sm:pt-6 pt-0">
+              <div className="h-16 flex items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <DashboardIcon />
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-200 to-blue-400 bg-clip-text text-transparent">
+                    Admin Dashboard
+                  </h1>
                 </div>
               </div>
               
@@ -730,27 +736,27 @@ export default function AdminPanel() {
               </div>
               
               {/* Tab buttons */}
-              <div className="inline-flex p-0.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 max-sm:w-full shrink-0 w-[172px]">
-                  <button
-                    onClick={() => setActiveTab('paid')}
-                    className={`w-20 px-3 py-2 rounded-lg transition-all text-sm ${
-                      activeTab === 'paid' 
-                        ? 'bg-blue-500/20 text-blue-300' 
-                        : 'text-gray-300 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    Paid
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('regular')}
-                    className={`w-20 px-3 py-2 rounded-lg transition-all text-sm ${
-                      activeTab === 'regular' 
-                        ? 'bg-blue-500/20 text-blue-300' 
-                        : 'text-gray-300 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    Regular
-                  </button>
+              <div className="inline-flex p-0.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 max-sm:w-full max-sm:justify-center shrink-0 w-[172px]">
+                <button
+                  onClick={() => setActiveTab('paid')}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-all text-sm ${
+                    activeTab === 'paid' 
+                      ? 'bg-blue-500/20 text-blue-300' 
+                      : 'text-gray-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  Paid
+                </button>
+                <button
+                  onClick={() => setActiveTab('regular')}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-all text-sm ${
+                    activeTab === 'regular' 
+                      ? 'bg-blue-500/20 text-blue-300' 
+                      : 'text-gray-300 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  Regular
+                </button>
               </div>
             </div>
 
@@ -759,6 +765,17 @@ export default function AdminPanel() {
                 {(() => {
                   const tweets = activeTab === 'paid' ? paidTweets : regularTweets;
                   const { paginatedTweets, totalPages } = getPaginatedTweets(tweets);
+                  
+                  if (loading) {
+                    return (
+                      <li className="p-6">
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                          <span className="ml-3 text-gray-400">Loading tweets...</span>
+                        </div>
+                      </li>
+                    );
+                  }
                   
                   if (paginatedTweets.length === 0) {
                     return (
@@ -807,28 +824,50 @@ export default function AdminPanel() {
                                       </a>
                                     )
                                   )}
+                                  {activeTab === 'paid' && (
+                                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                      tweet.tweetStatus === 'posted' 
+                                        ? 'bg-green-500/10 text-green-300 border border-green-500/20'
+                                        : tweet.tweetStatus === 'pending'
+                                          ? 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/20'
+                                          : 'bg-red-500/10 text-red-300 border border-red-500/20'
+                                    }`}>
+                                      {tweet.tweetStatus.toUpperCase()}
+                                    </span>
+                                  )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm text-gray-300">
+                                <div className="flex items-start gap-2">
+                                  <p className="text-sm text-gray-300 break-words whitespace-pre-wrap">
                                     {tweet.messageText}
                                   </p>
-                                  <button
-                                    onClick={async () => {
-                                      if (await copyToClipboard(tweet.messageText)) {
-                                        setSuccessMessage('Message copied to clipboard!');
-                                        setTimeout(() => setSuccessMessage(''), 1000);
-                                      }
-                                    }}
-                                    className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-gray-300 transition-all"
-                                    title="Copy message"
-                                  >
-                                    <CopyIcon />
-                                  </button>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                      onClick={async () => {
+                                        if (await copyToClipboard(tweet.messageText)) {
+                                          setSuccessMessage('Message copied to clipboard!');
+                                          setTimeout(() => setSuccessMessage(''), 1000);
+                                        }
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-gray-300 transition-all"
+                                      title="Copy message"
+                                    >
+                                      <CopyIcon />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDelete(tweet._id)}
+                                      className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-300 hover:text-red-200 transition-all disabled:opacity-50"
+                                      disabled={loadingStates[`delete_${tweet._id}`]}
+                                      title={loadingStates[`delete_${tweet._id}`] ? 'Deleting...' : 'Delete tweet'}
+                                    >
+                                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" strokeLinecap="round" strokeLinejoin="round"/>
+                                      </svg>
+                                    </button>
+                                  </div>
                                 </div>
                                 <p className="text-xs text-gray-400">
                                   Sent: {new Date(activeTab === 'paid' ? (tweet.postedAt || tweet.createdAt) : tweet.createdAt).toLocaleString()}
                                 </p>
-                                
                                 {tweet.mediaUrl && (
                                   <div className="mt-3">
                                     {isVideoFile(tweet.mediaUrl) ? (
@@ -874,71 +913,46 @@ export default function AdminPanel() {
                                   </div>
                                 )}
                               </div>
-                              
-                              {activeTab === 'paid' && (
-                                <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                  tweet.tweetStatus === 'posted' 
-                                    ? 'bg-green-500/10 text-green-300 border border-green-500/20'
-                                    : tweet.tweetStatus === 'pending'
-                                      ? 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/20'
-                                      : 'bg-red-500/10 text-red-300 border border-red-500/20'
-                                }`}>
-                                  {tweet.tweetStatus.toUpperCase()}
-                                </span>
-                              )}
                             </div>
 
-                            <div className="flex items-center justify-between gap-4">
-                              {activeTab === 'paid' ? (
-                                <div className="flex-1 flex flex-wrap items-center gap-2">
-                                  <select
-                                    value={tweet.tweetStatus}
-                                    onChange={(e) => handleStatusUpdate(tweet._id, e.target.value)}
-                                    className="w-full sm:w-auto px-4 py-2 rounded-xl border border-white/10 bg-black/40 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-                                    disabled={loadingStates[`status_${tweet._id}`]}
+                            {activeTab === 'paid' && (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <select
+                                  value={tweet.tweetStatus}
+                                  onChange={(e) => handleStatusUpdate(tweet._id, e.target.value)}
+                                  className="w-full sm:w-auto px-4 py-2 rounded-xl border border-white/10 bg-black/40 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                  disabled={loadingStates[`status_${tweet._id}`]}
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="posted">Posted</option>
+                                  <option value="rejected">Rejected</option>
+                                </select>
+
+                                {tweet.tweetStatus === 'posted' && (
+                                  <div className="flex-1 min-w-[200px] sm:min-w-[400px] lg:min-w-[500px]">
+                                    <input
+                                      type="text"
+                                      placeholder="Tweet URL"
+                                      value={urlInputs[tweet._id] ?? tweet.tweetUrl ?? ''}
+                                      onChange={(e) => handleUrlInputChange(tweet._id, e.target.value)}
+                                      className="w-full px-4 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                                      disabled={loadingStates[`status_${tweet._id}`]}
+                                    />
+                                  </div>
+                                )}
+
+                                {tweet.tweetStatus === 'posted' && tweet.tweetUrl && !tweet.notificationSent && (
+                                  <button
+                                    onClick={() => handleSendNotification(tweet._id)}
+                                    className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all disabled:opacity-50 text-sm shrink-0"
+                                    disabled={loadingStates[`notify_${tweet._id}`]}
                                   >
-                                    <option value="pending">Pending</option>
-                                    <option value="posted">Posted</option>
-                                    <option value="rejected">Rejected</option>
-                                  </select>
-
-                                  {tweet.tweetStatus === 'posted' && (
-                                    <div className="flex-1 min-w-[200px] sm:min-w-[400px] lg:min-w-[500px]">
-                                      <input
-                                        type="text"
-                                        placeholder="Tweet URL"
-                                        value={urlInputs[tweet._id] ?? tweet.tweetUrl ?? ''}
-                                        onChange={(e) => handleUrlInputChange(tweet._id, e.target.value)}
-                                        className="w-full px-4 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-                                        disabled={loadingStates[`status_${tweet._id}`]}
-                                      />
-                                    </div>
-                                  )}
-
-                                  {tweet.tweetStatus === 'posted' && tweet.tweetUrl && !tweet.notificationSent && (
-                                    <button
-                                      onClick={() => handleSendNotification(tweet._id)}
-                                      className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all disabled:opacity-50 text-sm shrink-0"
-                                      disabled={loadingStates[`notify_${tweet._id}`]}
-                                    >
-                                      <NotificationIcon />
-                                      <span>{loadingStates[`notify_${tweet._id}`] ? 'Sending...' : 'Send Notification'}</span>
-                                    </button>
-                                  )}
-                                </div>
-                              ) : <div className="flex-1" />}
-
-                              <button
-                                onClick={() => handleDelete(tweet._id)}
-                                className="flex items-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 rounded-xl transition-all disabled:opacity-50 text-sm shrink-0"
-                                disabled={loadingStates[`delete_${tweet._id}`]}
-                              >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                  <path d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <span>{loadingStates[`delete_${tweet._id}`] ? 'Deleting...' : 'Delete'}</span>
-                              </button>
-                            </div>
+                                    <NotificationIcon />
+                                    <span>{loadingStates[`notify_${tweet._id}`] ? 'Sending...' : 'Send Notification'}</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </li>
                       ))}

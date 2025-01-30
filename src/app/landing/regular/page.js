@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
+import Head from 'next/head';
 
 // Update Copyright component
 const Copyright = () => (
@@ -63,6 +64,7 @@ const RegularMenfessLanding = () => {
     type: null, // 'personal' or 'global'
     nextAvailable: null
   });
+  const [tweetId, setTweetId] = useState(null);
 
   useEffect(() => {
     // Load menfess data from localStorage
@@ -154,6 +156,7 @@ const RegularMenfessLanding = () => {
 
       localStorage.removeItem('menfessData');
       setIsComplete(true);
+      setTweetId(data.tweetId);
 
     } catch (error) {
       console.error('Error sending tweet:', error);
@@ -322,6 +325,12 @@ const RegularMenfessLanding = () => {
 
   return (
     <>
+      <Head>
+        <meta 
+          name="viewport" 
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" 
+        />
+      </Head>
       <div className="min-h-screen bg-gradient-to-br from-[#000072] via-[#000060] to-[#000045] text-white p-4 pb-16">
         <nav className="max-w-7xl mx-auto flex justify-end space-x-6 mb-12 px-4 animate-slideUp">
           <a href="/" className="text-gray-300 hover:text-white transition-all-smooth hover-scale">HOME</a>
@@ -388,6 +397,16 @@ const RegularMenfessLanding = () => {
                         <p className="normal-text text-green-300 font-medium animate-fadeIn">
                           Menfess sent successfully!
                         </p>
+                        {tweetId && (
+                          <a 
+                            href={`https://twitter.com/DraftAnakITB/status/${tweetId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-4 px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg border border-blue-500/20 hover:bg-blue-500/30 transition-all"
+                          >
+                            View Tweet
+                          </a>
+                        )}
                       </div>
                       <div className="mt-6 flex justify-center">
                         <a 

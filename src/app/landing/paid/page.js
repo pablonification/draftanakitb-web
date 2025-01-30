@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
+import Head from 'next/head';
 
 // Update Copyright component
 const Copyright = () => (
@@ -191,6 +192,12 @@ const PaidMenfessLanding = () => {
 
   return (
     <>
+      <Head>
+        <meta 
+          name="viewport" 
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" 
+        />
+      </Head>
       <div className="min-h-screen bg-gradient-to-br from-[#000072] via-[#000060] to-[#000045] text-white p-4 pb-16">
         <nav className="max-w-7xl mx-auto flex justify-end space-x-6 mb-12 px-4 animate-slideUp">
           <a href="/" className="text-gray-300 hover:text-white transition-all-smooth hover-scale">HOME</a>

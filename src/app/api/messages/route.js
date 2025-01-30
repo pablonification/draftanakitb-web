@@ -82,7 +82,8 @@ async function getDailyMessageCount() {
 
 async function checkGlobalLimit() {
   const currentCount = await getDailyMessageCount();
-  return isWithinLimits.globalRegular(currentCount);
+  // Add 1 to account for the current message being sent
+  return isWithinLimits.globalRegular(currentCount + 1);
 }
 
 export async function POST(request) {
@@ -122,8 +123,8 @@ export async function POST(request) {
       });
     }
 
-    const canSendGlobal = isWithinLimits.globalRegular(currentCount);
-    if (!canSendGlobal) {
+    // Check if adding this message would exceed the limit
+    if (currentCount >= LIMITS.GLOBAL_REGULAR_DAILY) {
       return NextResponse.json({
         success: false,
         error: 'GLOBAL_LIMIT_EXCEEDED'
@@ -171,7 +172,7 @@ export async function POST(request) {
       let updateRetries = 0;
       while (!updateSuccess && updateRetries < 3) {
         try {
-          await DailyMessageCount.findOneAndUpdate(
+          const updatedCount = await DailyMessageCount.findOneAndUpdate(
             { date: today },
             { $inc: { regularCount: 1 } },
             { 
@@ -180,6 +181,21 @@ export async function POST(request) {
               runValidators: true
             }
           );
+
+          // Double-check the count after update
+          if (updatedCount.regularCount > LIMITS.GLOBAL_REGULAR_DAILY) {
+            console.error('Count exceeded limit after update:', updatedCount.regularCount);
+            // Rollback the increment if needed
+            await DailyMessageCount.updateOne(
+              { date: today },
+              { $inc: { regularCount: -1 } }
+            );
+            return NextResponse.json({
+              success: false,
+              error: 'GLOBAL_LIMIT_EXCEEDED'
+            });
+          }
+
           updateSuccess = true;
         } catch (error) {
           updateRetries++;
@@ -211,7 +227,7 @@ export async function POST(request) {
         tweetId: tweetResponse.data?.id,
         limitStatus: {
           personalLimitExceeded: !canSendPersonal,
-          globalLimitExceeded: !canSendGlobal
+          globalLimitExceeded: currentCount >= LIMITS.GLOBAL_REGULAR_DAILY
         }
       });
 
