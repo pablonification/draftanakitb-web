@@ -500,12 +500,12 @@ const MainPage = () => {
         isWhitelisted
       };
       
+      // Store the data first
       localStorage.setItem('menfessData', JSON.stringify(menfessData));
 
-      // Redirect based on the effective type, not the selected type
-      window.location.href = effectiveType === 'paid' 
-        ? '/landing/paid'
-        : '/landing/regular';
+      // Use window.location.replace for more reliable redirection
+      const redirectPath = effectiveType === 'paid' ? '/landing/paid' : '/landing/regular';
+      window.location.replace(redirectPath);
 
     } catch (error) {
       console.error('Error:', error);

@@ -10,7 +10,7 @@
 export const LIMITS = {
   // Regular menfess limits
   GLOBAL_REGULAR_DAILY: 17,       // Twitter API limit per day
-  PERSONAL_REGULAR_DAYS: 7,       // Days between regular menfess per user
+  PERSONAL_REGULAR_DAYS: 1,       // Days between regular menfess per user
   
   // Message limits
   MESSAGE_LENGTH: 280,           // Twitter character limit

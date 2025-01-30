@@ -7,17 +7,41 @@ const TermsModal = ({ isOpen, onClose, onAccept }) => {
   const checkScroll = () => {
     const element = contentRef.current;
     if (element) {
-      const isAtBottom = 
-        Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 1;
+      const scrollPosition = Math.ceil(element.scrollTop + element.clientHeight);
+      const scrollHeight = Math.ceil(element.scrollHeight);
+      const isAtBottom = scrollPosition >= scrollHeight - 2; // 2px threshold
       setCanAccept(isAtBottom);
     }
   };
 
+  // Handle touch events for mobile
+  const handleTouchMove = () => {
+    checkScroll();
+  };
+
   useEffect(() => {
-    if (isOpen) {
+    const element = contentRef.current;
+    if (isOpen && element) {
+      // Reset scroll position and canAccept when modal opens
+      element.scrollTop = 0;
       setCanAccept(false);
-      // Check initial scroll position
+
+      // Check if content is shorter than container
+      if (element.scrollHeight <= element.clientHeight) {
+        setCanAccept(true);
+      }
+
+      // Add event listeners
+      element.addEventListener('scroll', checkScroll, { passive: true });
+      element.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+      // Initial check
       checkScroll();
+
+      return () => {
+        element.removeEventListener('scroll', checkScroll);
+        element.removeEventListener('touchmove', handleTouchMove);
+      };
     }
   }, [isOpen]);
 
@@ -40,8 +64,7 @@ const TermsModal = ({ isOpen, onClose, onAccept }) => {
           
           <div 
             ref={contentRef}
-            onScroll={checkScroll}
-            className="p-6 overflow-y-auto max-h-[60vh] text-gray-300 space-y-6"
+            className="p-6 overflow-y-auto max-h-[60vh] text-gray-300 space-y-6 overscroll-contain"
           >
             <div className="bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 p-6">
               <p className="normal-text mb-4">Halaman ini mengatur penggunaan layanan Menfess DraftAnakITB ("DraftAnakITB"). Dengan menggunakan layanan ini, Anda dianggap menyetujui Aturan dan Ketentuan berikut:</p>
