@@ -705,11 +705,11 @@ export default function AdminPanel() {
             <div className="flex items-center gap-4 max-sm:flex-col">
               <div className="flex-1 w-full">
                 <div className="flex gap-2 max-sm:flex-col">
-                  <div className="w-40 max-sm:w-full">
+                  <div className="w-50 max-sm:w-full">
                     <select
                       value={searchType}
                       onChange={(e) => setSearchType(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                      className="w-full px-2 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
                     >
                       <option value="message">Search by Message</option>
                       <option value="email">Search by Email</option>
