@@ -211,7 +211,7 @@ const ComparisonModal = ({ isOpen, onClose, botStatus, setMenfessType }) => {
                 </li>
                 <li className="flex items-center gap-3">
                   <LimitIcon />
-                  <span>Batas 1 tweet/minggu (per user)</span>
+                  <span>Batas 1 tweet/hari (per user)</span>
                 </li>
               </ul>
               <div className="mt-6 pt-6 border-t border-white/10">
@@ -485,7 +485,7 @@ const MainPage = () => {
       // Check if email is whitelisted
       const isWhitelisted = WHITELISTED_EMAILS.includes(email);
       
-      // Determine correct menfess type based on bot status and whitelist
+      // Determine effective type based on bot status and whitelist
       const effectiveType = botStatus.isPaidOnly ? 'paid' : 
                           isWhitelisted ? 'regular' : 
                           menfessType;
@@ -493,7 +493,7 @@ const MainPage = () => {
       const menfessData = {
         email,
         message,
-        type: effectiveType,
+        type: effectiveType,  // Use effectiveType here
         attachment: base64Attachment,
         remainingRegular: botStatus.remainingRegular,
         personalLimitExceeded: botStatus.personalLimitExceeded,
@@ -503,7 +503,7 @@ const MainPage = () => {
       // Store the data first
       localStorage.setItem('menfessData', JSON.stringify(menfessData));
 
-      // Use window.location.replace for more reliable redirection
+      // Use effectiveType for redirection
       const redirectPath = effectiveType === 'paid' ? '/landing/paid' : '/landing/regular';
       window.location.replace(redirectPath);
 
