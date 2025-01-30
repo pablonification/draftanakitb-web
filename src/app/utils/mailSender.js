@@ -4,9 +4,12 @@ import path from 'path';
 
 const mailSender = async (email, title, body) => {
   try {
-    // Path to PFX certificate
+    // Path to PFX certificate and logo
     const pfxPath = path.join(process.cwd(), 'public', 'certificate.pfx');
+    const logoPath = path.join(process.cwd(), 'public', 'logo.jpg');
+    
     const pfx = fs.readFileSync(pfxPath);
+    const logo = fs.readFileSync(logoPath);
 
     // Create a transporter
     const transporter = nodemailer.createTransport({
@@ -29,6 +32,11 @@ const mailSender = async (email, title, body) => {
       to: email,
       subject: title,
       html: body,
+      attachments: [{
+        filename: 'logo.jpg',
+        content: logo,
+        cid: 'logo' // Same cid value as mentioned in the email template
+      }]
     });
 
     console.log('Email sent:', info);

@@ -1,19 +1,24 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
+import mongoose from 'mongoose';
 import { verifyToken } from '@/lib/auth';
 import { generateTweetNotification } from '@/app/utils/emailTemplate';
-import nodemailer from 'nodemailer';
+import mailSender from '@/app/utils/mailSender';
 
-export async function POST(request, { params }) {  // Destructure params here
+export async function POST(request, { params }) {
     try {
         const token = request.headers.get('authorization')?.split(' ')[1];
         if (!verifyToken(token)) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const tweetId = params.tweetId;  // Access from destructured params
+        const tweetId = params.tweetId;
 
-        const { db } = await connectToDatabase();
+        // Connect to MongoDB using mongoose
+        if (!mongoose.connections[0].readyState) {
+            await mongoose.connect(process.env.MONGODB_URI);
+        }
+
+        const db = mongoose.connection.db;
 
         const tweet = await db.collection('paidTweets').findOne({ _id: tweetId });
         if (!tweet || !tweet.tweetUrl) {
@@ -23,22 +28,12 @@ export async function POST(request, { params }) {  // Destructure params here
             }, { status: 404 });
         }
 
-        const transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: process.env.MAIL_PORT,
-            secure: false,
-            auth: {
-                user: process.env.MAIL_USER,
-                pass: process.env.MAIL_PASS
-            }
-        });
-
-        await transporter.sendMail({
-            from: `"DraftAnakITB" <${process.env.MAIL_USER}>`,
-            to: tweet.email,
-            subject: 'Your Paid Menfess Has Been Posted! 🎉',
-            html: generateTweetNotification(tweet.tweetUrl)
-        });
+        // Pass the entire tweet object to the template
+        await mailSender(
+            tweet.email,
+            'Your Paid Menfess Has Been Posted! ✨',
+            generateTweetNotification(tweet.tweetUrl, tweet)
+        );
 
         await db.collection('paidTweets').updateOne(
             { _id: tweetId },
@@ -53,7 +48,7 @@ export async function POST(request, { params }) {  // Destructure params here
         console.error('Error sending notification:', error);
         return NextResponse.json({ 
             success: false, 
-            error: 'Failed to send notification' 
+            error: 'Failed to send notification: ' + error.message 
         }, { status: 500 });
     }
 }

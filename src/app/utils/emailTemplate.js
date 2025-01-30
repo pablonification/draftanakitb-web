@@ -14,7 +14,7 @@ function generateEmailTemplate(otp) {
             background-color: #000072;
             color: #ffffff;
           }
-          h1, h2 {
+          h1, h2, h3 {
             margin: 0;
             font-weight: 600;
           }
@@ -29,29 +29,63 @@ function generateEmailTemplate(otp) {
           .header {
             padding: 20px 0;
             text-align: center;
-          }
-          .header h1 {
-            color: #ffffff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
           }
           .verification-code {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
             text-align: center;
-            margin: 20px 0;
+            margin: 25px 0;
             border: 1px solid rgba(255, 255, 255, 0.2);
           }
           .verification-code span {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
             letter-spacing: 8px;
-            color: #ffffff;
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+          }
+          .info-box {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          .warning-text {
+            color: #ffcc00;
+            font-size: 14px;
           }
           .footer {
             padding: 20px;
             text-align: center;
             color: rgba(255, 255, 255, 0.7);
             font-size: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 20px;
+          }
+          .social-links {
+            margin-top: 15px;
+          }
+          .social-links a {
+            color: #ffffff;
+            text-decoration: none;
+            margin: 0 10px;
+          }
+          .steps {
+            margin: 20px 0;
+            padding-left: 20px;
+          }
+          .steps li {
+            margin: 10px 0;
+            color: rgba(255, 255, 255, 0.9);
+          }
+          .logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 15px;
           }
         </style>
       </head>
@@ -61,36 +95,73 @@ function generateEmailTemplate(otp) {
             <td style="padding: 40px 20px;">
               <div class="container">
                 <div class="header">
-                  <h1>DraftAnakITB Verification</h1>
+                  <img src="cid:logo" alt="DraftAnakITB Logo" class="logo" />
+                  <p style="margin-top: 10px; color: rgba(255, 255, 255, 0.7);">
+                    Kode OTP untuk Verifikasi Email
+                  </p>
                 </div>
-                <h2 style="margin-bottom: 20px;">Verification Code</h2>
-                <p style="font-size: 14px; line-height: 24px;">
-                  Here is your verification code:
-                </p>
-                <div class="verification-code">
-                  <span>${otp}</span>
+
+                <div class="content">
+                  <p>Halo! 👋</p>
+                  <p>Terima kasih telah menggunakan DraftAnakITB Menfess. Berikut adalah kode OTP untuk verifikasi email kamu:</p>
+
+                  <div class="verification-code">
+                    <span>${otp}</span>
+                  </div>
+
+                  <div class="info-box">
+                    <h3>Petunjuk Verifikasi</h3>
+                    <ol class="steps">
+                      <li>Masukkan kode OTP di atas ke dalam form verifikasi</li>
+                      <li>Pastikan kode dimasukkan dengan benar</li>
+                      <li>Klik tombol "Verify" untuk melanjutkan</li>
+                    </ol>
+                  </div>
+
+                  <div class="info-box">
+                    <h3>Informasi Penting</h3>
+                    <ul class="steps">
+                      <li>Kode OTP akan kadaluarsa dalam <span class="warning-text">5 menit</span></li>
+                      <li>Jangan bagikan kode ini dengan siapapun</li>
+                      <li>Kode hanya dapat digunakan satu kali</li>
+                      <li>Jika kode kadaluarsa, kamu bisa meminta kode baru</li>
+                    </ul>
+                  </div>
+
+                  <div class="info-box">
+                    <h3>Butuh Bantuan?</h3>
+                    <p>Jika mengalami masalah dengan verifikasi, kamu bisa:</p>
+                    <ul class="steps">
+                      <li>Klik tombol "Resend OTP" di website</li>
+                      <li>DM admin di @satpam_itb</li>
+                      <li>Cek FAQ di website kami</li>
+                    </ul>
+                  </div>
+
+                  <p class="warning-text" style="margin-top: 20px;">
+                    Jika kamu tidak merasa meminta kode ini, abaikan email ini.
+                  </p>
                 </div>
-                <p style="font-size: 14px;">
-                  This code will expire in 5 minutes.<br>
-                  If you didn't request this code, please ignore this email.
-                </p>
+
+                <div class="footer">
+                  <p>© 2024 DraftAnakITB. All rights reserved.</p>
+                  <div class="social-links">
+                    <a href="https://twitter.com/DraftAnakITB" target="_blank">Twitter</a> |
+                    <a href="https://draftanakitb.tech" target="_blank">Website</a>
+                  </div>
+                </div>
               </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="footer">
-              <p>© 2024 DraftAnakITB. All rights reserved.</p>
             </td>
           </tr>
         </table>
       </body>
       </html>
     `;
-  }
-  
-  export default generateEmailTemplate;
+}
 
-  export const generateTweetNotification = (tweetUrl) => `
+export default generateEmailTemplate;
+
+export const generateTweetNotification = (tweetUrl, tweet) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -120,6 +191,15 @@ function generateEmailTemplate(otp) {
     .header {
       padding: 20px 0;
       text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 20px;
+    }
+    .tweet-preview {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .tweet-link {
       background-color: rgba(255, 255, 255, 0.1);
@@ -127,24 +207,51 @@ function generateEmailTemplate(otp) {
       border-radius: 4px;
       margin: 20px 0;
       border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
     }
     .tweet-link a {
       color: #ffffff;
-      text-decoration: underline;
-      word-break: break-all;
+      text-decoration: none;
+      padding: 10px 20px;
+      background-color: rgba(29, 161, 242, 0.2);
+      border-radius: 20px;
+      display: inline-block;
+      transition: background-color 0.3s;
+    }
+    .tweet-link a:hover {
+      background-color: rgba(29, 161, 242, 0.3);
     }
     .info-box {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.05);
       padding: 15px;
       border-radius: 4px;
       margin: 20px 0;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .footer {
       padding: 20px;
       text-align: center;
       color: rgba(255, 255, 255, 0.7);
       font-size: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 20px;
+    }
+    .social-links {
+      margin-top: 15px;
+    }
+    .social-links a {
+      color: #ffffff;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    .highlight {
+      color: #00ff00;
+      font-weight: bold;
+    }
+    .logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 15px;
     }
   </style>
 </head>
@@ -154,32 +261,60 @@ function generateEmailTemplate(otp) {
       <td style="padding: 40px 20px;">
         <div class="container">
           <div class="header">
+            <img src="cid:logo" alt="DraftAnakITB Logo" class="logo" />
             <h1>DraftAnakITB Notification</h1>
+            <p style="margin-top: 10px; color: rgba(255, 255, 255, 0.7);">
+              Paid Menfess Successfully Posted! ✨
+            </p>
           </div>
+          
           <div class="content">
-            <h2 style="margin-bottom: 20px;">Tweet Posted Successfully! 🎉</h2>
-            <p>Your paid menfess has been posted to our Twitter account.</p>
+            <p>Halo! 👋</p>
+            <p>Paid menfess kamu sudah berhasil diposting ke Twitter/X. Terima kasih sudah menggunakan layanan kami!</p>
             
             <div class="tweet-link">
-              <strong>View your tweet here:</strong><br>
-              <a href="${tweetUrl}" target="_blank" style="color: #ffffff; text-decoration: underline;">${tweetUrl}</a>
+              <h3 style="margin-bottom: 15px;">Lihat Tweet Kamu</h3>
+              <a href="${tweetUrl}" target="_blank">Buka di Twitter/X</a>
             </div>
 
             <div class="info-box">
-              <h3>Important Information</h3>
-              <p>Please note:</p>
-              <ul>
-                <li>Paid menfess are posted at 8 PM or 10 PM WIB daily</li>
-                <li>For support, contact @satpam_itb on Twitter</li>
+              <h3>Informasi Penting</h3>
+              <ul style="padding-left: 20px; margin: 10px 0;">
+                <li>Tweet kamu sudah terposting dan bisa dilihat oleh orang lain</li>
+                <li>Kamu bisa melihat tweet dengan mengklik link di atas</li>
+                <li>Untuk menfess berikutnya, kamu bisa langsung menggunakan layanan paid menfess lagi</li>
+                <li>Paid menfess tidak memiliki batasan harian</li>
+              </ul>
+            </div>
+
+            <div class="info-box">
+              <h3>Fitur Paid Menfess</h3>
+              <ul style="padding-left: 20px; margin: 10px 0;">
+                <li>Support gambar (JPG, PNG, GIF max 1MB)</li>
+                <li>Support video (MP4, 60s, 720p, max 5MB)</li>
+                <li>Tidak ada batasan tweet harian</li>
+                <li>Pengiriman terjadwal 20.00-22.00 WIB</li>
+              </ul>
+            </div>
+
+            <div class="info-box">
+              <h3>Butuh Bantuan?</h3>
+              <p>Jika ada pertanyaan atau masalah, kamu bisa:</p>
+              <ul style="padding-left: 20px; margin: 10px 0;">
+                <li>DM admin di @satpam_itb</li>
+                <li>Cek FAQ di website kami</li>
               </ul>
             </div>
           </div>
+
+          <div class="footer">
+            <p>© 2024 DraftAnakITB. All rights reserved.</p>
+            <div class="social-links">
+              <a href="https://twitter.com/DraftAnakITB" target="_blank">Twitter</a> |
+              <a href="https://draftanakitb.tech" target="_blank">Website</a>
+            </div>
+          </div>
         </div>
-      </td>
-    </tr>
-    <tr>
-      <td class="footer">
-        <p>© 2024 DraftAnakITB. All rights reserved.</p>
       </td>
     </tr>
   </table>
