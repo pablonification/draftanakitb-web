@@ -153,7 +153,9 @@ const UnlimitedIcon = () => (
 // Update ComparisonModal component with new styling and icons
 const ComparisonModal = ({ isOpen, onClose, botStatus, setMenfessType }) => {
   const handleServiceSelect = (type) => {
-    setMenfessType(type);
+    // If isPaidOnly is true, always set to paid
+    const effectiveType = botStatus.isPaidOnly ? 'paid' : type;
+    setMenfessType(effectiveType);
     onClose();
   };
 
@@ -329,7 +331,9 @@ const PaidMenfessTooltip = () => {
 
 // Update ServiceTypeDescription component
 const ServiceTypeDescription = ({ type, isPaidOnly }) => {
-  if (type === 'regular' && !isPaidOnly) {
+  const effectiveType = isPaidOnly ? 'paid' : type;
+  
+  if (effectiveType === 'regular') {
     return (
       <div className="w-full mt-4 bg-gradient-to-b from-[#000072]/50 to-[#000050]/50 p-6 rounded-xl border border-white/10 hover:border-white/20 transition-all">
         <div className="flex items-start gap-3">
@@ -880,26 +884,25 @@ const MainPage = () => {
               <div className="flex flex-col items-center">
                 <div className="w-full flex items-center justify-center space-x-6 bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 p-4 rounded-xl border border-white/10">
                   <label className="flex items-center space-x-2 cursor-pointer group">
-                  {/* Tipe layanan text */}
-                  <span className="normal-text font-semibold text-gray-400">Tipe Layanan:</span>
-                  <input
-                    type="radio"
-                    value="regular"
-                    checked={menfessType === 'regular'}
-                    onChange={(e) => setMenfessType(e.target.value)}
-                    disabled={botStatus.isPaidOnly}
+                    <span className="normal-text font-semibold text-gray-400">Tipe Layanan:</span>
+                    <input
+                      type="radio"
+                      value="regular"
+                      checked={!botStatus.isPaidOnly && menfessType === 'regular'}
+                      onChange={(e) => setMenfessType(e.target.value)}
+                      disabled={botStatus.isPaidOnly}
                       className="w-3 h-3 text-blue-500 border-gray-400 focus:ring-blue-500"
-                  />
+                    />
                     <span className={`normal-text font-medium ${botStatus.isPaidOnly ? 'text-gray-400' : 'group-hover:text-blue-200'}`}>
-                  Regular Menfess
+                      Regular Menfess
                     </span>
-                </label>
+                  </label>
                   <label className="flex items-center space-x-2 cursor-pointer group">
-                  <input
-                    type="radio"
-                    value="paid"
-                    checked={menfessType === 'paid' || botStatus.isPaidOnly}
-                    onChange={(e) => setMenfessType(e.target.value)}
+                    <input
+                      type="radio"
+                      value="paid"
+                      checked={botStatus.isPaidOnly || menfessType === 'paid'}
+                      onChange={(e) => setMenfessType(e.target.value)}
                       className="w-3 h-3 text-blue-500 border-gray-400 focus:ring-blue-500"
                     />
                     <span className="normal-text font-medium group-hover:text-blue-200">Paid Menfess</span>
@@ -907,7 +910,7 @@ const MainPage = () => {
                 </div>
                 
                 <ServiceTypeDescription 
-                  type={menfessType} 
+                  type={botStatus.isPaidOnly ? 'paid' : menfessType} 
                   isPaidOnly={botStatus.isPaidOnly} 
                 />
                 
