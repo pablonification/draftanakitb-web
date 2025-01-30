@@ -44,7 +44,6 @@ function generateEmailTemplate(otp) {
             font-size: 36px;
             font-weight: bold;
             letter-spacing: 8px;
-            color: #00ff00;
             text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
           }
           .info-box {
@@ -262,7 +261,6 @@ export const generateTweetNotification = (tweetUrl, tweet) => `
         <div class="container">
           <div class="header">
             <img src="cid:logo" alt="DraftAnakITB Logo" class="logo" />
-            <h1>DraftAnakITB Notification</h1>
             <p style="margin-top: 10px; color: rgba(255, 255, 255, 0.7);">
               Paid Menfess Successfully Posted! ✨
             </p>
