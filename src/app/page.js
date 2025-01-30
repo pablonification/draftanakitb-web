@@ -792,7 +792,7 @@ const MainPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="block font-semibold">Email</label>
-            <div className="flex items-center gap-2 input-wrapper">
+              <div className="input-wrapper">
                 <input
                   type="email"
                   value={email}
@@ -801,7 +801,6 @@ const MainPage = () => {
                   disabled={isEmailVerified}
                   className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                   placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
-                  inputMode="email"
                   autoComplete="email"
                   autoCorrect="off"
                   autoCapitalize="none"
@@ -833,7 +832,7 @@ const MainPage = () => {
                   <label className="block font-semibold">OTP</label>
                   <OtpHelpButton onClick={() => setShowOtpHelp(true)} />
                 </div>
-              <div className="flex items-center gap-2 input-wrapper">
+                <div className="input-wrapper">
                   <input
                     type="text"
                     value={otp}
@@ -842,7 +841,6 @@ const MainPage = () => {
                     disabled={isOtpVerified}
                     className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50"
                     placeholder="Masukkan kode OTP"
-                    inputMode="numeric"
                     autoComplete="one-time-code"
                     autoCorrect="off"
                     autoCapitalize="none"
@@ -926,7 +924,7 @@ const MainPage = () => {
                 <label className="block font-semibold">
                   Pesan <span className="text-red-400">*</span>
                 </label>
-              <div className="w-full bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 input-wrapper">
+              <div className="w-full bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 input-wrapper textarea-wrapper">
                 <textarea
                   value={message}
                   onChange={handleMessageChange}
