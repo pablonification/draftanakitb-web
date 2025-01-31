@@ -234,7 +234,7 @@ const ComparisonModal = ({ isOpen, onClose, botStatus, setMenfessType }) => {
                   <p className="text-blue-300 text-sm">Pengiriman Terjadwal</p>
                 </div>
                 <span className="px-4 py-1.5 bg-blue-500/20 text-blue-300 text-sm font-medium rounded-full border border-blue-400/20">
-                  Rp2.600
+                  Rp2.800
                 </span>
               </div>
               <ul className="space-y-4">
@@ -352,7 +352,7 @@ const ServiceTypeDescription = ({ type, isPaidOnly }) => {
       <div className="flex items-start gap-3">
         <AutoPostIcon />
         <div className="min-w-0 flex-1">
-          <p className="normal-text font-medium text-blue-200">Paid Menfess - Rp2.600</p>
+          <p className="normal-text font-medium text-blue-200">Paid Menfess - Rp2.800</p>
           <p className="normal-text text-gray-300 mt-1">Pengiriman terjadwal 20.00-22.00 WIB, support gambar & video, unlimited</p>
         </div>
       </div>
