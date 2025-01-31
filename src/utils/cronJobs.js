@@ -3,11 +3,11 @@ import { DailyMessageCount } from '../app/models/dailyMessageCount';
 import { PaidTweet } from '../app/models/paidTweetModel';
 
 export function initializeCronJobs() {
-    // Reset counter at midnight (00:00) every day
-    cron.schedule('0 0 * * *', async () => {
+    // Reset counter at 10:00 every day
+    cron.schedule('0 10 * * *', async () => {
         try {
             const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            today.setHours(0, 10, 0, 0);
             
             await DailyMessageCount.findOneAndUpdate(
                 { date: today },
