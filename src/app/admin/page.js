@@ -25,6 +25,8 @@ export default function AdminPanel() {
   const [urlUpdateTimeout, setUrlUpdateTimeout] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
   const [searchInputValue, setSearchInputValue] = useState('');
+  const [batchChanges, setBatchChanges] = useState([]);
+  const [batchNotifications, setBatchNotifications] = useState([]);
 
   useEffect(() => {
     checkAuth();
@@ -280,66 +282,228 @@ export default function AdminPanel() {
   // Debounced version of fetchRegularTweets
   const debouncedFetchRegularTweets = debounce(fetchRegularTweets, 300);
 
-  const handleStatusUpdate = async (tweetId, status, tweetUrl = '') => {
-    const loadingKey = `status_${tweetId}`;
+  // Function to add changes to batch
+  const addToBatch = (tweetId, status, tweetUrl) => {
+    setBatchChanges(prev => {
+      const existing = prev.find(change => change.tweetId === tweetId);
+      if (existing) {
+        return prev.map(change => 
+          change.tweetId === tweetId ? { ...change, status, tweetUrl } : change
+        );
+      }
+      return [...prev, { tweetId, status, tweetUrl }];
+    });
+  };
+
+  // Function to add notifications to batch
+  const addToNotificationBatch = (tweetId) => {
+    setBatchNotifications(prev => [...new Set([...prev, tweetId])]);
+  };
+
+  // Function to save all batch changes
+  const saveBatchChanges = async () => {
+    const loadingKey = 'batch_save';
     try {
       setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
+      setError('');
+
       const token = localStorage.getItem('adminToken');
-      const endpoint = activeTab === 'paid' ? `/api/admin/tweets/${tweetId}` : `/api/admin/regular/${tweetId}`;
-      
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ status, tweetUrl })
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setSuccessMessage('Tweet status updated successfully');
-        if (activeTab === 'paid') {
-          await fetchPaidTweets();
-        } else {
-          await fetchRegularTweets();
-        }
-        await fetchAdminStats();
-      } else {
-        setError(data.error || 'Failed to update tweet status');
+      if (!token) {
+        throw new Error('Authentication token missing');
       }
+
+      for (const change of batchChanges) {
+        const endpoint = activeTab === 'paid' ? `/api/admin/tweets/${change.tweetId}` : `/api/admin/regular/${change.tweetId}`;
+        
+        const response = await fetchWithRetry(
+          endpoint,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            },
+            body: JSON.stringify({ 
+              status: change.status, 
+              tweetUrl: change.tweetUrl 
+            })
+          },
+          3 // max retries
+        );
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to update tweet status');
+        }
+      }
+
+      // Show success message
+      setSuccessMessage('All changes saved successfully');
+      
+      // Refresh the data to ensure consistency
+      if (activeTab === 'paid') {
+        await fetchPaidTweets();
+      } else {
+        await fetchRegularTweets();
+      }
+      
+      // Update admin stats
+      await fetchAdminStats();
+      
+      // Clear batch after successful save
+      setBatchChanges([]);
+
     } catch (error) {
-      setError('Failed to update tweet status');
+      console.error('Batch save error:', error);
+      setError(`Failed to save changes: ${error.message}`);
     } finally {
       setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
-      setTimeout(() => setSuccessMessage(''), 1000);
+      setTimeout(() => setSuccessMessage(''), 2000);
     }
   };
 
-  const handleSendNotification = async (tweetId) => {
+  // Update handleSendNotification to properly update the state
+  const handleSendNotification = async (tweetId, addToBatchOnly = false) => {
     const loadingKey = `notify_${tweetId}`;
     try {
       setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
+      setError('');
+
+      if (addToBatchOnly) {
+        addToNotificationBatch(tweetId);
+        setSuccessMessage('Added to notification batch');
+        return;
+      }
+
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/admin/notify/${tweetId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      if (!token) {
+        throw new Error('Authentication token missing');
+      }
+
+      const response = await fetchWithRetry(
+        `/api/admin/notify/${tweetId}`,
+        {
+          method: 'POST',
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        },
+        3 // max retries
+      );
 
       const data = await response.json();
       
-      if (response.ok) {
-        setSuccessMessage('Notification sent successfully');
-        await fetchPaidTweets();
-      } else {
-        setError(data.error || 'Failed to send notification');
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send notification');
       }
+
+      // Update the state immediately
+      setPaidTweets(prev => 
+        prev.map(tweet => 
+          tweet._id === tweetId 
+            ? { ...tweet, notificationSent: true }
+            : tweet
+        )
+      );
+
+      setSuccessMessage('Notification sent successfully');
+
     } catch (error) {
-      setError('Failed to send notification');
+      console.error('Notification error:', error);
+      setError(`Failed to send notification: ${error.message}`);
     } finally {
       setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
-      setTimeout(() => setSuccessMessage(''), 1000);
+      setTimeout(() => setSuccessMessage(''), 2000);
+    }
+  };
+
+  // Update sendBatchNotifications to properly update the state
+  const sendBatchNotifications = async () => {
+    const loadingKey = 'batch_notify';
+    try {
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
+      setError('');
+
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('Authentication token missing');
+      }
+
+      const successfulNotifications = [];
+
+      for (const tweetId of batchNotifications) {
+        try {
+          const response = await fetchWithRetry(
+            `/api/admin/notify/${tweetId}`,
+            {
+              method: 'POST',
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+              }
+            },
+            3 // max retries
+          );
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to send notification');
+          }
+
+          successfulNotifications.push(tweetId);
+        } catch (error) {
+          console.error(`Failed to send notification for tweet ${tweetId}:`, error);
+        }
+      }
+
+      // Update state for successful notifications
+      if (successfulNotifications.length > 0) {
+        setPaidTweets(prev => 
+          prev.map(tweet => 
+            successfulNotifications.includes(tweet._id)
+              ? { ...tweet, notificationSent: true }
+              : tweet
+          )
+        );
+      }
+
+      setSuccessMessage(`Successfully sent ${successfulNotifications.length} notifications`);
+      setBatchNotifications([]); // Clear batch after success
+
+    } catch (error) {
+      console.error('Batch notification error:', error);
+      setError(`Failed to send notifications: ${error.message}`);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
+      setTimeout(() => setSuccessMessage(''), 2000);
+    }
+  };
+
+  // Update handleStatusUpdate to add changes to batch
+  const handleStatusUpdate = async (tweetId, status, tweetUrl = '') => {
+    addToBatch(tweetId, status, tweetUrl);
+    // Optimistically update the UI
+    if (activeTab === 'paid') {
+      setPaidTweets(prev => 
+        prev.map(tweet => 
+          tweet._id === tweetId 
+            ? { ...tweet, tweetStatus: status, tweetUrl: status === 'posted' ? (tweetUrl || tweet.tweetUrl) : '' }
+            : tweet
+        )
+      );
+    } else {
+      setRegularTweets(prev => 
+        prev.map(tweet => 
+          tweet._id === tweetId 
+            ? { ...tweet, tweetStatus: status }
+            : tweet
+        )
+      );
     }
   };
 
@@ -614,44 +778,52 @@ export default function AdminPanel() {
     }
   };
 
-  // Add search handler
-  const handleSearch = () => {
-    setSearchQuery(searchInputValue);
-    setCurrentPage(1); // Reset to first page when searching
-    // Trigger immediate fetch based on active tab
-    if (activeTab === 'paid') {
-      fetchPaidTweets();
-    } else {
-      fetchRegularTweets();
-    }
-  };
-
-  // Add key press handler for search input
-  const handleSearchKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  // Update useEffect to include searchQuery and searchType
+  // Simplified fetch function without search logic in useEffect
   useEffect(() => {
     if (isLoggedIn) {
       if (activeTab === 'paid') {
-        debouncedFetchPaidTweets();
+        fetchPaidTweets();
       } else {
-        debouncedFetchRegularTweets();
+        fetchRegularTweets();
       }
     }
-  }, [isLoggedIn, activeTab, currentPage, searchQuery, searchType]); // Added back searchQuery and searchType
+  }, [isLoggedIn, activeTab, currentPage]); // Remove searchQuery and searchType
 
-  // Update the search input in the UI section
+  // Separate search handler
+  const handleSearch = () => {
+    if (searchInputValue !== searchQuery) {
+      setSearchQuery(searchInputValue);
+      setCurrentPage(1);
+      // Trigger immediate fetch
+      if (activeTab === 'paid') {
+        fetchPaidTweets();
+      } else {
+        fetchRegularTweets();
+      }
+    }
+  };
+
+  // Update search type handler
+  const handleSearchTypeChange = (newType) => {
+    setSearchType(newType);
+    if (searchInputValue) {
+      setCurrentPage(1);
+      if (activeTab === 'paid') {
+        fetchPaidTweets();
+      } else {
+        fetchRegularTweets();
+      }
+    }
+  };
+
+  // Update the search section JSX
   const searchSection = (
     <div className="flex-1 w-full">
       <div className="flex gap-2 max-sm:flex-col">
         <div className="w-50 max-sm:w-full">
           <select
             value={searchType}
-            onChange={(e) => setSearchType(e.target.value)}
+            onChange={(e) => handleSearchTypeChange(e.target.value)}
             className="w-full px-2 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
           >
             <option value="message">Search by Message</option>
@@ -664,7 +836,7 @@ export default function AdminPanel() {
               type="text"
               value={searchInputValue}
               onChange={(e) => setSearchInputValue(e.target.value)}
-              onKeyPress={handleSearchKeyPress}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               placeholder={searchType === 'email' ? "Search by email..." : "Search in messages..."}
               className="w-full px-4 py-2 pl-10 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
             />
@@ -687,6 +859,16 @@ export default function AdminPanel() {
       </div>
     </div>
   );
+
+  // Update tab change handler
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    // Only keep search if there's an actual query
+    if (!searchInputValue) {
+      setSearchQuery('');
+    }
+  };
 
   // Add pagination controls component
   const PaginationControls = ({ totalPages }) => {
@@ -743,7 +925,7 @@ export default function AdminPanel() {
     // Set new timeout for the API call
     const timeoutId = setTimeout(() => {
       handleStatusUpdate(tweetId, 'posted', value);
-    }, 1000); // Wait 1 second after typing stops
+    }, 1500); // Increased to 1.5 seconds for better debouncing
     
     setUrlUpdateTimeout(timeoutId);
   };
@@ -827,6 +1009,47 @@ export default function AdminPanel() {
     );
   }
 
+  // Update the batch action buttons JSX to show loading state
+  const batchActionButtons = (
+    <div className="flex items-center gap-4 mt-4 bg-black/40 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+      <div className="flex items-center gap-4 flex-1">
+        <button 
+          onClick={saveBatchChanges}
+          disabled={loadingStates.batch_save || batchChanges.length === 0}
+          className="flex items-center gap-2 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-300 border border-green-500/20 rounded-xl transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loadingStates.batch_save ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-300"></div>
+              <span>Saving...</span>
+            </>
+          ) : (
+            <span>Save Changes ({batchChanges.length})</span>
+          )}
+        </button>
+        <button 
+          onClick={sendBatchNotifications}
+          disabled={loadingStates.batch_notify || batchNotifications.length === 0}
+          className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <NotificationIcon />
+          {loadingStates.batch_notify ? (
+            <span>Sending...</span>
+          ) : (
+            <span>Send Notifications ({batchNotifications.length})</span>
+          )}
+        </button>
+      </div>
+      {(batchChanges.length > 0 || batchNotifications.length > 0) && (
+        <div className="text-sm text-gray-400">
+          {batchChanges.length > 0 && <span>{batchChanges.length} changes pending</span>}
+          {batchChanges.length > 0 && batchNotifications.length > 0 && <span> • </span>}
+          {batchNotifications.length > 0 && <span>{batchNotifications.length} notifications queued</span>}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-[#000030] via-[#000025] to-[#000020] text-white">
@@ -880,7 +1103,7 @@ export default function AdminPanel() {
               {searchSection}
               <div className="inline-flex p-0.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 max-sm:w-full max-sm:justify-center shrink-0 w-[172px]">
                 <button
-                  onClick={() => setActiveTab('paid')}
+                  onClick={() => handleTabChange('paid')}
                   className={`flex-1 px-4 py-2 rounded-lg transition-all text-sm ${
                     activeTab === 'paid' 
                       ? 'bg-blue-500/20 text-blue-300' 
@@ -890,7 +1113,7 @@ export default function AdminPanel() {
                   Paid
                 </button>
                 <button
-                  onClick={() => setActiveTab('regular')}
+                  onClick={() => handleTabChange('regular')}
                   className={`flex-1 px-4 py-2 rounded-lg transition-all text-sm ${
                     activeTab === 'regular' 
                       ? 'bg-blue-500/20 text-blue-300' 
@@ -901,6 +1124,9 @@ export default function AdminPanel() {
                 </button>
               </div>
             </div>
+
+            {/* Batch action buttons */}
+            {batchActionButtons}
 
             <div className="bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
               <ul className="divide-y divide-white/5">
@@ -1083,14 +1309,24 @@ export default function AdminPanel() {
                                 )}
 
                                 {tweet.tweetStatus === 'posted' && tweet.tweetUrl && !tweet.notificationSent && (
-                                  <button
-                                    onClick={() => handleSendNotification(tweet._id)}
-                                    className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all disabled:opacity-50 text-sm shrink-0"
-                                    disabled={loadingStates[`notify_${tweet._id}`]}
-                                  >
-                                    <NotificationIcon />
-                                    <span>{loadingStates[`notify_${tweet._id}`] ? 'Sending...' : 'Send Notification'}</span>
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleSendNotification(tweet._id, false)}
+                                      className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all disabled:opacity-50 text-sm shrink-0"
+                                      disabled={loadingStates[`notify_${tweet._id}`]}
+                                    >
+                                      <NotificationIcon />
+                                      <span>{loadingStates[`notify_${tweet._id}`] ? 'Sending...' : 'Send Now'}</span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleSendNotification(tweet._id, true)}
+                                      className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all text-sm shrink-0"
+                                      disabled={batchNotifications.includes(tweet._id)}
+                                    >
+                                      <NotificationIcon />
+                                      <span>{batchNotifications.includes(tweet._id) ? 'Added to Batch' : 'Add to Batch'}</span>
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             )}

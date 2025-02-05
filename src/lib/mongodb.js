@@ -42,8 +42,8 @@ export async function connectToDatabase() {
 
         // Connect with new MongoClient with optimized options
         const client = await MongoClient.connect(MONGODB_URI, {
-            maxPoolSize: 10,
-            minPoolSize: 5,
+            maxPoolSize: 5,
+            minPoolSize: 1,
             connectTimeoutMS: 30000, // Increased timeout
             socketTimeoutMS: 45000,
             serverSelectionTimeoutMS: 30000, // Increased timeout
