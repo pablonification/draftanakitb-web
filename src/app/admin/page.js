@@ -23,6 +23,8 @@ export default function AdminPanel() {
   const router = useRouter();
   const [urlInputs, setUrlInputs] = useState({});
   const [urlUpdateTimeout, setUrlUpdateTimeout] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchInputValue, setSearchInputValue] = useState('');
 
   useEffect(() => {
     checkAuth();
@@ -92,64 +94,191 @@ export default function AdminPanel() {
     setIsLoggedIn(false);
   };
 
+  // Improved fetch with timeout and cleanup
+  const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(id);
+      return response;
+    } catch (error) {
+      clearTimeout(id);
+      // Handle timeout more gracefully
+      if (error.name === 'AbortError') {
+        return {
+          ok: false,
+          status: 408,
+          json: async () => ({ error: 'Request timed out' })
+        };
+      }
+      throw error;
+    } finally {
+      clearTimeout(id);
+    }
+  };
+
+  // Improved fetch with retry
+  const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
+    let lastError;
+    
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const response = await fetchWithTimeout(url, options);
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        }
+        return response;
+      } catch (error) {
+        lastError = error;
+        if (i === maxRetries - 1) break;
+        
+        // Don't retry on authentication errors
+        if (error.message.includes('401') || error.message.includes('403')) {
+          throw error;
+        }
+        
+        const delay = Math.min(1000 * Math.pow(2, i), 10000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError;
+  };
+
+  // Add debounce utility
+  const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  };
+
   const fetchPaidTweets = async () => {
     setLoading(true);
+    setError('');
+    
     try {
       const token = localStorage.getItem('adminToken');
       if (!token) {
-        console.error('No token found');
         setError('Authentication token missing');
         return;
       }
 
-      const response = await fetch('/api/admin/tweets', {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
+      const searchParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: tweetsPerPage.toString()
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch tweets');
+
+      if (searchQuery) {
+        searchParams.append('search', searchQuery);
+        searchParams.append('searchType', searchType);
       }
 
-      if (data.success && Array.isArray(data.tweets)) {
-        setPaidTweets(data.tweets);
+      const response = await fetchWithRetry(
+        `/api/admin/tweets?${searchParams.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }
+      );
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setPaidTweets(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(data.tweets)) {
+            return data.tweets;
+          }
+          return prev;
+        });
+        setTotalPages(data.totalPages);
       } else {
-        throw new Error('Invalid response format');
+        throw new Error(data.error || 'Failed to fetch tweets');
       }
     } catch (error) {
       console.error('Error fetching tweets:', error);
-      setError(`Failed to fetch tweets: ${error.message}`);
-      setPaidTweets([]);
+      setError(
+        error.message === 'Request timed out'
+          ? 'Request timed out. Please try again.'
+          : `Failed to fetch tweets: ${error.message}`
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // Debounced version of fetchPaidTweets
+  const debouncedFetchPaidTweets = debounce(fetchPaidTweets, 300);
+
   const fetchRegularTweets = async () => {
+    setLoading(true);
+    setError('');
+    
     try {
       const token = localStorage.getItem('adminToken');
-      if (!token) return;
+      if (!token) {
+        setError('Authentication token missing');
+        return;
+      }
 
-      const response = await fetch('/api/admin/regular', {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache'
-        }
+      const searchParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: tweetsPerPage.toString()
       });
-      
+
+      if (searchQuery) {
+        searchParams.append('search', searchQuery);
+        searchParams.append('searchType', searchType);
+      }
+
+      const response = await fetchWithRetry(
+        `/api/admin/regular?${searchParams.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }
+      );
+
       const data = await response.json();
+      
       if (data.success) {
-        setRegularTweets(data.tweets);
+        setRegularTweets(prev => {
+          if (JSON.stringify(prev) !== JSON.stringify(data.tweets)) {
+            return data.tweets;
+          }
+          return prev;
+        });
+        setTotalPages(data.totalPages);
+      } else {
+        throw new Error(data.error || 'Failed to fetch regular tweets');
       }
     } catch (error) {
       console.error('Error fetching regular tweets:', error);
+      setError(
+        error.message === 'Request timed out'
+          ? 'Request timed out. Please try again.'
+          : `Failed to fetch regular tweets: ${error.message}`
+      );
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Debounced version of fetchRegularTweets
+  const debouncedFetchRegularTweets = debounce(fetchRegularTweets, 300);
 
   const handleStatusUpdate = async (tweetId, status, tweetUrl = '') => {
     const loadingKey = `status_${tweetId}`;
@@ -334,20 +463,6 @@ export default function AdminPanel() {
     }
   }, [isLoggedIn]);
 
-  // Add to useEffect
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchPaidTweets();
-      fetchRegularTweets();
-      // Refresh data every 5 minutes
-      const interval = setInterval(() => {
-        fetchPaidTweets();
-        fetchRegularTweets();
-      }, 300000);
-      return () => clearInterval(interval);
-    }
-  }, [isLoggedIn]);
-
   // Update the stats display in the UI
   const statsDisplay = adminStats && (
     <div>
@@ -499,29 +614,79 @@ export default function AdminPanel() {
     }
   };
 
-  // Update filter function
-  const filterTweets = (tweets) => {
-    if (!searchQuery) return tweets;
-    const query = searchQuery.toLowerCase();
-    return tweets.filter(tweet => {
-      if (searchType === 'email') {
-        return tweet.email.toLowerCase().includes(query);
-      } else {
-        return tweet.messageText.toLowerCase().includes(query);
-      }
-    });
+  // Add search handler
+  const handleSearch = () => {
+    setSearchQuery(searchInputValue);
+    setCurrentPage(1); // Reset to first page when searching
+    // Trigger immediate fetch based on active tab
+    if (activeTab === 'paid') {
+      fetchPaidTweets();
+    } else {
+      fetchRegularTweets();
+    }
   };
 
-  // Add pagination logic
-  const getPaginatedTweets = (tweets) => {
-    const filteredTweets = filterTweets(tweets);
-    const indexOfLastTweet = currentPage * tweetsPerPage;
-    const indexOfFirstTweet = indexOfLastTweet - tweetsPerPage;
-    return {
-      paginatedTweets: filteredTweets.slice(indexOfFirstTweet, indexOfLastTweet),
-      totalPages: Math.ceil(filteredTweets.length / tweetsPerPage)
-    };
+  // Add key press handler for search input
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
+
+  // Update useEffect to include searchQuery and searchType
+  useEffect(() => {
+    if (isLoggedIn) {
+      if (activeTab === 'paid') {
+        debouncedFetchPaidTweets();
+      } else {
+        debouncedFetchRegularTweets();
+      }
+    }
+  }, [isLoggedIn, activeTab, currentPage, searchQuery, searchType]); // Added back searchQuery and searchType
+
+  // Update the search input in the UI section
+  const searchSection = (
+    <div className="flex-1 w-full">
+      <div className="flex gap-2 max-sm:flex-col">
+        <div className="w-50 max-sm:w-full">
+          <select
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
+            className="w-full px-2 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+          >
+            <option value="message">Search by Message</option>
+            <option value="email">Search by Email</option>
+          </select>
+        </div>
+        <div className="flex-1 relative flex gap-2">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={searchInputValue}
+              onChange={(e) => setSearchInputValue(e.target.value)}
+              onKeyPress={handleSearchKeyPress}
+              placeholder={searchType === 'email' ? "Search by email..." : "Search in messages..."}
+              className="w-full px-4 py-2 pl-10 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+            />
+            <svg 
+              className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 rounded-xl transition-all text-sm whitespace-nowrap"
+          >
+            Search
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   // Add pagination controls component
   const PaginationControls = ({ totalPages }) => {
@@ -531,7 +696,7 @@ export default function AdminPanel() {
       <div className="flex items-center justify-center gap-2 p-6 border-t border-white/5">
         <button
           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
+          disabled={currentPage === 1 || loading}
           className="px-3 py-1 rounded-lg bg-black/40 text-gray-300 hover:bg-black/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           Previous
@@ -540,6 +705,7 @@ export default function AdminPanel() {
           <button
             key={page}
             onClick={() => setCurrentPage(page)}
+            disabled={loading}
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
               currentPage === page
                 ? 'bg-blue-500/20 text-blue-300 border border-blue-500/20'
@@ -551,7 +717,7 @@ export default function AdminPanel() {
         ))}
         <button
           onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
+          disabled={currentPage === totalPages || loading}
           className="px-3 py-1 rounded-lg bg-black/40 text-gray-300 hover:bg-black/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           Next
@@ -590,6 +756,14 @@ export default function AdminPanel() {
       }
     };
   }, [urlUpdateTimeout]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedFetchPaidTweets.cancel?.();
+      debouncedFetchRegularTweets.cancel?.();
+    };
+  }, []);
 
   // Update the initial loading state
   if (!isLoggedIn && loading) {
@@ -703,39 +877,7 @@ export default function AdminPanel() {
           <div className="space-y-6">
             {/* Search and filter section */}
             <div className="flex items-center gap-4 max-sm:flex-col">
-              <div className="flex-1 w-full">
-                <div className="flex gap-2 max-sm:flex-col">
-                  <div className="w-50 max-sm:w-full">
-                    <select
-                      value={searchType}
-                      onChange={(e) => setSearchType(e.target.value)}
-                      className="w-full px-2 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-                    >
-                      <option value="message">Search by Message</option>
-                      <option value="email">Search by Email</option>
-                    </select>
-                  </div>
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={searchType === 'email' ? "Search by email..." : "Search in messages..."}
-                      className="w-full px-4 py-2 pl-10 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
-                    />
-                    <svg 
-                      className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Tab buttons */}
+              {searchSection}
               <div className="inline-flex p-0.5 bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 max-sm:w-full max-sm:justify-center shrink-0 w-[172px]">
                 <button
                   onClick={() => setActiveTab('paid')}
@@ -764,7 +906,6 @@ export default function AdminPanel() {
               <ul className="divide-y divide-white/5">
                 {(() => {
                   const tweets = activeTab === 'paid' ? paidTweets : regularTweets;
-                  const { paginatedTweets, totalPages } = getPaginatedTweets(tweets);
                   
                   if (loading) {
                     return (
@@ -777,7 +918,7 @@ export default function AdminPanel() {
                     );
                   }
                   
-                  if (paginatedTweets.length === 0) {
+                  if (tweets.length === 0) {
                     return (
                       <li className="p-6 text-center text-gray-400">
                         {searchQuery ? 'No tweets found matching your search.' : 'No tweets available.'}
@@ -787,7 +928,7 @@ export default function AdminPanel() {
 
                   return (
                     <>
-                      {paginatedTweets.map((tweet) => (
+                      {tweets.map((tweet) => (
                         <li key={tweet._id} className="p-6 hover:bg-black/60 transition-all">
                           <div className="space-y-4">
                             <div className="flex justify-between items-start">
@@ -961,9 +1102,9 @@ export default function AdminPanel() {
                 })()}
               </ul>
               {/* Pagination controls */}
-              {getPaginatedTweets(activeTab === 'paid' ? paidTweets : regularTweets).totalPages > 1 && (
+              {totalPages > 1 && (
                 <PaginationControls 
-                  totalPages={getPaginatedTweets(activeTab === 'paid' ? paidTweets : regularTweets).totalPages} 
+                  totalPages={totalPages} 
                 />
               )}
             </div>
