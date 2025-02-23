@@ -85,7 +85,7 @@ const PaidMenfessLanding = () => {
   const [paymentStatus, setPaymentStatus] = useState('initializing'); // initializing, pending, success, failed
   const [qrString, setQrString] = useState(''); // replaced qrUrl with qrString
   const [merchantRef, setMerchantRef] = useState('');
-  const PAYMENT_AMOUNT = 1;
+  const PAYMENT_AMOUNT = 2800;
 
   // Add polling interval state
   const [pollInterval, setPollInterval] = useState(null);

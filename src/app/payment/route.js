@@ -98,7 +98,7 @@ export async function POST(request) {
     // Set the callback URL to your ngrok endpoint if not provided via env.
     let callbackUrl = process.env.XENDIT_CALLBACK_URL || "https://8c91-125-164-19-244.ngrok-free.app/api/payment/callback";
     const externalId = 'XENDIT' + Date.now();
-    const amount = 1;
+    const amount = 2800;
 
     const payload = {
       external_id: externalId,
