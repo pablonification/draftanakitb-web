@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Script from 'next/script';
 import Head from 'next/head';
 import { QRCodeSVG } from 'qrcode.react'; // use QRCodeSVG instead of QRCodeCanvas
+import AdSection from '@/components/AdSection';
 
 // Update Copyright component
 const Copyright = () => (
@@ -86,6 +87,8 @@ const PaidMenfessLanding = () => {
   const [qrString, setQrString] = useState(''); // replaced qrUrl with qrString
   const [merchantRef, setMerchantRef] = useState('');
   const PAYMENT_AMOUNT = 2800;
+  const [timeRemaining, setTimeRemaining] = useState(7); // 7 second countdown
+  const [progress, setProgress] = useState(0);
 
   // Add polling interval state
   const [pollInterval, setPollInterval] = useState(null);
@@ -109,6 +112,16 @@ const PaidMenfessLanding = () => {
       console.error('Error checking transaction status:', error);
     }
   };
+
+  useEffect(() => {
+    if (paymentStatus === 'pending' && timeRemaining > 0) {
+      const timer = setTimeout(() => {
+        setTimeRemaining(timeRemaining - 1);
+        setProgress((7 - timeRemaining + 1) * (100/7)); // Divide progress bar into 7 equal parts
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [timeRemaining, paymentStatus]);
 
   useEffect(() => {
     const initializePayment = async () => {
@@ -169,6 +182,7 @@ const PaidMenfessLanding = () => {
         setQrString(qrStringFromHeader);
         setMerchantRef(paymentData.merchantRef);
         setPaymentStatus('pending');
+        setTimeRemaining(7); // Reset countdown to 7 seconds when payment is initialized
 
         // Start polling for new payment
         const interval = setInterval(() => {
@@ -255,46 +269,71 @@ const PaidMenfessLanding = () => {
 
               {paymentStatus === 'pending' && qrString && (
                 <div className="bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] overflow-hidden animate-fadeIn hover-scale">
-                  <div className="p-8 border-b border-white/10">
-                    <div className="flex items-center justify-center gap-3 mb-8">
-                      <QRIcon />
-                      <h5 className="text-2xl font-semibold bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
-                        Scan QRIS to Pay
-                      </h5>
-                    </div>
-                    <div className="bg-white p-6 rounded-xl inline-block shadow-lg transition-all-smooth hover:scale-105">
-                      <QRCodeSVG value={qrString} style={{ width: 250, height: 250 }} />
-                    </div>
-                  </div>
-                  <div className="p-8 space-y-6 bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30">
-                    <div className="flex items-start gap-4">
-                      <TimerIcon />
-                      <div className="flex-1 text-left">
-                        <p className="normal-text font-medium text-blue-200">Payment Status</p>
-                        <p className="normal-text text-gray-300">Waiting for your payment...</p>
+                  {timeRemaining > 0 ? (
+                    <div className="p-8 space-y-6">
+                      <div className="flex items-center justify-center gap-4">
+                        <TimerIcon />
+                        <div className="text-left">
+                          <p className="normal-text font-medium text-blue-200">
+                            Please wait <span className="font-semibold text-blue-100">{timeRemaining}</span> seconds...
+                          </p>
+                          <div className="w-full bg-gray-800/50 rounded-full h-2 overflow-hidden mt-2">
+                            <div 
+                              className="h-full bg-gradient-to-r from-blue-500 to-blue-300 rounded-full transition-all duration-1000 ease-linear"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Show AdSection during countdown */}
+                      <AdSection position="paid-landing" />
                     </div>
-                    <div className="flex items-start gap-4">
-                      <WarningIcon />
-                      <div className="flex-1 text-left">
-                        <p className="normal-text font-medium text-blue-200">Important Notes</p>
-                        <ul className="normal-text text-gray-300 space-y-2 mt-2">
-                          <li className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                            QR Code will expire in 5 minutes
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                            Do not close this page until payment is completed
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                            After payment, your menfess will be processed at 20.00 or 22.00 WIB
-                          </li>
-                        </ul>
+                  ) : (
+                    <>
+                      <div className="p-8 border-b border-white/10">
+                        <div className="flex items-center justify-center gap-3 mb-8">
+                          <QRIcon />
+                          <h5 className="text-2xl font-semibold bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
+                            Scan QRIS to Pay
+                          </h5>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl inline-block shadow-lg transition-all-smooth hover:scale-105">
+                          <QRCodeSVG value={qrString} style={{ width: 250, height: 250 }} />
+                        </div>
                       </div>
-                    </div>
-                  </div>
+
+                      <div className="p-8 space-y-6">
+                        <div className="flex items-start gap-4">
+                          <TimerIcon />
+                          <div className="flex-1 text-left">
+                            <p className="normal-text font-medium text-blue-200">Payment Status</p>
+                            <p className="normal-text text-gray-300">Waiting for your payment...</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <WarningIcon />
+                          <div className="flex-1 text-left">
+                            <p className="normal-text font-medium text-blue-200">Important Notes</p>
+                            <ul className="normal-text text-gray-300 space-y-2 mt-2">
+                              <li className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                QR Code will expire in 5 minutes
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                Do not close this page until payment is completed
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                After payment, your menfess will be processed at 20.00 or 22.00 WIB in 3 days range
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -308,6 +347,10 @@ const PaidMenfessLanding = () => {
                     <p className="normal-text text-gray-300 text-center">
                       We apologize, but there was an issue processing your payment.
                     </p>
+                    
+                    {/* Show AdSection on payment failed */}
+                    <AdSection position="paid-landing" />
+
                     <div className="bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30 rounded-xl p-6">
                       <p className="normal-text font-medium text-blue-200 mb-4">What should you do?</p>
                       <ul className="normal-text text-gray-300 space-y-3">
@@ -338,31 +381,116 @@ const PaidMenfessLanding = () => {
               )}
 
               {paymentStatus === 'success' && (
-                <div className="text-center transform scale-100 animate-fadeIn">
-                  <div className="flex flex-col items-center justify-center">
-                    <SuccessIcon />
-                    <p className="normal-text text-green-300 font-medium">
-                      Payment successful!
-                    </p>
-                    <div className="mt-4 space-y-2">
-                      <p className="normal-text text-gray-300">
-                        Your menfess will be sent at 20.00 or 22.00 WIB
-                      </p>
-                      <p className="normal-text text-gray-300">
-                        Transaction ID: <span className="text-blue-300 font-medium">{merchantRef}</span>
-                      </p>
-                      <p className="normal-text text-gray-400 text-sm">
-                        If your menfess is not posted within 3 days, please contact @satpam_itb with a screenshot of this page
-                      </p>
+                <div className="bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] overflow-hidden animate-fadeIn">
+                  <div className="p-4 sm:p-8 border-b border-white/10 text-center">
+                    <div className="bg-green-500/10 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <SuccessIcon />
                     </div>
+                    <h4 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-300 to-green-100 bg-clip-text text-transparent">
+                      Payment Successful!
+                    </h4>
+                    <p className="text-sm sm:text-base text-gray-400 mt-2">
+                      Thank you for using our paid menfess service
+                    </p>
                   </div>
-                  <div className="mt-6 flex justify-center">
-                    <a 
-                      href="/"
-                      className="px-6 py-2 bg-white text-[#000072] rounded hover:bg-gray-100 transition-colors"
-                    >
-                      Back to Home
-                    </a>
+
+                  <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
+                    {/* Transaction Details */}
+                    <div className="bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30 rounded-xl p-4 sm:p-6">
+                      <h5 className="text-base sm:text-lg font-medium text-blue-200 mb-3 sm:mb-4">Transaction Details</h5>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm sm:text-base">
+                          <span className="text-gray-400">Status</span>
+                          <span className="text-green-400 font-medium">Completed</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm sm:text-base">
+                          <span className="text-gray-400">Transaction ID</span>
+                          <span className="text-blue-300 font-medium font-mono text-xs sm:text-sm break-all">{merchantRef}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm sm:text-base">
+                          <span className="text-gray-400">Processing Time</span>
+                          <span className="text-blue-300 text-right">20.00 or 22.00 WIB<br className="sm:hidden" /> in 3 days range</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Important Information */}
+                    <div className="bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30 rounded-xl p-4 sm:p-6">
+                      {/* Screenshot Instructions - Moved to top */}
+                      <div className="mb-4 sm:mb-6 bg-blue-500/10 p-3 sm:p-4 rounded-lg border border-blue-500/20">
+                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                          <div className="flex-shrink-0 bg-yellow-500/10 p-1.5 sm:p-2 rounded-lg mt-0.5 sm:mt-0">
+                            <svg className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-sm sm:text-base text-yellow-300 font-medium mb-1 sm:mb-2">SCREENSHOT THIS SECTION!</p>
+                            <p className="text-xs sm:text-sm text-gray-300">You must take a screenshot of this information as proof for reporting any issues with your menfess.</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <h5 className="text-base sm:text-lg font-medium text-blue-200 mb-3 sm:mb-4 flex items-center gap-2">
+                        <div className="bg-blue-500/10 p-1.5 rounded-lg">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        Important Information
+                      </h5>
+
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="flex-shrink-0 bg-blue-500/10 p-1.5 rounded-lg mt-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                          </div>
+                          <div className="text-sm sm:text-base text-gray-300">
+                            <p>Your menfess will be processed and posted at <span className="text-blue-300 font-medium">20.00</span> or <span className="text-blue-300 font-medium">22.00 WIB</span></p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="flex-shrink-0 bg-blue-500/10 p-1.5 rounded-lg mt-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                          </div>
+                          <div className="text-sm sm:text-base text-gray-300">
+                            <p className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                              <span>Your Transaction ID (save this):</span>
+                              <span className="text-blue-300 font-mono bg-blue-500/10 px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm break-all">{merchantRef}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="flex-shrink-0 bg-blue-500/10 p-1.5 rounded-lg mt-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                          </div>
+                          <div className="text-sm sm:text-base text-gray-300">
+                            <p>If your menfess is not posted within 3 days, contact <a href="https://twitter.com/satpam_itb" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200 transition-colors">@satpam_itb</a> with your screenshot</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Show AdSection */}
+                    <AdSection position="paid-landing" />
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                      <a 
+                        href="/"
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl text-center text-sm sm:text-base"
+                      >
+                        Back to Home
+                      </a>
+                      <button 
+                        onClick={() => window.print()}
+                        className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 border border-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/10 transition-all duration-300 text-center text-sm sm:text-base"
+                      >
+                        Save Receipt
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

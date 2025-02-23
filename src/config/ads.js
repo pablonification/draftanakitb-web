@@ -1,48 +1,58 @@
 // Advertisement configuration
 export const adsConfig = {
   // Global switch to enable/disable all ads
-  enabled: false,
+  enabled: true,
 
   // Configuration for different ad positions
   positions: {
     'main-top': {
-      enabled: true,
+      enabled: false,
       type: 'banner',
       customContent: {
-        title: "Advertisement",
-        description: "Main page top advertisement space",
-        link: "https://draftanakitb.tech",
-        imageUrl: "/og-image.jpg", // Using local image from public directory
+        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
+        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
+        link: "https://wa.me/6283197457289",
+        imageUrl: "/ads2.jpg", // Using local image from public directory
       }
     },
     'main-bottom': {
+      enabled: false,
+      type: 'banner',
+      customContent: {
+        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
+        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
+        link: "https://wa.me/6283197457289",
+        imageUrl: "/ads2.jpg",
+      }
+    },
+    'main-comparison': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "Advertisement",
-        description: "Main page bottom advertisement space",
-        link: "https://draftanakitb.tech",
-        imageUrl: "/og-image.jpg",
+        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
+        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
+        link: "https://wa.me/6283197457289",
+        imageUrl: "/ads2.jpg"
       }
     },
     'regular-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "Advertisement",
-        description: "Regular landing page advertisement space",
-        link: "https://draftanakitb.tech",
-        imageUrl: "/og-image.jpg",
+        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
+        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
+        link: "https://wa.me/6283197457289",
+        imageUrl: "/ads1.png"
       }
     },
     'paid-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "Advertisement",
-        description: "Paid landing page advertisement space",
-        link: "https://draftanakitb.tech",
-        imageUrl: "/og-image.jpg",
+        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
+        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
+        link: "https://wa.me/6283197457289",
+        imageUrl: "/ads1.png"
       }
     },
   },
@@ -55,7 +65,7 @@ export const adsConfig = {
       title: "Advertisement",
       description: "Advertisement space",
       link: "",
-      imageUrl: "/og-image.jpg", // Default image
+      imageUrl: "/og-image.jpg" // Default image
     }
   }
 };

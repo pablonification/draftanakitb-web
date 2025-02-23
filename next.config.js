@@ -6,7 +6,6 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['draftanakitb.tech'],
     remotePatterns: [
       {
         protocol: 'https',

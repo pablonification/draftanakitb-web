@@ -18,6 +18,7 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('paid');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('message');
+  const [searchStatus, setSearchStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const tweetsPerPage = 10;
   const router = useRouter();
@@ -183,6 +184,10 @@ export default function AdminPanel() {
         searchParams.append('searchType', searchType);
       }
 
+      if (searchStatus !== 'all') {
+        searchParams.append('status', searchStatus);
+      }
+
       const response = await fetchWithRetry(
         `/api/admin/tweets?${searchParams.toString()}`,
         {
@@ -241,6 +246,10 @@ export default function AdminPanel() {
       if (searchQuery) {
         searchParams.append('search', searchQuery);
         searchParams.append('searchType', searchType);
+      }
+
+      if (searchStatus !== 'all') {
+        searchParams.append('status', searchStatus);
       }
 
       const response = await fetchWithRetry(
@@ -787,7 +796,7 @@ export default function AdminPanel() {
         fetchRegularTweets();
       }
     }
-  }, [isLoggedIn, activeTab, currentPage]); // Remove searchQuery and searchType
+  }, [isLoggedIn, activeTab, currentPage, searchQuery, searchType, searchStatus]);
 
   // Separate search handler
   const handleSearch = () => {
@@ -816,11 +825,22 @@ export default function AdminPanel() {
     }
   };
 
+  // Add status change handler
+  const handleStatusChange = (newStatus) => {
+    setSearchStatus(newStatus);
+    setCurrentPage(1);
+    if (activeTab === 'paid') {
+      fetchPaidTweets();
+    } else {
+      fetchRegularTweets();
+    }
+  };
+
   // Update the search section JSX
   const searchSection = (
     <div className="flex-1 w-full">
       <div className="flex gap-2 max-sm:flex-col">
-        <div className="w-50 max-sm:w-full">
+        <div className="w-40 max-sm:w-full">
           <select
             value={searchType}
             onChange={(e) => handleSearchTypeChange(e.target.value)}
@@ -828,6 +848,18 @@ export default function AdminPanel() {
           >
             <option value="message">Search by Message</option>
             <option value="email">Search by Email</option>
+          </select>
+        </div>
+        <div className="w-40 max-sm:w-full">
+          <select
+            value={searchStatus}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            className="w-full px-2 py-2 rounded-xl border border-white/10 bg-black/40 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="posted">Posted</option>
+            <option value="rejected">Rejected</option>
           </select>
         </div>
         <div className="flex-1 relative flex gap-2">

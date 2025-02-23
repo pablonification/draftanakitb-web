@@ -377,6 +377,68 @@ const validateTriggerWord = (message) => {
   return triggerWords.some(word => lowerMessage.includes(word));
 };
 
+// Add PaidMenfessWarningModal component
+const PaidMenfessWarningModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+        <div 
+          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 backdrop-blur-sm" 
+          onClick={onClose}
+        ></div>
+
+        <div className="relative inline-block w-full max-w-lg p-8 overflow-hidden text-left align-middle transition-all transform bg-gradient-to-b from-[#000072] to-[#000050] rounded-xl shadow-2xl border border-white/10">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div className="flex items-start gap-4 mb-6">
+            <div className="bg-yellow-500/10 p-2 rounded-lg">
+              <svg className="w-6 h-6 text-yellow-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">Important Notice</h3>
+              <p className="text-gray-300 mt-2">
+                Your paid menfess will be processed and posted at <span className="text-blue-300 font-medium">20.00</span> or <span className="text-blue-300 font-medium">22.00 WIB</span> within a <span className="text-blue-300 font-medium">3-day range</span> from submission.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30 rounded-xl p-6">
+            <p className="text-gray-300">
+              While we aim to process your menfess as soon as possible, please expect some delay. However, we guarantee it will be posted within the 3-day timeframe.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-end mt-8">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 border border-white/20 text-white rounded-lg hover:bg-white/10 transition-all duration-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              Proceed to Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MainPage = () => {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -408,6 +470,8 @@ const MainPage = () => {
   const [showPaidInfo, setShowPaidInfo] = useState(false);
   const [showOtpHelp, setShowOtpHelp] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  const [showPaidWarning, setShowPaidWarning] = useState(false);
+  const [pendingMenfessData, setPendingMenfessData] = useState(null);
 
   useEffect(() => {
     const fetchBotStatus = async () => {
@@ -509,18 +573,31 @@ const MainPage = () => {
         personalLimitExceeded: botStatus.personalLimitExceeded,
         isWhitelisted
       };
-      
-      // Store the data first
-      localStorage.setItem('menfessData', JSON.stringify(menfessData));
 
-      // Redirect based on the effective type
-      window.location.href = effectiveType === 'paid' ? '/landing/paid' : '/landing/regular';
+      // If it's a paid menfess, show warning first
+      if (effectiveType === 'paid') {
+        setPendingMenfessData(menfessData);
+        setShowPaidWarning(true);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // For regular menfess, proceed as usual
+      localStorage.setItem('menfessData', JSON.stringify(menfessData));
+      window.location.href = '/landing/regular';
 
     } catch (error) {
       console.error('Error:', error);
       setSubmitError('Terjadi kesalahan. Silakan coba lagi.');
       setIsSubmitting(false);
     }
+  };
+
+  const handlePaidWarningConfirm = () => {
+    if (!pendingMenfessData) return;
+    
+    localStorage.setItem('menfessData', JSON.stringify(pendingMenfessData));
+    window.location.href = '/landing/paid';
   };
 
   // Add real-time message validation
@@ -932,6 +1009,11 @@ const MainPage = () => {
                   <InfoIcon />
                   <span className="group-hover:underline">Lihat detail perbandingan layanan</span>
                 </button>
+
+                {/* Add new ad section under comparison button */}
+                <div className="mt-6">
+                  <AdSection position="main-comparison" />
+                </div>
                 </div>
               </div>
 
@@ -1048,6 +1130,14 @@ const MainPage = () => {
       <OtpHelpModal
         isOpen={showOtpHelp}
         onClose={() => setShowOtpHelp(false)}
+      />
+      <PaidMenfessWarningModal 
+        isOpen={showPaidWarning}
+        onClose={() => {
+          setShowPaidWarning(false);
+          setIsSubmitting(false);
+        }}
+        onConfirm={handlePaidWarningConfirm}
       />
       <Script
         async
