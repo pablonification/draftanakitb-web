@@ -1,18 +1,24 @@
-const Xendit = require('xendit-node');
+import Xendit from 'xendit-node';
 
 // Initialize Xendit client with your secret key
 const xenditClient = new Xendit({
-  secretKey: process.env.XENDIT_SECRET_KEY,
+  secretKey: process.env.XENDIT_SECRET_KEY || '',
 });
 
 // Create instances of Xendit's services that you'll use
-const { Invoice } = xenditClient;
-const xenditInvoice = new Invoice({});
+const { Invoice, Disbursement, Balance } = xenditClient;
 
-// Example function to create an invoice
-async function createInvoice(params) {
+// Create invoice service
+const createXenditInvoice = () => {
+  return new xenditClient.Invoice({});
+};
+
+// Create invoice function
+export async function createInvoice(params) {
   try {
-    const invoice = await xenditInvoice.createInvoice({
+    const invoiceService = createXenditInvoice();
+    
+    const invoice = await invoiceService.createInvoice({
       externalID: params.externalID,
       amount: params.amount,
       description: params.description,
@@ -21,6 +27,7 @@ async function createInvoice(params) {
       invoiceDuration: 86400, // 24 hours
       currency: 'IDR',
     });
+    
     return invoice;
   } catch (error) {
     console.error('Xendit Invoice Creation Error:', error);
@@ -28,7 +35,24 @@ async function createInvoice(params) {
   }
 }
 
-module.exports = {
-  createInvoice,
-  xenditClient
-}; 
+// Create balance service
+const createXenditBalance = () => {
+  return new xenditClient.Balance({});
+};
+
+// Check balance function
+export async function checkBalance() {
+  try {
+    const balanceService = createXenditBalance();
+    
+    const balance = await balanceService.getBalance({
+      accountType: 'CASH',
+      currency: 'IDR',
+    });
+    
+    return balance;
+  } catch (error) {
+    console.error('Xendit Balance Check Error:', error);
+    throw error;
+  }
+} 
