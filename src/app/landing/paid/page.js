@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 import Head from 'next/head';
+import AdSection from '@/components/AdSection';
+import { QRCodeSVG } from 'qrcode.react'; // use QRCodeSVG instead of QRCodeCanvas
 
 // Update Copyright component
 const Copyright = () => (
@@ -81,114 +83,141 @@ const SuccessIcon = () => (
 const PaidMenfessLanding = () => {
   const [error, setError] = useState('');
   const [menfessData, setMenfessData] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState('initializing'); // initializing, pending, success, failed
-  const [qrUrl, setQrUrl] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('countdown'); // Add countdown status
+  const [qrString, setQrString] = useState('');
   const [merchantRef, setMerchantRef] = useState('');
-  const PAYMENT_AMOUNT = 2800;
+  const [timeRemaining, setTimeRemaining] = useState(5); // 5 second countdown
+  const [progress, setProgress] = useState(0);
+  const PAYMENT_AMOUNT = 1; // Changed to match route.js amount
 
   // Add polling interval state
   const [pollInterval, setPollInterval] = useState(null);
 
+  useEffect(() => {
+    if (timeRemaining > 0) {
+      const timer = setTimeout(() => {
+        setTimeRemaining(timeRemaining - 1);
+        setProgress((5 - timeRemaining + 1) * 20); // 20% per second for 5 seconds
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setPaymentStatus('initializing');
+      initializePayment();
+    }
+  }, [timeRemaining]);
+
+  // Add cleanup effect for polling
+  useEffect(() => {
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [pollInterval]);
+
+  const initializePayment = async () => {
+    try {
+      // Always clear existing payment session
+      localStorage.removeItem('paymentSession');
+      
+      const data = JSON.parse(localStorage.getItem('menfessData'));
+      if (!data) {
+        throw new Error('No menfess data found');
+      }
+
+      // Log the attachment data for debugging
+      if (data.attachment) {
+        console.log('Sending attachment:', {
+          length: data.attachment.length,
+          isBase64: data.attachment.includes('base64'),
+          preview: data.attachment.substring(0, 50) + '...'
+        });
+      }
+
+      // Always create new payment
+      const response = await fetch('/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        },
+        body: JSON.stringify({
+          ...data,
+          timestamp: Date.now() // Add timestamp to ensure uniqueness
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Payment initialization failed');
+      }
+
+      const paymentData = await response.json();
+      
+      if (!paymentData.success) {
+        throw new Error(paymentData.error || 'Failed to initialize payment');
+      }
+
+      // Store payment session with qr_string and expiry
+      localStorage.setItem('paymentSession', JSON.stringify({
+        qrString: paymentData.qrUrl,
+        merchantRef: paymentData.merchantRef,
+        expiresAt: paymentData.expiresAt,
+        createdAt: new Date().toISOString()
+      }));
+
+      setQrString(paymentData.qrUrl);
+      setMerchantRef(paymentData.merchantRef);
+      setPaymentStatus('pending');
+
+      // Start polling for payment status
+      const interval = setInterval(() => {
+        checkTransactionStatus(paymentData.merchantRef);
+      }, 3000); // Check every 3 seconds
+      setPollInterval(interval);
+
+    } catch (error) {
+      console.error('Error initializing payment:', error);
+      setError(error.message || 'Failed to initialize payment');
+      setPaymentStatus('failed');
+    }
+  };
+
   // Add status checking function
   const checkTransactionStatus = async (ref) => {
     try {
-      const response = await fetch(`/api/check-transaction?ref=${ref}`);
+      const response = await fetch(`/api/check-transaction?ref=${ref}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to check transaction status');
+      }
+
       const data = await response.json();
+      console.log('Transaction status check:', { ref, status: data.status });
       
       if (data.status === 'PAID') {
         setPaymentStatus('success');
         localStorage.removeItem('paymentSession');
-        if (pollInterval) clearInterval(pollInterval);
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          setPollInterval(null);
+        }
       } else if (data.status === 'FAILED' || data.status === 'EXPIRED') {
         setPaymentStatus('failed');
         localStorage.removeItem('paymentSession');
-        if (pollInterval) clearInterval(pollInterval);
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          setPollInterval(null);
+        }
       }
     } catch (error) {
       console.error('Error checking transaction status:', error);
     }
   };
-
-  useEffect(() => {
-    const initializePayment = async () => {
-      try {
-        // Always clear existing payment session
-        localStorage.removeItem('paymentSession');
-        
-        const data = JSON.parse(localStorage.getItem('menfessData'));
-        if (!data) {
-          throw new Error('No menfess data found');
-        }
-
-        // Log the attachment data for debugging
-        if (data.attachment) {
-          console.log('Sending attachment:', {
-            length: data.attachment.length,
-            isBase64: data.attachment.includes('base64'),
-            preview: data.attachment.substring(0, 50) + '...'
-          });
-        }
-
-        // Always create new payment
-        const response = await fetch('/payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-          },
-          body: JSON.stringify({
-            ...data,
-            timestamp: Date.now() // Add timestamp to ensure uniqueness
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Payment initialization failed');
-        }
-
-        const paymentData = await response.json();
-        
-        if (!paymentData.success) {
-          throw new Error(paymentData.error || 'Failed to initialize payment');
-        }
-
-        // Store payment session
-        localStorage.setItem('paymentSession', JSON.stringify({
-          qrUrl: paymentData.qrUrl,
-          merchantRef: paymentData.merchantRef,
-          createdAt: new Date().toISOString()
-        }));
-
-        setQrUrl(paymentData.qrUrl);
-        setMerchantRef(paymentData.merchantRef);
-        setPaymentStatus('pending');
-
-        // Start polling for new payment
-        const interval = setInterval(() => {
-          checkTransactionStatus(paymentData.merchantRef);
-        }, 5000);
-        setPollInterval(interval);
-
-      } catch (error) {
-        console.error('Error initializing payment:', error);
-        setError(error.message || 'Failed to initialize payment');
-        setPaymentStatus('failed');
-      }
-    };
-
-    initializePayment();
-
-    // Cleanup payment session on component unmount
-    return () => {
-      // Only clear if payment wasn't successful
-      if (paymentStatus !== 'success') {
-        localStorage.removeItem('paymentSession');
-      }
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
-    };
-  }, []); // Keep empty dependency array
 
   return (
     <>
@@ -225,15 +254,39 @@ const PaidMenfessLanding = () => {
             )}
 
             <div className="text-center space-y-6 animate-slideUp">
-              <div className="space-y-3">
-                <h4 className="text-3xl font-bold bg-gradient-to-r from-blue-200 via-blue-300 to-blue-200 bg-clip-text text-transparent hover-scale">
-                  PAID MENFESS
-                </h4>
-                <p className="normal-text text-gray-300">
-                  Amount to pay: <span className="text-2xl font-semibold bg-gradient-to-r from-blue-300 to-blue-200 bg-clip-text text-transparent animate-pulse-slow">Rp {PAYMENT_AMOUNT.toLocaleString()}</span>
-                </p>
-              </div>
-              
+              {paymentStatus === 'countdown' && (
+                <div className="bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] overflow-hidden animate-slideUp hover-scale">
+                  <div className="p-8 border-b border-white/10">
+                    <div className="flex items-center justify-center gap-4">
+                      <TimerIcon />
+                      <h4 className="text-2xl font-semibold bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
+                        PREPARING PAYMENT
+                      </h4>
+                    </div>
+                    <div className="mt-6 space-y-3 text-center">
+                      <p className="normal-text text-gray-300">
+                        Please wait while we prepare your payment details.
+                      </p>
+                      <div className="space-y-6">
+                        <p className="normal-text text-blue-200">
+                          Ready in <span className="font-semibold text-blue-100">{timeRemaining}</span> seconds
+                        </p>
+                        <div className="w-full bg-gray-800/50 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-500 to-blue-300 rounded-full transition-all duration-1000 ease-linear"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-8">
+                    <AdSection position="paid-landing" className="mb-6" />
+                  </div>
+                </div>
+              )}
+
               {paymentStatus === 'initializing' && (
                 <div className="animate-pulse bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] p-8 hover-scale">
                   <div className="flex items-center justify-center gap-4">
@@ -246,7 +299,7 @@ const PaidMenfessLanding = () => {
                 </div>
               )}
 
-              {paymentStatus === 'pending' && qrUrl && (
+              {paymentStatus === 'pending' && qrString && (
                 <div className="bg-gradient-to-br from-[#000080]/20 via-[#000072]/20 to-[#000060]/20 backdrop-blur-sm rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.3)] overflow-hidden animate-fadeIn hover-scale">
                   <div className="p-8 border-b border-white/10">
                     <div className="flex items-center justify-center gap-3 mb-8">
@@ -256,11 +309,7 @@ const PaidMenfessLanding = () => {
                       </h5>
                     </div>
                     <div className="bg-white p-6 rounded-xl inline-block shadow-lg transition-all-smooth hover:scale-105">
-                      <img 
-                        src={qrUrl}
-                        alt="QRIS Payment QR Code"
-                        className="w-[250px] h-[250px] mx-auto"
-                      />
+                      <QRCodeSVG value={qrString} style={{ width: 250, height: 250 }} />
                     </div>
                   </div>
                   <div className="p-8 space-y-6 bg-gradient-to-br from-[#000080]/30 via-[#000072]/30 to-[#000060]/30">

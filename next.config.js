@@ -10,6 +10,18 @@ const nextConfig = {
       sizeLimit: '10mb' // Increased from default 1mb
     },
   },
+  images: {
+    domains: ['draftanakitb.tech'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'draftanakitb.tech',
+        port: '',
+        pathname: '/**',
+      },
+      // Add more patterns if needed
+    ],
+  },
 }
 
 module.exports = nextConfig

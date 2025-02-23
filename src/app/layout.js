@@ -28,7 +28,7 @@ export const metadata = {
     siteName: 'DraftAnakITB',
     images: [
       {
-        url: '/og-image.jpg', // Make sure to add this image to your public folder
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'DraftAnakITB Preview'
@@ -97,7 +97,6 @@ export default function RootLayout({ children }) {
         {/* Additional verification tags */}
         <meta name="facebook-domain-verification" content="your-fb-verification-code" />
         <meta name="google-site-verification" content="your-google-verification-code" />
-        <meta name="google-adsense-account" content="ca-pub-9161286456755540" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}

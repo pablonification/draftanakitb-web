@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 import Head from 'next/head';
+import AdSection from '@/components/AdSection';
 
 // Update Copyright component
 const Copyright = () => (
@@ -385,10 +386,8 @@ const RegularMenfessLanding = () => {
                 </div>
 
                 <div className="p-8 space-y-8">
-                  {/* Google Adsense Placeholder */}
-                  <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 p-6 rounded-xl text-center border border-white/5">
-                    <p className="text-gray-400">Advertisement</p>
-                  </div>
+                  {/* Replace Google Adsense Placeholder with AdSection */}
+                  <AdSection position="regular-landing" />
 
                   {isComplete && (
                     <div className="text-center transform scale-100 animate-fadeIn">

@@ -6,6 +6,7 @@ import { validateFile, convertFileToBase64 } from '@/app/utils/fileUpload';
 import OtpHelpModal from '../components/OtpHelpModal';
 import Script from 'next/script';
 import Head from 'next/head';
+import AdSection from '@/components/AdSection';
 
 // Add whitelist constant at the top
 const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
@@ -353,7 +354,7 @@ const ServiceTypeDescription = ({ type, isPaidOnly }) => {
         <AutoPostIcon />
         <div className="min-w-0 flex-1">
           <p className="normal-text font-medium text-blue-200">Paid Menfess - Rp2.800</p>
-          <p className="normal-text text-gray-300 mt-1">Pengiriman terjadwal 20.00-22.00 WIB, support gambar & video, unlimited</p>
+          <p className="normal-text text-gray-300 mt-1">Pengiriman terjadwal 20.00-22.00 WIB dalam rentang 3 hari dari pengiriman, support gambar & video, unlimited</p>
         </div>
       </div>
     </div>
@@ -490,14 +491,19 @@ const MainPage = () => {
       const isWhitelisted = WHITELISTED_EMAILS.includes(email);
       
       // Determine effective type based on bot status and whitelist
-      const effectiveType = botStatus.isPaidOnly ? 'paid' : 
-                          isWhitelisted ? 'regular' : 
-                          menfessType;
+      let effectiveType;
+      if (botStatus.isPaidOnly) {
+        effectiveType = 'paid';
+      } else if (isWhitelisted) {
+        effectiveType = menfessType; // Whitelisted users can choose their type
+      } else {
+        effectiveType = menfessType; // Regular users can choose their type when bot is not in paid-only mode
+      }
 
       const menfessData = {
         email,
         message,
-        type: effectiveType,  // Use effectiveType here
+        type: effectiveType,
         attachment: base64Attachment,
         remainingRegular: botStatus.remainingRegular,
         personalLimitExceeded: botStatus.personalLimitExceeded,
@@ -507,9 +513,8 @@ const MainPage = () => {
       // Store the data first
       localStorage.setItem('menfessData', JSON.stringify(menfessData));
 
-      // Use effectiveType for redirection
-      const redirectPath = effectiveType === 'paid' ? '/landing/paid' : '/landing/regular';
-      window.location.replace(redirectPath);
+      // Redirect based on the effective type
+      window.location.href = effectiveType === 'paid' ? '/landing/paid' : '/landing/regular';
 
     } catch (error) {
       console.error('Error:', error);
@@ -730,6 +735,11 @@ const MainPage = () => {
             className="mx-auto shadow-lg"
             priority
           />
+        </div>
+
+        {/* Add top advertisement section */}
+        <div className="mb-8">
+          <AdSection position="main-top" />
         </div>
 
         <div className="mb-8">
@@ -1016,8 +1026,10 @@ const MainPage = () => {
         </div>
       </form>
 
-        {/* Add Copyright */}
-        {/* <Copyright /> */}
+        {/* Add bottom advertisement section */}
+        <div className="mt-12">
+          <AdSection position="main-bottom" />
+        </div>
       </div>
 
     {/* Add ComparisonModal */}
