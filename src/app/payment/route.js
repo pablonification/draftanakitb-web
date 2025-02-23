@@ -95,25 +95,16 @@ export async function POST(request) {
 
     // === Xendit Integration Start ===
     const secretKey = process.env.XENDIT_SECRET_KEY;
-    const callbackUrl = process.env.XENDIT_CALLBACK_URL || "https://draftanakitb.vercel.app/payment/callback";
+    // Set the callback URL to your ngrok endpoint if not provided via env.
+    let callbackUrl = process.env.XENDIT_CALLBACK_URL || "https://8c91-125-164-19-244.ngrok-free.app/api/payment/callback";
     const externalId = 'XENDIT' + Date.now();
-
-    // Amount in IDR (minimum 1, maximum 10,000,000)
-    const amount = 1; // Changed to minimum amount for testing
+    const amount = 1;
 
     const payload = {
       external_id: externalId,
       type: "DYNAMIC",
       callback_url: callbackUrl,
-      amount: amount,
-      currency: "IDR",
-      channel_code: "ID_DANA",
-      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes expiry
-      is_single_use: true,
-      description: "DraftAnakITB Paid Menfess",
-      metadata: {
-        branch_code: "DraftAnakITB_001"
-      }
+      amount: amount
     };
 
     console.log('>>>>>>>>>Xendit Payment Request Payload:', JSON.stringify(payload, null, 2));
@@ -148,16 +139,7 @@ export async function POST(request) {
       headers: response.headers,
       data: JSON.stringify(response.data, null, 2)
     });
-
-    if (response.status !== 200) {
-      throw new Error(`Xendit API error: ${response.status} - ${JSON.stringify(response.data)}`);
-    }
-
-    // Log the Xendit QR ID
-    console.log('Xendit QR Code created:', {
-      id: response.data.id,
-      qr_string: response.data.qr_string
-    });
+    // === Xendit Integration End ===
 
     // Create transaction record in database
     const transaction = new Transaction({
@@ -166,26 +148,22 @@ export async function POST(request) {
       message: body.message,
       amount: amount,
       status: 'UNPAID',
-      mediaData: mediaData ? JSON.stringify(mediaData) : null,
-      createdAt: new Date(),
-      xenditQrId: response.data.id // Store the QR ID from response
+      mediaData: mediaData ? JSON.stringify(mediaData) : null, // Store as string
+      createdAt: new Date()
     });
 
     await transaction.save();
-    console.log('Transaction created:', {
+    console.log('Transaction created with media:', {
       ref: transaction.merchantRef,
-      hasMedia: !!mediaData,
-      xenditQrId: response.data.id,
-      status: transaction.status
+      hasMedia: !!mediaData
     });
 
     // Create the response and set header "qr_string"
     const nextResp = NextResponse.json({
       success: true,
       merchantRef: externalId,
-      qrUrl: response.data.qr_string,
-      amount: amount,
-      expiresAt: response.data.expires_at
+      qrUrl: response.data.qr_url,
+      amount: amount
     });
     nextResp.headers.set("qr_string", response.data.qr_string);
     return nextResp;
