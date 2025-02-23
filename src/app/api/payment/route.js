@@ -1,15 +1,18 @@
-import { NextResponse } from 'next/server';
-import { createInvoice } from '@/lib/xendit';
+const { createInvoice } = require('@/lib/xendit');
+const { headers } = require('next/headers');
 
-export async function POST(req) {
+async function POST(req) {
   try {
     const body = await req.json();
     
     // Validate the request body
     if (!body.amount || !body.description || !body.payerEmail) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
@@ -24,40 +27,65 @@ export async function POST(req) {
       payerEmail: body.payerEmail
     });
 
-    return NextResponse.json(invoice);
+    return new Response(
+      JSON.stringify(invoice),
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('Payment API Error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: error.message || 'Internal server error' }),
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   }
 }
 
-// Handle Xendit webhook notifications
-export async function PUT(req) {
+async function PUT(req) {
   try {
     const body = await req.json();
-    const xenditHeader = req.headers.get('x-callback-token');
+    const headersList = headers();
+    const xenditHeader = headersList.get('x-callback-token');
 
     // Verify the webhook signature
     if (xenditHeader !== process.env.XENDIT_WEBHOOK_TOKEN) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { 
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
     // Handle the webhook notification
-    // You can update your database or trigger other actions here
     console.log('Received webhook:', body);
 
-    return NextResponse.json({ success: true });
+    return new Response(
+      JSON.stringify({ success: true }),
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('Webhook Error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: error.message || 'Internal server error' }),
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   }
-} 
+}
+
+module.exports = {
+  POST,
+  PUT
+}; 
