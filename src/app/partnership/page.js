@@ -80,13 +80,12 @@ const FeatureCard = ({ icon, title, description }) => (
 const PasswordProtection = ({ onCorrectPassword }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
-  const PASS_SUBSTRING = 'KJAKAx09';
+  const PASS_SUBSTRING = 'itb';
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (password.includes(PASS_SUBSTRING)) {
       onCorrectPassword();
-      localStorage.setItem('partnership-authenticated', 'true');
     } else {
       setError(true);
       setTimeout(() => setError(false), 2000);
@@ -150,14 +149,6 @@ const PasswordProtection = ({ onCorrectPassword }) => {
 
 const PartnershipPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    // Check if user was previously authenticated
-    const authenticated = localStorage.getItem('partnership-authenticated');
-    if (authenticated === 'true') {
-      setIsAuthenticated(true);
-    }
-  }, []);
 
   if (!isAuthenticated) {
     return <PasswordProtection onCorrectPassword={() => setIsAuthenticated(true)} />;
@@ -432,20 +423,24 @@ const PartnershipPage = () => {
             <h2 className="text-xl font-semibold mb-4 text-blue-300">7. Cara Pemesanan</h2>
             
             <div className="space-y-4">
-              <li className="flex items-center gap-4">
-                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center">1</span>
-                <span className="text-gray-300 text-sm">Isi formulir pemesanan melalui link: <a href="https://forms.gle/ADzKrDsV23EcdBoZ7" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200">https://forms.gle/ADzKrDsV23EcdBoZ7</a></span>
+              <li className="flex items-start gap-4">
+                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center mt-0.5">1</span>
+                <span className="text-gray-300 text-sm">Cek ketersediaan tanggal melalui link: <a href="https://docs.google.com/spreadsheets/d/121TOd005z_6AxbtVdSaMYZGf86PIqRAiDhHWNfRx9jY/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200">Spreadsheet Ketersediaan Tanggal</a></span>
               </li>
-              <li className="flex items-center gap-4">
-                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center">2</span>
+              <li className="flex items-start gap-4">
+                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center mt-0.5">2</span>
+                <span className="text-gray-300 text-sm">Isi formulir pemesanan melalui link: <a href="https://forms.gle/ADzKrDsV23EcdBoZ7" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-blue-200">Form Pengajuan Kerja Sama dengan DraftAnakITB</a></span>
+              </li>
+              <li className="flex items-start gap-4">
+                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center mt-0.5">3</span>
                 <span className="text-gray-300 text-sm">Tunggu konfirmasi dari tim DraftAnakITB</span>
               </li>
-              <li className="flex items-center gap-4">
-                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center">3</span>
+              <li className="flex items-start gap-4">
+                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center mt-0.5">4</span>
                 <span className="text-gray-300 text-sm">Lakukan pembayaran sesuai instruksi yang diberikan</span>
               </li>
-              <li className="flex items-center gap-4">
-                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center">4</span>
+              <li className="flex items-start gap-4">
+                <span className="flex-shrink-0 w-6 h-6 rounded bg-blue-500/20 text-blue-300 text-sm flex items-center justify-center mt-0.5">5</span>
                 <span className="text-gray-300 text-sm">Layanan akan berjalan sesuai jadwal yang disepakati</span>
               </li>
             </div>
