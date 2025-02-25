@@ -6,13 +6,13 @@ export const adsConfig = {
   // Configuration for different ad positions
   positions: {
     'main-top': {
-      enabled: false,
+      enabled: true,
       type: 'banner',
       customContent: {
-        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
-        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
-        link: "https://wa.me/6283197457289",
-        imageUrl: "/ads2.jpg", // Using local image from public directory
+        title: "Advertisement",
+        // description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
+        link: "https://x.com/spgjatinangor/status/1893653863892242625?s=46",
+        imageUrl: "/footerSPG.jpg", // Using local image from public directory
       }
     },
     'main-bottom': {
@@ -29,30 +29,30 @@ export const adsConfig = {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
-        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
-        link: "https://wa.me/6283197457289",
-        imageUrl: "/ads2.jpg"
+        title: "✨ YUK MAKAN DI SPG JATINANGOR ✨",
+        description: "Makan enak, kenyang, dan murah? Cuma di Warung Nasi SPG Jatinangor!🔥 @spgjatinangor",
+        link: "https://x.com/spgjatinangor/status/1893653863892242625?s=46",
+        imageUrl: "/adsSPG.jpeg"
       }
     },
     'regular-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
-        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
-        link: "https://wa.me/6283197457289",
-        imageUrl: "/ads1.png"
+        title: "✨ YUK MAKAN DI SPG JATINANGOR ✨",
+        description: "Makan enak, kenyang, dan murah? Cuma di Warung Nasi SPG Jatinangor!🔥 @spgjatinangor",
+        link: "https://x.com/spgjatinangor/status/1893653863892242625?s=46",
+        imageUrl: "/adsSPG.jpeg"
       }
     },
     'paid-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "✨ OPEN PRE-ORDER PAKET HEMAT CATERING RAMADHAN ✨",
-        description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
-        link: "https://wa.me/6283197457289",
-        imageUrl: "/ads1.png"
+        title: "✨ YUK MAKAN DI SPG JATINANGOR ✨",
+        description: "Makan enak, kenyang, dan murah? Cuma di Warung Nasi SPG Jatinangor!🔥 @spgjatinangor",
+        link: "https://x.com/spgjatinangor/status/1893653863892242625?s=46",
+        imageUrl: "/adsSPG.jpeg"
       }
     },
   },
