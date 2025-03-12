@@ -1,7 +1,7 @@
 // Advertisement configuration
 export const adsConfig = {
   // Global switch to enable/disable all ads
-  enabled: true,
+  enabled: false, // ok
 
   // Configuration for different ad positions
   positions: {
