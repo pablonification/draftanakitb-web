@@ -625,6 +625,11 @@ const MainPage = () => {
     
     if ((isWhitelisted || validateEmail(email)) && !isSendingOtp && otpCooldown === 0) {
       setIsSendingOtp(true);
+      
+      // Add a timeout to abort the fetch if it takes too long
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
       try {
         // Temporarily make the email input readonly to prevent zoom
         const emailInput = document.querySelector('input[type="email"]');
@@ -635,8 +640,16 @@ const MainPage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email: email })
+          body: JSON.stringify({ email: email }),
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Server error');
+        }
 
         const data = await response.json();
         
@@ -645,19 +658,25 @@ const MainPage = () => {
           setEmailError('');
           setOtpMessage('Kode OTP telah dikirim ke email anda. Tolong cek dalam folder JUNK EMAIL di Email ITB (Outlook anda). Kode akan kadaluarsa dalam 5 menit.');
           startOtpCooldown();
-
-          // Remove readonly after a short delay
-          setTimeout(() => {
-            const emailInput = document.querySelector('input[type="email"]');
-            if (emailInput) emailInput.readOnly = false;
-          }, 100);
         } else {
           setEmailError(data.error || 'Gagal mengirim OTP. Silakan coba lagi.');
         }
       } catch (error) {
+        clearTimeout(timeoutId);
+        
         console.error('Error:', error);
-        setEmailError('Terjadi kesalahan. Silakan coba lagi.');
+        if (error.name === 'AbortError') {
+          setEmailError('Request timed out. Server mungkin sedang sibuk, silakan coba lagi dalam beberapa saat.');
+        } else {
+          setEmailError('Terjadi kesalahan. Silakan coba lagi.');
+        }
       } finally {
+        // Remove readonly after a short delay
+        setTimeout(() => {
+          const emailInput = document.querySelector('input[type="email"]');
+          if (emailInput) emailInput.readOnly = false;
+        }, 100);
+        
         setIsSendingOtp(false);
       }
     } else {
@@ -672,6 +691,10 @@ const MainPage = () => {
     setOtpError('');
     setOtpSuccessMessage('');
 
+    // Add a timeout to abort the fetch if it takes too long
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
     try {
       // Temporarily make the OTP input readonly to prevent zoom
       const otpInput = document.querySelector('input[placeholder="Masukkan kode OTP"]');
@@ -682,8 +705,16 @@ const MainPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, otp })
+        body: JSON.stringify({ email, otp }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Server error');
+      }
 
       const data = await response.json();
 
@@ -693,16 +724,22 @@ const MainPage = () => {
       } else {
         setOtpError(data.error || 'OTP tidak valid!');
       }
-
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      console.error('Error:', error);
+      if (error.name === 'AbortError') {
+        setOtpError('Request timed out. Server mungkin sedang sibuk, silakan coba lagi dalam beberapa saat.');
+      } else {
+        setOtpError('Terjadi kesalahan. Silakan coba lagi.');
+      }
+    } finally {
       // Remove readonly after a short delay
       setTimeout(() => {
         const otpInput = document.querySelector('input[placeholder="Masukkan kode OTP"]');
         if (otpInput) otpInput.readOnly = false;
       }, 100);
-    } catch (error) {
-      console.error('Error:', error);
-      setOtpError('Terjadi kesalahan. Silakan coba lagi.');
-    } finally {
+      
       setIsVerifyingOtp(false);
     }
   };
@@ -711,14 +748,27 @@ const MainPage = () => {
     if (isSendingOtp || otpCooldown > 0) return;
     
     setIsSendingOtp(true);
+    
+    // Add a timeout to abort the fetch if it takes too long
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
     try {
       const response = await fetch('/api/otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({ email: email }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Server error');
+      }
 
       const data = await response.json();
       
@@ -729,8 +779,14 @@ const MainPage = () => {
         setEmailError(data.error || 'Gagal mengirim OTP. Silakan coba lagi.');
       }
     } catch (error) {
+      clearTimeout(timeoutId);
+      
       console.error('Error:', error);
-      setEmailError('Terjadi kesalahan. Silakan coba lagi.');
+      if (error.name === 'AbortError') {
+        setEmailError('Request timed out. Server mungkin sedang sibuk, silakan coba lagi dalam beberapa saat.');
+      } else {
+        setEmailError('Terjadi kesalahan. Silakan coba lagi.');
+      }
     } finally {
       setIsSendingOtp(false);
     }
