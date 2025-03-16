@@ -674,7 +674,7 @@ const MainPage = () => {
 
     try {
       // Temporarily make the OTP input readonly to prevent zoom
-      const otpInput = document.querySelector('input[value="'+otp+'"]');
+      const otpInput = document.querySelector('input[placeholder="Masukkan kode OTP"]');
       if (otpInput) otpInput.readOnly = true;
 
       const response = await fetch('/api/otp', {
@@ -696,7 +696,7 @@ const MainPage = () => {
 
       // Remove readonly after a short delay
       setTimeout(() => {
-        const otpInput = document.querySelector('input[value="'+otp+'"]');
+        const otpInput = document.querySelector('input[placeholder="Masukkan kode OTP"]');
         if (otpInput) otpInput.readOnly = false;
       }, 100);
     } catch (error) {
