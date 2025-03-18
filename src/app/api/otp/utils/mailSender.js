@@ -1,39 +1,28 @@
-const nodemailer = require('nodemailer');
-const fs = require('fs');
-const path = require('path');
+const { Resend } = require('resend');
+
+const apiKey = process.env.RESEND_API_KEY;
+const resend = new Resend(apiKey);
 
 const mailSender = async (email, title, body) => {
     try {
-        // Read the PFX certificate file
-        const pfxPath = path.join(__dirname, 'certificate.pfx'); // Update this path
-        const pfx = fs.readFileSync(pfxPath);
-
-        // Create a transporter
-        let transporter = nodemailer.createTransport({
-            host: process.env.MAIL_HOST,
-            port: process.env.MAIL_PORT,
-            secure: false, // Use true for 465, false for other ports
-            auth: {
-                user: process.env.MAIL_USER,
-                pass: process.env.MAIL_PASS
-            },
-            tls: {
-                pfx: pfx,
-                passphrase: 'iOOma$@k0YsKq2L8CP' // Update this with your PFX password
-            }
-        });
-
-        // Send mail with defined transport object
-        let info = await transporter.sendMail({
-            from: `"DraftAnakITB" <${process.env.MAIL_USER}>`, // Ensure the from field is correctly set
+        console.log(`Preparing to send email to ${email}`);
+        
+        const { data, error } = await resend.emails.send({
+            from: 'DraftAnakITB <noreply@draftanakitb.tech>',
             to: email,
             subject: title,
-            html: body
+            html: body,
         });
-        console.log('Email info:', info);
-        return info;
+
+        if (error) {
+            console.error('Error sending email:', error);
+            throw error;
+        }
+
+        console.log('Email sent successfully:', data.id);
+        return data;
     } catch (error) {
-        console.log(error.message);
+        console.error('Failed to send email:', error);
         return null;
     }
 };
