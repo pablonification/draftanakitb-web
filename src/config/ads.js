@@ -11,48 +11,48 @@ export const adsConfig = {
       customContent: {
         // title: "Advertisement",
         // description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
-        link: "https://x.com/DraftAnakITB/status/1900065538472316977",
-        imageUrl: "/footerEdelweiss.png", // Using local image from public directory
+        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
+        imageUrl: "/footerGrab.png", // Using local image from public directory
       }
     },
     'main-bottom': {
       enabled: false,
       type: 'banner',
       customContent: {
-        title: "☕ Edelweiss Coffee Jatinangor ☕",
-        description: "Bingung cari menu bukber?\nEdelweiss Coffee Jatinangor punya paket bundling spesial Ramadan yang pas banget buat kamu!\nYuk, langsung langsung reservasi sekarang 0811211366",
-        link: "https://x.com/DraftAnakITB/status/1900065538472316977",
-        imageUrl: "/adsEdelweiss.jpg",
+        title: "🛵 Promo GrabBike 🛵",
+        description: "Naik GrabBike sekarang pake promo \"GRABKAMPUS\" diskon 30% s.d 15 ribu! Gacor ga tuh promonya 😎 \n\nBerlaku sampai 28 Maret 2025 dengan tujuan dari atau ke kampus. Syarat dan ketentuan lainnya, berlaku ya 😉\n\nYuk jalan bareng GrabBike pake promo GRABKAMPUS 🛵",
+        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
+        imageUrl: "/adsGrabBike.jpg",
       }
     },
     'main-comparison': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "☕ Edelweiss Coffee Jatinangor ☕",
-        description: "Bingung cari menu bukber?\nEdelweiss Coffee Jatinangor punya paket bundling spesial Ramadan yang pas banget buat kamu!\nYuk, langsung langsung reservasi sekarang 0811211366",
-        link: "https://x.com/DraftAnakITB/status/1900065538472316977",
-        imageUrl: "/adsEdelweiss.jpg",
+        title: "🛵 Promo GrabBike 🛵",
+        description: "Naik GrabBike sekarang pake promo \"GRABKAMPUS\" diskon 30% s.d 15 ribu! Gacor ga tuh promonya 😎 \n\nBerlaku sampai 28 Maret 2025 dengan tujuan dari atau ke kampus. Syarat dan ketentuan lainnya, berlaku ya 😉\n\nYuk jalan bareng GrabBike pake promo GRABKAMPUS 🛵",
+        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
+        imageUrl: "/adsGrabBike.jpg",
       }
     },
     'regular-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "☕ Edelweiss Coffee Jatinangor ☕",
-        description: "Bingung cari menu bukber?\nEdelweiss Coffee Jatinangor punya paket bundling spesial Ramadan yang pas banget buat kamu!\nYuk, langsung langsung reservasi sekarang 0811211366",
-        link: "https://x.com/DraftAnakITB/status/1900065538472316977",
-        imageUrl: "/adsEdelweiss.jpg",
+        title: "🛵 Promo GrabBike 🛵",
+        description: "Naik GrabBike sekarang pake promo \"GRABKAMPUS\" diskon 30% s.d 15 ribu! Gacor ga tuh promonya 😎 \n\nBerlaku sampai 28 Maret 2025 dengan tujuan dari atau ke kampus. Syarat dan ketentuan lainnya, berlaku ya 😉\n\nYuk jalan bareng GrabBike pake promo GRABKAMPUS 🛵",
+        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
+        imageUrl: "/footerGrab.png",
       }
     },
     'paid-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "☕ Edelweiss Coffee Jatinangor ☕",
-        description: "Bingung cari menu bukber?\nEdelweiss Coffee Jatinangor punya paket bundling spesial Ramadan yang pas banget buat kamu!\nYuk, langsung langsung reservasi sekarang 0811211366",
-        link: "https://x.com/DraftAnakITB/status/1900065538472316977",
-        imageUrl: "/adsEdelweiss.jpg",
+        title: "🛵 Promo GrabBike 🛵",
+        description: "Naik GrabBike sekarang pake promo \"GRABKAMPUS\" diskon 30% s.d 15 ribu! Gacor ga tuh promonya 😎 \n\nBerlaku sampai 28 Maret 2025 dengan tujuan dari atau ke kampus. Syarat dan ketentuan lainnya, berlaku ya 😉\n\nYuk jalan bareng GrabBike pake promo GRABKAMPUS 🛵",
+        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
+        imageUrl: "/footerGrab.png",
       }
     },
   },
