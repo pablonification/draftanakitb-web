@@ -1,12 +1,12 @@
 // Advertisement configuration
 export const adsConfig = {
   // Global switch to enable/disable all ads
-  enabled: false, // ok
+  enabled: true, // ok
 
   // Configuration for different ad positions
   positions: {
     'main-top': {
-      enabled: true,
+      enabled: false,
       type: 'banner',
       customContent: {
         // title: "Advertisement",
@@ -29,30 +29,30 @@ export const adsConfig = {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "🛵 Promo GrabBike 🛵",
-        description: "Naik GrabBike sekarang pake promo \"GRABKAMPUS\" diskon 30% s.d 15 ribu! Gacor ga tuh promonya 😎 \n\nBerlaku sampai 28 Maret 2025 dengan tujuan dari atau ke kampus. Syarat dan ketentuan lainnya, berlaku ya 😉\n\nYuk jalan bareng GrabBike pake promo GRABKAMPUS 🛵",
-        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
-        imageUrl: "/adsGrabBike.jpg",
+        title: "📃 Kuesioner Tesis 📃",
+        description: "Halo! Aku butuh responden yang sesuai kriteria untuk tesisku! Kriteria utamanya:\n\n- Mahasiswa Diploma/S1\n- Asal dari luar pulau Jawa\n- Mahasiswa di ITB/UI/IPB/UNPAD/TEL-U/UPI\n\nYang sesuai kriteria boleh banget bantu isi yaa🥹❤\n\nlink: https://bit.ly/KuesionerTesisMahasiwaRantau",
+        link: "https://bit.ly/KuesionerTesisMahasiwaRantau",
+        imageUrl: "/adsTesis.png",
       }
     },
     'regular-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "🛵 Promo GrabBike 🛵",
-        description: "Naik GrabBike sekarang pake promo \"GRABKAMPUS\" diskon 30% s.d 15 ribu! Gacor ga tuh promonya 😎 \n\nBerlaku sampai 28 Maret 2025 dengan tujuan dari atau ke kampus. Syarat dan ketentuan lainnya, berlaku ya 😉\n\nYuk jalan bareng GrabBike pake promo GRABKAMPUS 🛵",
-        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
-        imageUrl: "/footerGrab.png",
+        title: "📃 Kuesioner Tesis 📃",
+        description: "Halo! Aku butuh responden yang sesuai kriteria untuk tesisku! Kriteria utamanya:\n\n- Mahasiswa Diploma/S1\n- Asal dari luar pulau Jawa\n- Mahasiswa di ITB/UI/IPB/UNPAD/TEL-U/UPI\n\nYang sesuai kriteria boleh banget bantu isi yaa🥹❤\n\nlink: https://bit.ly/KuesionerTesisMahasiwaRantau",
+        link: "https://bit.ly/KuesionerTesisMahasiwaRantau",
+        imageUrl: "/adsTesis.png",
       }
     },
     'paid-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "🛵 Promo GrabBike 🛵",
-        description: "Naik GrabBike sekarang pake promo \"GRABKAMPUS\" diskon 30% s.d 15 ribu! Gacor ga tuh promonya 😎 \n\nBerlaku sampai 28 Maret 2025 dengan tujuan dari atau ke kampus. Syarat dan ketentuan lainnya, berlaku ya 😉\n\nYuk jalan bareng GrabBike pake promo GRABKAMPUS 🛵",
-        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
-        imageUrl: "/footerGrab.png",
+        title: "📃 Kuesioner Tesis 📃",
+        description: "Halo! Aku butuh responden yang sesuai kriteria untuk tesisku! Kriteria utamanya:\n\n- Mahasiswa Diploma/S1\n- Asal dari luar pulau Jawa\n- Mahasiswa di ITB/UI/IPB/UNPAD/TEL-U/UPI\n\nYang sesuai kriteria boleh banget bantu isi yaa🥹❤\n\nlink: https://bit.ly/KuesionerTesisMahasiwaRantau",
+        link: "https://bit.ly/KuesionerTesisMahasiwaRantau",
+        imageUrl: "/adsTesis.png",
       }
     },
   },
