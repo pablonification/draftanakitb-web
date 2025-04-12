@@ -29,30 +29,30 @@ export const adsConfig = {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "📃 Kuesioner Tesis 📃",
-        description: "Halo! Aku butuh responden yang sesuai kriteria untuk tesisku! Kriteria utamanya:\n\n- Mahasiswa Diploma/S1\n- Asal dari luar pulau Jawa\n- Mahasiswa di ITB/UI/IPB/UNPAD/TEL-U/UPI\n\nYang sesuai kriteria boleh banget bantu isi yaa🥹❤\n\nlink: https://bit.ly/KuesionerTesisMahasiwaRantau",
-        link: "https://bit.ly/KuesionerTesisMahasiwaRantau",
-        imageUrl: "/adsTesis.png",
+        title: "📃 Cek Plagiasi Murah 📃",
+        description: "Sekarang nggak usah bingung lagi ya cek plagiasi super murah banget buat yang ngerjain tugas, sempro, atau sarat sidang butuh cek plagiasi cepet langsung ke website http://turnedin.id aja 💢",
+        link: "https://turnedin.id",
+        imageUrl: "/adsTuned.png",
       }
     },
     'regular-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "📃 Kuesioner Tesis 📃",
-        description: "Halo! Aku butuh responden yang sesuai kriteria untuk tesisku! Kriteria utamanya:\n\n- Mahasiswa Diploma/S1\n- Asal dari luar pulau Jawa\n- Mahasiswa di ITB/UI/IPB/UNPAD/TEL-U/UPI\n\nYang sesuai kriteria boleh banget bantu isi yaa🥹❤\n\nlink: https://bit.ly/KuesionerTesisMahasiwaRantau",
-        link: "https://bit.ly/KuesionerTesisMahasiwaRantau",
-        imageUrl: "/adsTesis.png",
+        title: "📃 Cek Plagiasi Murah 📃",
+        description: "Sekarang nggak usah bingung lagi ya cek plagiasi super murah banget buat yang ngerjain tugas, sempro, atau sarat sidang butuh cek plagiasi cepet langsung ke website http://turnedin.id aja 💢",
+        link: "https://turnedin.id",
+        imageUrl: "/adsTuned.png",
       }
     },
     'paid-landing': {
       enabled: true,
       type: 'banner',
       customContent: {
-        title: "📃 Kuesioner Tesis 📃",
-        description: "Halo! Aku butuh responden yang sesuai kriteria untuk tesisku! Kriteria utamanya:\n\n- Mahasiswa Diploma/S1\n- Asal dari luar pulau Jawa\n- Mahasiswa di ITB/UI/IPB/UNPAD/TEL-U/UPI\n\nYang sesuai kriteria boleh banget bantu isi yaa🥹❤\n\nlink: https://bit.ly/KuesionerTesisMahasiwaRantau",
-        link: "https://bit.ly/KuesionerTesisMahasiwaRantau",
-        imageUrl: "/adsTesis.png",
+        title: "📃 Cek Plagiasi Murah 📃",
+        description: "Sekarang nggak usah bingung lagi ya cek plagiasi super murah banget buat yang ngerjain tugas, sempro, atau sarat sidang butuh cek plagiasi cepet langsung ke website http://turnedin.id aja 💢",
+        link: "https://turnedin.id",
+        imageUrl: "/adsTuned.png",
       }
     },
   },
