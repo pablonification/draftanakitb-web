@@ -2,7 +2,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
-
+import Navbar from '@/components/Navbar';
 // Update Copyright component
 const Copyright = () => (
   <div className="fixed bottom-0 left-0 right-0 py-4 border-t border-white/10 bg-[#000072]">
@@ -59,11 +59,12 @@ const FAQPage = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-[#000072] to-[#000050] text-white p-4 pb-16">
-        <nav className="max-w-7xl mx-auto flex justify-end space-x-6 mb-12 px-4">
+        {/* <nav className="max-w-7xl mx-auto flex justify-end space-x-6 mb-12 px-4">
           <a href="/" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">HOME</a>
           <a href="/about" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">ABOUT</a>
           <a href="/faq" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">FAQ</a>
-        </nav>
+        </nav> */}
+        <Navbar />
 
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">

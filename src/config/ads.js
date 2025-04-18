@@ -6,13 +6,13 @@ export const adsConfig = {
   // Configuration for different ad positions
   positions: {
     'main-top': {
-      enabled: false,
+      enabled: true,
       type: 'banner',
       customContent: {
         // title: "Advertisement",
         // description: "HARGA PER-PAX NYA CUMA 18.500'an AJA GUYSSSS😭\nSLOT TERBATAS ⚠️\nADA PAKET REGULER JUGA, BEBAS PILIH 🥳\nFREE ONGKIR SE-JATINANGOR, DI KIRIM SAMPE DEPAN KOST.\nYU DI BOOKING DARI SEKARANG",
-        link: "https://x.com/DraftAnakITB/status/1902737871838302299",
-        imageUrl: "/footerGrab.png", // Using local image from public directory
+        link: "https://turnedin.id",
+        imageUrl: "/itb25.png", // Using local image from public directory
       }
     },
     'main-bottom': {

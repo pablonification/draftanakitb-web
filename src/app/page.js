@@ -7,6 +7,7 @@ import OtpHelpModal from '../components/OtpHelpModal';
 import Script from 'next/script';
 import Head from 'next/head';
 import AdSection from '@/components/AdSection';
+import Navbar from '@/components/Navbar';
 
 // Add whitelist constant at the top
 const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
@@ -812,9 +813,9 @@ const MainPage = () => {
           <div className="flex items-start space-x-3">
             <div className="text-green-300 text-sm">✨</div>
             <div>
-              <p className="text-sm font-semibold text-green-300">Admin/Test Account</p>
+              <p className="text-sm font-semibold text-green-300">Whitelisted Account</p>
               <p className="text-normal text-gray-300">
-                Email ini memiliki akses khusus untuk bypass limit regular menfess.
+                Email ini memiliki akses khusus untuk mengirim menfess tanpa melalui email ITB.
               </p>
             </div>
           </div>
@@ -852,317 +853,313 @@ const MainPage = () => {
         />
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-[#000072] via-[#000060] to-[#000045] text-white p-4 pb-16">
-        <nav className="max-w-7xl mx-auto flex justify-end space-x-6 mb-12 px-4">
-          <a href="/" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">HOME</a>
-          <a href="/about" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">ABOUT</a>
-          <a href="/faq" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">FAQ</a>
-      </nav>
+        <Navbar />
 
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <Image
-            src="/logo.jpg"
-            alt="DraftAnakITB Logo" 
-            width={100}
-            height={100}
-            className="mx-auto shadow-lg"
-            priority
-          />
-        </div>
-
-        {/* Add top advertisement section */}
-        <div className="mb-8">
-          <AdSection position="main-top" />
-        </div>
-
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <span className="h1">BOT STATUS:</span>
-            <span className="h1 font-bold">
-              {isLoading ? (
-                <span className="animate-pulse">LOADING...</span>
-              ) : (
-                botStatus.isPaidOnly ? 'PAID MENFESS ONLY' : 'ON'
-              )}
-            </span>
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <Image
+              src="/logo.jpg"
+              alt="DraftAnakITB Logo" 
+              width={100}
+              height={100}
+              className="mx-auto shadow-lg"
+              priority
+            />
           </div>
 
-          {/* Only show warnings after loading and when conditions are met */}
-          {!isLoading && (
-            <>
-          {botStatus.isPaidOnly && (
-                <div className="bg-blue-900/30 p-4 rounded-lg mb-6 animate-fadeIn">
-              <div className="flex items-start space-x-3">
-                <div className="text-yellow-300 text-sm">ℹ️</div>
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-white-300">Regular Menfess Unavailable</p>
-                  <p className="text-normal text-gray-300">
-                    Karena kebijakan baru Twitter/X yang membatasi penggunaan API, kami hanya dapat mengirim maksimal 17 tweets per hari untuk layanan regular menfess. Batas harian ini telah tercapai.
-                  </p>
-                  <div className="flex items-center space-x-2 text-normal">
-                    <span className="text-gray-400">Sisa kuota:</span>
-                    <span className="bg-red-900/50 text-red-300 px-2 py-1 rounded">
-                      {botStatus.remainingRegular} tweets
-                    </span>
-                  </div>
-                  <p className="text-normal text-blue-300">
-                    ✨ Anda masih dapat menggunakan layanan paid menfess untuk mengirim pesan.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Add top advertisement section */}
+          <div className="mb-8">
+            <AdSection position="main-top" />
+          </div>
 
-          {!botStatus.isPaidOnly && botStatus.remainingRegular < 5 && (
-                <div className="bg-yellow-900/30 p-4 rounded-lg mb-6 animate-fadeIn">
-              <div className="flex items-start space-x-3">
-                <div className="text-yellow-300 text-sm">⚠️</div>
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-yellow-300">Kuota Regular Menfess Hampir Habis</p>
-                  <p className="text-normal text-gray-300">
-                    Karena kebijakan Twitter/X, kami hanya dapat mengirim 17 tweets per hari untuk layanan regular menfess.
-                  </p>
-                  <div className="flex items-center space-x-2 text-normal">
-                    <span className="text-normal text-gray-400">Sisa kuota:</span>
-                    <span className="bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">
-                      {botStatus.remainingRegular} tweets
-                    </span>
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <span className="h1">BOT STATUS:</span>
+              <span className="h1 font-bold">
+                {isLoading ? (
+                  <span className="animate-pulse">LOADING...</span>
+                ) : (
+                  botStatus.isPaidOnly ? 'PAID MENFESS ONLY' : 'ON'
+                )}
+              </span>
+            </div>
+
+            {/* Only show warnings after loading and when conditions are met */}
+            {!isLoading && (
+              <>
+            {botStatus.isPaidOnly && (
+                  <div className="bg-blue-900/30 p-4 rounded-lg mb-6 animate-fadeIn">
+                <div className="flex items-start space-x-3">
+                  <div className="text-yellow-300 text-sm">ℹ️</div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-white-300">Regular Menfess Unavailable</p>
+                    <p className="text-normal text-gray-300">
+                      Karena kebijakan baru Twitter/X yang membatasi penggunaan API, kami hanya dapat mengirim maksimal 17 tweets per hari untuk layanan regular menfess. Batas harian ini telah tercapai.
+                    </p>
+                    <div className="flex items-center space-x-2 text-normal">
+                      <span className="text-gray-400">Sisa kuota:</span>
+                      <span className="bg-red-900/50 text-red-300 px-2 py-1 rounded">
+                        {botStatus.remainingRegular} tweets
+                      </span>
+                    </div>
+                    <p className="text-normal text-blue-300">
+                      ✨ Anda masih dapat menggunakan layanan paid menfess untuk mengirim pesan.
+                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-            </>
-          )}
-        </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="block font-semibold">Email</label>
-            <div className="flex items-center gap-2 input-wrapper">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={handleEmailKeyPress}
-                  disabled={isEmailVerified}
-                  className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50 text-base md:text-sm"
-                  placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
-                  inputMode="email"
-                  autoComplete="email"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                  spellCheck="false"
-                />
-                <button
-                  type="button"
-                  onClick={handleVerifyEmail}
-                  disabled={isEmailVerified || isSendingOtp}
-                  className="px-4 py-2 border rounded hover:bg-blue-900 transition-colors disabled:opacity-50"
-                >
-                  {isSendingOtp ? 'SENDING...' : 'CHECK'}
-                </button>
-              </div>
-              {emailError && (
-                <p className="error-message">{emailError}</p>
-              )}
-              {otpMessage && (
-                <p className="success-message mt-2">
-                  {otpMessage}
-                </p>
-              )}
-              {renderWhitelistInfo()}
-
-            </div>
-            {isEmailVerified && (
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <label className="block font-semibold">OTP</label>
-                  <OtpHelpButton onClick={() => setShowOtpHelp(true)} />
-                </div>
-              <div className="flex items-center gap-2 input-wrapper">
-                  <input
-                    type="text"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    onKeyDown={handleOtpKeyPress}
-                    disabled={isOtpVerified}
-                    className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50 text-base md:text-sm"
-                    placeholder="Masukkan kode OTP"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                    spellCheck="false"
-                    pattern="[0-9]*"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleVerifyOtp}
-                    disabled={isOtpVerified || isVerifyingOtp}
-                    className="px-4 py-2 border rounded hover:bg-blue-900 transition-colors disabled:opacity-50"
-                  >
-                    {isVerifyingOtp ? 'CHECKING...' : 'CHECK'}
-                  </button>
-                </div>
-                {otpError && (
-                  <p className="error-message">{otpError}</p>
-                )}
-                {otpSuccessMessage && (
-                  <p className="success-message">{otpSuccessMessage}</p>
-                )}
-                <button 
-                  type="button" 
-                  onClick={handleResendOtp}
-                  disabled={isSendingOtp || otpCooldown > 0}
-                  className="text-blue-300 hover:underline disabled:opacity-50 disabled:no-underline"
-                >
-                  {isSendingOtp ? 'SENDING...' : otpCooldown > 0 ? `Wait ${otpCooldown}s` : 'Resend OTP'}
-                </button>
               </div>
             )}
 
-            <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex flex-col items-center">
-                <div className="w-full flex items-center justify-center space-x-6 bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 p-4 rounded-xl border border-white/10">
-                  <label className="flex items-center space-x-2 cursor-pointer group">
-                    <span className="normal-text font-semibold text-gray-400">Tipe Layanan:</span>
-                    <input
-                      type="radio"
-                      value="regular"
-                      checked={!botStatus.isPaidOnly && menfessType === 'regular'}
-                      onChange={(e) => setMenfessType(e.target.value)}
-                      disabled={botStatus.isPaidOnly}
-                      className="w-3 h-3 text-blue-500 border-gray-400 focus:ring-blue-500"
-                    />
-                    <span className={`normal-text font-medium ${botStatus.isPaidOnly ? 'text-gray-400' : 'group-hover:text-blue-200'}`}>
-                      Regular Menfess
-                    </span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer group">
-                    <input
-                      type="radio"
-                      value="paid"
-                      checked={botStatus.isPaidOnly || menfessType === 'paid'}
-                      onChange={(e) => setMenfessType(e.target.value)}
-                      className="w-3 h-3 text-blue-500 border-gray-400 focus:ring-blue-500"
-                    />
-                    <span className="normal-text font-medium group-hover:text-blue-200">Paid Menfess</span>
-                  </label>
+            {!botStatus.isPaidOnly && botStatus.remainingRegular < 5 && (
+                  <div className="bg-yellow-900/30 p-4 rounded-lg mb-6 animate-fadeIn">
+                <div className="flex items-start space-x-3">
+                  <div className="text-yellow-300 text-sm">⚠️</div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-yellow-300">Kuota Regular Menfess Hampir Habis</p>
+                    <p className="text-normal text-gray-300">
+                      Karena kebijakan Twitter/X, kami hanya dapat mengirim 17 tweets per hari untuk layanan regular menfess.
+                    </p>
+                    <div className="flex items-center space-x-2 text-normal">
+                      <span className="text-normal text-gray-400">Sisa kuota:</span>
+                      <span className="bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">
+                        {botStatus.remainingRegular} tweets
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                
-                <ServiceTypeDescription 
-                  type={botStatus.isPaidOnly ? 'paid' : menfessType} 
-                  isPaidOnly={botStatus.isPaidOnly} 
-                />
-                
-                <button
-                  type="button"
-                  onClick={() => setShowComparison(true)}
-                  className="mt-3 normal-text text-blue-300 hover:text-blue-200 flex items-center gap-1.5 group px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-all"
-                >
-                  <InfoIcon />
-                  <span className="group-hover:underline">Lihat detail perbandingan layanan</span>
-                </button>
+              </div>
+              )}
+              </>
+            )}
+          </div>
 
-                {/* Add new ad section under comparison button */}
-                <div className="mt-6">
-                  <AdSection position="main-comparison" />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block font-semibold">Email</label>
+              <div className="flex items-center gap-2 input-wrapper">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={handleEmailKeyPress}
+                    disabled={isEmailVerified}
+                    className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50 text-base md:text-sm"
+                    placeholder="Email ITB NIM@mahasiswa.itb.ac.id"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck="false"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyEmail}
+                    disabled={isEmailVerified || isSendingOtp}
+                    className="px-4 py-2 border rounded hover:bg-blue-900 transition-colors disabled:opacity-50"
+                  >
+                    {isSendingOtp ? 'SENDING...' : 'CHECK'}
+                  </button>
                 </div>
-                </div>
-              </div>
+                {emailError && (
+                  <p className="error-message">{emailError}</p>
+                )}
+                {otpMessage && (
+                  <p className="success-message mt-2">
+                    {otpMessage}
+                  </p>
+                )}
+                {renderWhitelistInfo()}
 
-            <div className="space-y-2">
-                <label className="block font-semibold">
-                  Pesan <span className="text-red-400">*</span>
-                </label>
-              <div className="w-full bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 input-wrapper">
-                <textarea
-                  value={message}
-                  onChange={handleMessageChange}
-                  maxLength={280}
-                  required
-                  className="w-full h-32 p-4 bg-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none text-base md:text-sm"
-                  placeholder='🚀 Silakan ketik pesanmu disini dengan triggerword itb! maba! misuh! bucin! atau itbparkir! untuk mengirim menfess ke Twitter. Contoh menfess: "itb! please ada yang bisa ajarin sender kimia ga?? sender udah hopless banget buat besok uas dan gatau harus ngapain lagi 😭 😭 apa pasrah aja ya??" Maksimal 280 kata.'
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                  spellCheck="false"
-                />
               </div>
-              </div>
+              {isEmailVerified && (
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <label className="block font-semibold">OTP</label>
+                    <OtpHelpButton onClick={() => setShowOtpHelp(true)} />
+                  </div>
+                <div className="flex items-center gap-2 input-wrapper">
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      onKeyDown={handleOtpKeyPress}
+                      disabled={isOtpVerified}
+                      className="w-full p-2 bg-transparent border rounded focus:outline-none focus:border-blue-400 disabled:opacity-50 text-base md:text-sm"
+                      placeholder="Masukkan kode OTP"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      spellCheck="false"
+                      pattern="[0-9]*"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      disabled={isOtpVerified || isVerifyingOtp}
+                      className="px-4 py-2 border rounded hover:bg-blue-900 transition-colors disabled:opacity-50"
+                    >
+                      {isVerifyingOtp ? 'CHECKING...' : 'CHECK'}
+                    </button>
+                  </div>
+                  {otpError && (
+                    <p className="error-message">{otpError}</p>
+                  )}
+                  {otpSuccessMessage && (
+                    <p className="success-message">{otpSuccessMessage}</p>
+                  )}
+                  <button 
+                    type="button" 
+                    onClick={handleResendOtp}
+                    disabled={isSendingOtp || otpCooldown > 0}
+                    className="text-blue-300 hover:underline disabled:opacity-50 disabled:no-underline"
+                  >
+                    {isSendingOtp ? 'SENDING...' : otpCooldown > 0 ? `Wait ${otpCooldown}s` : 'Resend OTP'}
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex flex-col items-center">
+                  <div className="w-full flex items-center justify-center space-x-6 bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 p-4 rounded-xl border border-white/10">
+                    <label className="flex items-center space-x-2 cursor-pointer group">
+                      <span className="normal-text font-semibold text-gray-400">Tipe Layanan:</span>
+                      <input
+                        type="radio"
+                        value="regular"
+                        checked={!botStatus.isPaidOnly && menfessType === 'regular'}
+                        onChange={(e) => setMenfessType(e.target.value)}
+                        disabled={botStatus.isPaidOnly}
+                        className="w-3 h-3 text-blue-500 border-gray-400 focus:ring-blue-500"
+                      />
+                      <span className={`normal-text font-medium ${botStatus.isPaidOnly ? 'text-gray-400' : 'group-hover:text-blue-200'}`}>
+                        Regular Menfess
+                      </span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer group">
+                      <input
+                        type="radio"
+                        value="paid"
+                        checked={botStatus.isPaidOnly || menfessType === 'paid'}
+                        onChange={(e) => setMenfessType(e.target.value)}
+                        className="w-3 h-3 text-blue-500 border-gray-400 focus:ring-blue-500"
+                      />
+                      <span className="normal-text font-medium group-hover:text-blue-200">Paid Menfess</span>
+                    </label>
+                  </div>
+                  
+                  <ServiceTypeDescription 
+                    type={botStatus.isPaidOnly ? 'paid' : menfessType} 
+                    isPaidOnly={botStatus.isPaidOnly} 
+                  />
+                  
+                  <button
+                    type="button"
+                    onClick={() => setShowComparison(true)}
+                    className="mt-3 normal-text text-blue-300 hover:text-blue-200 flex items-center gap-1.5 group px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-all"
+                  >
+                    <InfoIcon />
+                    <span className="group-hover:underline">Lihat detail perbandingan layanan</span>
+                  </button>
+
+                  {/* Add new ad section under comparison button */}
+                  <div className="mt-6">
+                    <AdSection position="main-comparison" />
+                  </div>
+                  </div>
+                </div>
 
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <p className="font-bold text-normal">
-                    Media Attachment <span className="font-normal text-gray-400">(opsional)</span>
-                  </p>
-                  <span className="text-xs text-gray-400">
-                    {getMediaTypeInfo()}
-                  </span>
+                  <label className="block font-semibold">
+                    Pesan <span className="text-red-400">*</span>
+                  </label>
+                <div className="w-full bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 rounded-xl border border-white/10 input-wrapper">
+                  <textarea
+                    value={message}
+                    onChange={handleMessageChange}
+                    maxLength={280}
+                    required
+                    className="w-full h-32 p-4 bg-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none text-base md:text-sm"
+                    placeholder='🚀 Silakan ketik pesanmu disini dengan triggerword itb! maba! misuh! bucin! atau itbparkir! untuk mengirim menfess ke Twitter. Contoh menfess: "itb! please ada yang bisa ajarin sender kimia ga?? sender udah hopless banget buat besok uas dan gatau harus ngapain lagi 😭 😭 apa pasrah aja ya??" Maksimal 280 kata.'
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck="false"
+                  />
                 </div>
-                
-              <div className="bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 p-4 rounded-xl border border-white/10">
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-white/20 file:text-white file:bg-transparent hover:file:bg-blue-900 file:transition-colors"
-                  accept={botStatus.isPaidOnly || menfessType === 'paid' ? "image/*,video/mp4" : "image/*"}
-                />
-              </div>
-                
-                {attachmentError && (
-                  <p className="text-red-400 text-sm">{attachmentError}</p>
-                )}
-                
-                {attachment && (
-                <div className="mt-2 bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 p-4 rounded-xl border border-white/10">
-                    {isVideoFile(attachment) ? (
-                      <video
-                        src={URL.createObjectURL(attachment)}
-                        className="max-h-32 rounded-lg"
-                        controls
-                      />
-                    ) : (
-                      <img
-                        src={URL.createObjectURL(attachment)}
-                        alt="Preview"
-                        className="max-h-32 rounded-lg"
-                      />
-                    )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <p className="font-bold text-normal">
+                      Media Attachment <span className="font-normal text-gray-400">(opsional)</span>
+                    </p>
+                    <span className="text-xs text-gray-400">
+                      {getMediaTypeInfo()}
+                    </span>
                   </div>
+                  
+                <div className="bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 p-4 rounded-xl border border-white/10">
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-white/20 file:text-white file:bg-transparent hover:file:bg-blue-900 file:transition-colors"
+                    accept={botStatus.isPaidOnly || menfessType === 'paid' ? "image/*,video/mp4" : "image/*"}
+                  />
+                </div>
+                  
+                  {attachmentError && (
+                    <p className="text-red-400 text-sm">{attachmentError}</p>
+                  )}
+                  
+                  {attachment && (
+                  <div className="mt-2 bg-gradient-to-b from-[#000072]/30 to-[#000050]/30 p-4 rounded-xl border border-white/10">
+                      {isVideoFile(attachment) ? (
+                        <video
+                          src={URL.createObjectURL(attachment)}
+                          className="max-h-32 rounded-lg"
+                          controls
+                        />
+                      ) : (
+                        <img
+                          src={URL.createObjectURL(attachment)}
+                          alt="Preview"
+                          className="max-h-32 rounded-lg"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={isAgreed}
+                    onChange={handleCheckboxChange}
+                    className="rounded cursor-pointer"
+                  />
+                  <span className="normal-text">
+                    Dengan ini saya menyetujui semua aturan dan ketentuan yang berlaku di platform ini.
+                  </span>
+                </label>
+
+                {submitError && (
+                  <p className="error-message text-center">{submitError}</p>
                 )}
-              </div>
-
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={isAgreed}
-                  onChange={handleCheckboxChange}
-                  className="rounded cursor-pointer"
-                />
-                <span className="normal-text">
-                  Dengan ini saya menyetujui semua aturan dan ketentuan yang berlaku di platform ini.
-                </span>
-              </label>
-
-              {submitError && (
-                <p className="error-message text-center">{submitError}</p>
-              )}
-              {submitSuccess && (
-                <p className="success-message text-center">{submitSuccess}</p>
-              )}
-          <div className="text-center">
-            <button
-                type="submit"
-                disabled={!isAgreed || !isEmailVerified || !isOtpVerified || isSubmitting}
-                className="px-6 py-2 bg-white text-[#000072] rounded disabled:opacity-50 hover:bg-gray-100 transition-colors"
-            >
-                {isSubmitting ? 'SENDING...' : 'SEND'}
-            </button>
+                {submitSuccess && (
+                  <p className="success-message text-center">{submitSuccess}</p>
+                )}
+            <div className="text-center">
+              <button
+                  type="submit"
+                  disabled={!isAgreed || !isEmailVerified || !isOtpVerified || isSubmitting}
+                  className="px-6 py-2 bg-white text-[#000072] rounded disabled:opacity-50 hover:bg-gray-100 transition-colors"
+              >
+                  {isSubmitting ? 'SENDING...' : 'SEND'}
+              </button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
 
         {/* Add bottom advertisement section */}
         <div className="mt-12">

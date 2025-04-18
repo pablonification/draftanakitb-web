@@ -104,18 +104,18 @@ const PasswordProtection = ({ onCorrectPassword }) => {
             className="mb-4"
           />
           <h2 className="text-xl font-semibold text-white text-center">
-            Halaman Partnership DraftAnakITB
+            Partnership DraftAnakITB
           </h2>
           <p className="text-gray-400 text-sm mt-2 text-center">
-            Masukkan kode akses untuk melihat informasi partnership
+            Masukkan kode akses
           </p>
           <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
             <p className="text-red-400 text-sm text-center font-medium">
               ⚠️ PERINGATAN
             </p>
             <p className="text-red-400 text-xs text-center mt-1">
-              Dilarang membagikan link, kode akses, atau isi halaman ini kepada pihak lain.
-              Pelanggaran dapat berakibat pada pencabutan akses.
+              Dilarang keras membagikan link, kode akses, atau isi halaman ini kepada pihak lain.
+              Pelanggaran dapat berakibat anda terkena blacklist untuk kerja sama di masa mendatang.
             </p>
           </div>
         </div>

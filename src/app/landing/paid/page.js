@@ -86,7 +86,7 @@ const PaidMenfessLanding = () => {
   const [paymentStatus, setPaymentStatus] = useState('initializing'); // initializing, pending, success, failed
   const [qrString, setQrString] = useState(''); // replaced qrUrl with qrString
   const [merchantRef, setMerchantRef] = useState('');
-  const PAYMENT_AMOUNT = 2800;
+  const PAYMENT_AMOUNT = 3099;
   const [timeRemaining, setTimeRemaining] = useState(7); // 7 second countdown
   const [progress, setProgress] = useState(0);
 

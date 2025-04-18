@@ -4,7 +4,7 @@ import { isAdEnabled, getAdConfig } from '@/config/ads';
 
 const ArrowIcon = () => (
   <svg 
-    className="w-4 h-4" 
+    className="w-3 h-3" 
     viewBox="0 0 24 24" 
     fill="none" 
     stroke="currentColor" 
@@ -24,6 +24,37 @@ const AdSection = ({ position, className }) => {
 
   const { customContent } = config;
 
+  // Special handling for main-top position to show banner-style ad
+  if (position === 'main-top') {
+    return (
+      <a 
+        href={customContent.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block relative group cursor-pointer"
+      >
+        {customContent.imageUrl && (
+          <div className="relative w-full overflow-hidden rounded-xl">
+            <Image
+              src={customContent.imageUrl}
+              alt={customContent.title}
+              width={1200}
+              height={300}
+              className="w-full h-auto group-hover:scale-[1.01] transition-transform duration-300 rounded-xl"
+              priority
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+            {/* Subtle hover overlay */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+          </div>
+        )}
+      </a>
+    );
+  }
+
+  // Default ad section for other positions
   return (
     <div className={`bg-gradient-to-r from-gray-800/50 to-gray-900/50 p-6 rounded-xl text-center border border-white/5 ${className || ''}`}>
       <a 
@@ -53,7 +84,6 @@ const AdSection = ({ position, className }) => {
               className="w-full h-auto group-hover:scale-[1.02] transition-transform duration-300"
               priority={position === 'main-top'}
               onError={(e) => {
-                // Fallback to text-only if image fails to load
                 e.target.style.display = 'none';
               }}
             />
