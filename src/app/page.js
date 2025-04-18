@@ -8,9 +8,10 @@ import Script from 'next/script';
 import Head from 'next/head';
 import AdSection from '@/components/AdSection';
 import Navbar from '@/components/Navbar';
+import AliasForm from '@/components/AliasForm';
 
 // Add whitelist constant at the top
-const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
+const WHITELISTED_EMAILS = ['arqilasp@gmail.com', 'drafanakitb.dev@gmail.com', 'zatworkspace@gmail.com', 'arqilasp16@gmail.com'];
 
 // Add this helper function after the WHITELISTED_EMAILS constant
 const isVideoFile = (file) => {
@@ -473,6 +474,8 @@ const MainPage = () => {
   const [showComparison, setShowComparison] = useState(false);
   const [showPaidWarning, setShowPaidWarning] = useState(false);
   const [pendingMenfessData, setPendingMenfessData] = useState(null);
+  const [showAliasForm, setShowAliasForm] = useState(false);
+  const [userAlias, setUserAlias] = useState('Sender');
 
   useEffect(() => {
     const fetchBotStatus = async () => {
@@ -722,6 +725,9 @@ const MainPage = () => {
       if (data.success) {
         setIsOtpVerified(true);
         setOtpSuccessMessage('OTP berhasil diverifikasi! Silakan lanjutkan mengisi pesan anda.');
+        
+        // Fetch user alias and display the form
+        fetchUserAlias();
       } else {
         setOtpError(data.error || 'OTP tidak valid!');
       }
@@ -842,6 +848,77 @@ const MainPage = () => {
 
   const handlePaidInfoToggle = () => {
     setShowPaidInfo(prev => !prev);
+  };
+
+  // Fetch user alias if already set
+  const fetchUserAlias = async () => {
+    try {
+      const response = await fetch(`/api/user/alias?email=${encodeURIComponent(email)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Use the hasCustomAlias flag to determine if we should show the form
+          setUserAlias(data.alias || 'Sender');
+          
+          if (data.hasCustomAlias === false) {
+            // User hasn't set a custom alias yet, show the form
+            setShowAliasForm(true);
+            console.log('No custom alias set, showing alias form');
+          } else {
+            // User already has a custom alias
+            setShowAliasForm(false);
+            console.log('Custom alias found:', data.alias);
+          }
+        } else {
+          // Show alias form if API returns failure
+          setShowAliasForm(true);
+        }
+      } else {
+        // If fetch fails, show alias form
+        setShowAliasForm(true);
+      }
+    } catch (error) {
+      console.error('Error fetching alias:', error);
+      setShowAliasForm(true);
+    }
+  };
+  
+  // Handle submit alias
+  const handleSubmitAlias = async ({ alias, showInLeaderboard }) => {
+    try {
+      const response = await fetch('/api/user/alias', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email, 
+          alias, 
+          showInLeaderboard 
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update alias');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setUserAlias(data.alias);
+        setShowAliasForm(false);
+      }
+    } catch (error) {
+      console.error('Error setting alias:', error);
+      // Continue anyway even if it fails
+      setShowAliasForm(false);
+    }
+  };
+  
+  // Skip alias setup
+  const handleSkipAlias = () => {
+    setShowAliasForm(false);
   };
 
   return (
@@ -977,7 +1054,7 @@ const MainPage = () => {
                     <label className="block font-semibold">OTP</label>
                     <OtpHelpButton onClick={() => setShowOtpHelp(true)} />
                   </div>
-                <div className="flex items-center gap-2 input-wrapper">
+                  <div className="flex items-center gap-2 input-wrapper">
                     <input
                       type="text"
                       value={otp}
@@ -991,7 +1068,6 @@ const MainPage = () => {
                       autoCorrect="off"
                       autoCapitalize="none"
                       spellCheck="false"
-                      pattern="[0-9]*"
                     />
                     <button
                       type="button"
@@ -1011,11 +1087,21 @@ const MainPage = () => {
                   <button 
                     type="button" 
                     onClick={handleResendOtp}
-                    disabled={isSendingOtp || otpCooldown > 0}
-                    className="text-blue-300 hover:underline disabled:opacity-50 disabled:no-underline"
+                    disabled={otpCooldown > 0}
+                    className="text-blue-300 hover:underline disabled:opacity-50 disabled:no-underline text-sm"
                   >
-                    {isSendingOtp ? 'SENDING...' : otpCooldown > 0 ? `Wait ${otpCooldown}s` : 'Resend OTP'}
+                    {otpCooldown > 0 ? `Wait ${otpCooldown}s to resend` : 'Resend OTP'}
                   </button>
+                </div>
+              )}
+
+              {isOtpVerified && showAliasForm && (
+                <div className="mt-6 mb-6">
+                  <AliasForm 
+                    onSubmit={handleSubmitAlias} 
+                    defaultAlias={userAlias} 
+                    onSkip={handleSkipAlias} 
+                  />
                 </div>
               )}
 

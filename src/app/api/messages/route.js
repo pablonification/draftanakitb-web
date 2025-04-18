@@ -211,11 +211,15 @@ export async function POST(request) {
         // Continue anyway since the tweet was sent
       }
 
-      // Always update user's last message time
+      // Always update user's last message time and increment message count
       await User.findOneAndUpdate(
         { email },
         { 
-          $set: { lastRegularMessage: new Date() },
+          $set: { 
+            lastRegularMessage: new Date(),
+            lastActive: new Date()
+          },
+          $inc: { messageCount: 1 },
           $setOnInsert: { email }
         },
         { upsert: true }

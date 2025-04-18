@@ -5,7 +5,7 @@ import { User } from '@/app/models/userModel';
 import mailSender from '@/app/utils/mailSender';
 
 // Whitelist constant at the top (sama dengan di page.js)
-const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
+const WHITELISTED_EMAILS = ['arqilasp@gmail.com', 'drafanakitb.dev@gmail.com', 'zatworkspace@gmail.com', 'arqilasp13@gmail.com'];
 
 // Dev mode setting - when true, email validation will be relaxed and duplicate votes allowed
 const DEV_MODE = process.env.DEV_MODE === 'true';
@@ -344,3 +344,6 @@ export async function GET(request) {
     }, { status: 500 });
   }
 } 
+ 
+ 
+ 

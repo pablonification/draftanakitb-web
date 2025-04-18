@@ -7,7 +7,7 @@ import AdSection from '@/components/AdSection';
 import Navbar from '@/components/Navbar';
 
 // Whitelist constant at the top (sama dengan yang ada di page.js)
-const WHITELISTED_EMAILS = ['arqilasp@gmail.com'];
+const WHITELISTED_EMAILS = ['arqilasp@gmail.com', 'drafanakitb.dev@gmail.com', 'zatworkspace@gmail.com', 'arqilasp13@gmail.com'];
 
 // Dev mode setting for testing
 const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === 'true';

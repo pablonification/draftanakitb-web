@@ -39,3 +39,5 @@ const DelVoteSchema = new mongoose.Schema({
 DelVoteSchema.index({ twitterUrl: 1, email: 1, uniqueId: 1 }, { unique: true });
 
 export const DelVoteModel = mongoose.models.DelVote || mongoose.model('DelVote', DelVoteSchema); 
+ 
+ 

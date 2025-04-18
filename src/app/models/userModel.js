@@ -4,19 +4,38 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    trim: true,
   },
   isVerified: {
     type: Boolean,
-    default: false
+    default: false,
+  },
+  alias: {
+    type: String,
+    default: "Sender", 
+    trim: true,
+    maxlength: 20 // Batasi panjang alias
+  },
+  messageCount: {
+    type: Number,
+    default: 0
+  },
+  showInLeaderboard: {
+    type: Boolean,
+    default: true // Default tampilkan di leaderboard
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  lastActive: {
+    type: Date,
+    default: Date.now
   },
   lastRegularMessage: {
     type: Date,
     default: null
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
 });
 

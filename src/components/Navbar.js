@@ -11,6 +11,9 @@ const Navbar = ({ showLogo = true }) => {
           <Link href="/" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">
             HOME
           </Link>
+          <Link href="/leaderboard" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">
+            LEADERBOARD
+          </Link>
           <Link href="/delvote" className="text-gray-300 hover:text-white hover:scale-105 transition-all duration-300">
             DELVOTE
           </Link>
@@ -40,3 +43,5 @@ const Navbar = ({ showLogo = true }) => {
 };
 
 export default Navbar; 
+ 
+ 
